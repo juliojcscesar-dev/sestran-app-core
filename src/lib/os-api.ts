@@ -159,10 +159,16 @@ export async function criarOrdem(dados: DadosOS) {
   const criada = checar(
     await supabase
       .from("ordens_servico")
-      .insert({ ...camposOrdem(dados), criado_por: userData.user?.id ?? null })
+      .insert({
+        ...camposOrdem(dados),
+        // o número é gerado pelo banco (formato 001/2026)
+        numero: "",
+        criado_por: userData.user?.id ?? null,
+      })
       .select("id, numero")
       .single(),
   );
+  if (!criada) throw new Error("Não foi possível criar a ordem de serviço.");
   await sincronizarFilhos(criada.id, dados);
   return criada;
 }
