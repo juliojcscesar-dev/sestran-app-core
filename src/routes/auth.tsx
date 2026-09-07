@@ -170,8 +170,8 @@ function PaginaAcesso() {
 
               <TabsContent value="entrar">
                 <form onSubmit={entrar} className="space-y-4" noValidate>
-                  <Campo id="email" rotulo="E-mail" tipo="email" erro={erros.email} />
-                  <Campo id="senha" rotulo="Senha" tipo="password" erro={erros.senha} />
+                  <Campo id="email" rotulo="E-mail" tipo="email" erro={erros["email"]} />
+                  <Campo id="senha" rotulo="Senha" tipo="password" erro={erros["senha"]} />
                   <Button type="submit" className="w-full" disabled={carregando}>
                     {carregando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
@@ -181,10 +181,10 @@ function PaginaAcesso() {
 
               <TabsContent value="criar">
                 <form onSubmit={cadastrar} className="space-y-4" noValidate>
-                  <Campo id="nome" rotulo="Nome completo" tipo="text" erro={erros.nome} />
-                  <Campo id="cargo" rotulo="Cargo (opcional)" tipo="text" erro={erros.cargo} />
-                  <Campo id="email" rotulo="E-mail" tipo="email" erro={erros.email} />
-                  <Campo id="senha" rotulo="Senha" tipo="password" erro={erros.senha} />
+                  <Campo id="nome" rotulo="Nome completo" tipo="text" erro={erros["nome"]} />
+                  <Campo id="cargo" rotulo="Cargo (opcional)" tipo="text" erro={erros["cargo"]} />
+                  <Campo id="email" rotulo="E-mail" tipo="email" erro={erros["email"]} />
+                  <Campo id="senha" rotulo="Senha" tipo="password" erro={erros["senha"]} />
                   <p className="text-xs text-muted-foreground">
                     Novas contas entram com perfil <strong>Consulta</strong>. Um administrador
                     define o nível de acesso definitivo.
@@ -227,7 +227,7 @@ function Campo({
   id: string;
   rotulo: string;
   tipo: string;
-  erro?: string;
+  erro?: string | undefined;
 }) {
   return (
     <div className="space-y-1.5">
