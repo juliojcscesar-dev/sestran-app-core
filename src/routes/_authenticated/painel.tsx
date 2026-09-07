@@ -54,25 +54,12 @@ function Painel() {
   const indicadores = useQuery({
     queryKey: ["painel", "indicadores"],
     queryFn: async (): Promise<Indicadores> => {
-      const hoje = new Date().toISOString();
-      const contar = async (
-        tabela:
-          | "ordens_servico"
-          | "eventos"
-          | "agentes"
-          | "orientadores"
-          | "solicitantes"
-          | "escolas"
-          | "veiculos_abandonados"
-          | "acoes_educativas",
-        aplicar?: (q: ReturnType<typeof supabase.from>) => unknown,
-      ) => {
-        let consulta = supabase.from(tabela).select("id", { count: "exact", head: true }) as never;
-        if (aplicar) consulta = aplicar(consulta as never) as never;
-        const { count, error } = (await consulta) as { count: number | null; error: unknown };
-        if (error) throw error;
-        return count ?? 0;
+      const agora = new Date().toISOString();
+      const total = (resultado: { count: number | null; error: unknown }) => {
+        if (resultado.error) throw resultado.error;
+        return resultado.count ?? 0;
       };
+      const cabecalho = { count: "exact" as const, head: true };
 
       const [
         osAbertas,
@@ -85,20 +72,25 @@ function Painel() {
         veiculosPendentes,
         acoesPlanejadas,
       ] = await Promise.all([
-        contar("ordens_servico", (q) => (q as never as { eq: Function }).eq("status", "ABERTA")),
-        contar("ordens_servico", (q) =>
-          (q as never as { eq: Function }).eq("status", "EM_EXECUCAO"),
-        ),
-        contar("eventos", (q) => (q as never as { gte: Function }).gte("data_inicio", hoje)),
-        contar("agentes", (q) => (q as never as { eq: Function }).eq("ativo", true)),
-        contar("orientadores", (q) => (q as never as { eq: Function }).eq("ativo", true)),
-        contar("solicitantes"),
-        contar("escolas"),
-        contar("veiculos_abandonados", (q) =>
-          (q as never as { in: Function }).in("status", ["REGISTRADO", "NOTIFICADO"]),
-        ),
-        contar("acoes_educativas", (q) => (q as never as { eq: Function }).eq("status", "PLANEJADA")),
+        supabase.from("ordens_servico").select("id", cabecalho).eq("status", "ABERTA").then(total),
+        supabase
+          .from("ordens_servico")
+          .select("id", cabecalho)
+          .eq("status", "EM_EXECUCAO")
+          .then(total),
+        supabase.from("eventos").select("id", cabecalho).gte("data_inicio", agora).then(total),
+        supabase.from("agentes").select("id", cabecalho).eq("ativo", true).then(total),
+        supabase.from("orientadores").select("id", cabecalho).eq("ativo", true).then(total),
+        supabase.from("solicitantes").select("id", cabecalho).then(total),
+        supabase.from("escolas").select("id", cabecalho).then(total),
+        supabase
+          .from("veiculos_abandonados")
+          .select("id", cabecalho)
+          .in("status", ["REGISTRADO", "NOTIFICADO"])
+          .then(total),
+        supabase.from("acoes_educativas").select("id", cabecalho).eq("status", "PLANEJADA").then(total),
       ]);
+
 
       return {
         osAbertas,
