@@ -104,6 +104,24 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes: {
+        Row: {
+          chave: string
+          updated_at: string
+          valor: string | null
+        }
+        Insert: {
+          chave: string
+          updated_at?: string
+          valor?: string | null
+        }
+        Update: {
+          chave?: string
+          updated_at?: string
+          valor?: string | null
+        }
+        Relationships: []
+      }
       escolas: {
         Row: {
           ativo: boolean
@@ -235,26 +253,62 @@ export type Database = {
         }
         Relationships: []
       }
+      locais: {
+        Row: {
+          ativo: boolean
+          bairro: string | null
+          created_at: string
+          endereco: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          bairro?: string | null
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          bairro?: string | null
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ordem_servico_agentes: {
         Row: {
           agente_id: string
           created_at: string
           funcao: string | null
+          hora_chegada: string | null
           id: string
+          observacao: string | null
           ordem_servico_id: string
         }
         Insert: {
           agente_id: string
           created_at?: string
           funcao?: string | null
+          hora_chegada?: string | null
           id?: string
+          observacao?: string | null
           ordem_servico_id: string
         }
         Update: {
           agente_id?: string
           created_at?: string
           funcao?: string | null
+          hora_chegada?: string | null
           id?: string
+          observacao?: string | null
           ordem_servico_id?: string
         }
         Relationships: [
@@ -274,62 +328,208 @@ export type Database = {
           },
         ]
       }
-      ordens_servico: {
+      ordem_servico_historico: {
+        Row: {
+          acao: string
+          alteracoes: Json | null
+          created_at: string
+          id: string
+          ordem_servico_id: string
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          alteracoes?: Json | null
+          created_at?: string
+          id?: string
+          ordem_servico_id: string
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          alteracoes?: Json | null
+          created_at?: string
+          id?: string
+          ordem_servico_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordem_servico_historico_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordem_servico_orientadores: {
         Row: {
           created_at: string
+          id: string
+          observacao: string | null
+          ordem_servico_id: string
+          orientador_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          ordem_servico_id: string
+          orientador_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          ordem_servico_id?: string
+          orientador_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordem_servico_orientadores_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordem_servico_orientadores_orientador_id_fkey"
+            columns: ["orientador_id"]
+            isOneToOne: false
+            referencedRelation: "orientadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordem_servico_servicos: {
+        Row: {
+          created_at: string
+          detalhe: string | null
+          id: string
+          ordem_servico_id: string
+          tipo_servico_id: string
+        }
+        Insert: {
+          created_at?: string
+          detalhe?: string | null
+          id?: string
+          ordem_servico_id: string
+          tipo_servico_id: string
+        }
+        Update: {
+          created_at?: string
+          detalhe?: string | null
+          id?: string
+          ordem_servico_id?: string
+          tipo_servico_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordem_servico_servicos_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordem_servico_servicos_tipo_servico_id_fkey"
+            columns: ["tipo_servico_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordens_servico: {
+        Row: {
+          ano: number
+          arquivada: boolean
+          arquivada_em: string | null
+          arquivada_por: string | null
+          created_at: string
           criado_por: string | null
+          data_emissao: string
           data_servico: string
           descricao: string | null
+          destinatario: string | null
           evento_id: string | null
           hora_fim: string | null
           hora_inicio: string | null
           id: string
+          ipm: string | null
           local: string | null
+          natureza: string | null
           numero: string
           observacoes: string | null
           prioridade: string
+          remetente: string | null
+          sequencial: number | null
           solicitante_id: string | null
           status: string
           tipo: string
-          titulo: string
+          titulo: string | null
+          trajeto: string | null
           updated_at: string
         }
         Insert: {
+          ano?: number
+          arquivada?: boolean
+          arquivada_em?: string | null
+          arquivada_por?: string | null
           created_at?: string
           criado_por?: string | null
+          data_emissao?: string
           data_servico: string
           descricao?: string | null
+          destinatario?: string | null
           evento_id?: string | null
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
+          ipm?: string | null
           local?: string | null
-          numero?: string
+          natureza?: string | null
+          numero: string
           observacoes?: string | null
           prioridade?: string
+          remetente?: string | null
+          sequencial?: number | null
           solicitante_id?: string | null
           status?: string
           tipo?: string
-          titulo: string
+          titulo?: string | null
+          trajeto?: string | null
           updated_at?: string
         }
         Update: {
+          ano?: number
+          arquivada?: boolean
+          arquivada_em?: string | null
+          arquivada_por?: string | null
           created_at?: string
           criado_por?: string | null
+          data_emissao?: string
           data_servico?: string
           descricao?: string | null
+          destinatario?: string | null
           evento_id?: string | null
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
+          ipm?: string | null
           local?: string | null
+          natureza?: string | null
           numero?: string
           observacoes?: string | null
           prioridade?: string
+          remetente?: string | null
+          sequencial?: number | null
           solicitante_id?: string | null
           status?: string
           tipo?: string
-          titulo?: string
+          titulo?: string | null
+          trajeto?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -379,6 +579,21 @@ export type Database = {
           nome?: string
           telefone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      os_contador: {
+        Row: {
+          ano: number
+          ultimo: number
+        }
+        Insert: {
+          ano: number
+          ultimo?: number
+        }
+        Update: {
+          ano?: number
+          ultimo?: number
         }
         Relationships: []
       }
@@ -453,6 +668,33 @@ export type Database = {
           nome?: string
           telefone?: string | null
           tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tipos_servico: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
           updated_at?: string
         }
         Relationships: []
