@@ -12,7 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAgentesRouteImport } from './routes/_authenticated/agentes'
+import { Route as AuthenticatedEducacaoTransitoRouteImport } from './routes/_authenticated/educacao-transito'
+import { Route as AuthenticatedEscolasRouteImport } from './routes/_authenticated/escolas'
+import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
+import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedOrdensServicoRouteImport } from './routes/_authenticated/ordens-servico'
+import { Route as AuthenticatedOrientadoresRouteImport } from './routes/_authenticated/orientadores'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedSolicitantesRouteImport } from './routes/_authenticated/solicitantes'
+import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
+import { Route as AuthenticatedVeiculosAbandonadosRouteImport } from './routes/_authenticated/veiculos-abandonados'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +38,161 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAgentesRoute = AuthenticatedAgentesRouteImport.update({
+  id: '/agentes',
+  path: '/agentes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEducacaoTransitoRoute =
+  AuthenticatedEducacaoTransitoRouteImport.update({
+    id: '/educacao-transito',
+    path: '/educacao-transito',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEscolasRoute = AuthenticatedEscolasRouteImport.update({
+  id: '/escolas',
+  path: '/escolas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEventosRoute = AuthenticatedEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOrdensServicoRoute =
+  AuthenticatedOrdensServicoRouteImport.update({
+    id: '/ordens-servico',
+    path: '/ordens-servico',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrientadoresRoute =
+  AuthenticatedOrientadoresRouteImport.update({
+    id: '/orientadores',
+    path: '/orientadores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSolicitantesRoute =
+  AuthenticatedSolicitantesRouteImport.update({
+    id: '/solicitantes',
+    path: '/solicitantes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVeiculosAbandonadosRoute =
+  AuthenticatedVeiculosAbandonadosRouteImport.update({
+    id: '/veiculos-abandonados',
+    path: '/veiculos-abandonados',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/agentes': typeof AuthenticatedAgentesRoute
+  '/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
+  '/escolas': typeof AuthenticatedEscolasRoute
+  '/eventos': typeof AuthenticatedEventosRoute
+  '/historico': typeof AuthenticatedHistoricoRoute
+  '/ordens-servico': typeof AuthenticatedOrdensServicoRoute
+  '/orientadores': typeof AuthenticatedOrientadoresRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/solicitantes': typeof AuthenticatedSolicitantesRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/agentes': typeof AuthenticatedAgentesRoute
+  '/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
+  '/escolas': typeof AuthenticatedEscolasRoute
+  '/eventos': typeof AuthenticatedEventosRoute
+  '/historico': typeof AuthenticatedHistoricoRoute
+  '/ordens-servico': typeof AuthenticatedOrdensServicoRoute
+  '/orientadores': typeof AuthenticatedOrientadoresRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/solicitantes': typeof AuthenticatedSolicitantesRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/agentes': typeof AuthenticatedAgentesRoute
+  '/_authenticated/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
+  '/_authenticated/escolas': typeof AuthenticatedEscolasRoute
+  '/_authenticated/eventos': typeof AuthenticatedEventosRoute
+  '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
+  '/_authenticated/ordens-servico': typeof AuthenticatedOrdensServicoRoute
+  '/_authenticated/orientadores': typeof AuthenticatedOrientadoresRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/solicitantes': typeof AuthenticatedSolicitantesRoute
+  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
+  '/_authenticated/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/painel'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/agentes'
+    | '/educacao-transito'
+    | '/escolas'
+    | '/eventos'
+    | '/historico'
+    | '/ordens-servico'
+    | '/orientadores'
+    | '/painel'
+    | '/solicitantes'
+    | '/usuarios'
+    | '/veiculos-abandonados'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/painel'
+  to:
+    | '/'
+    | '/auth'
+    | '/agentes'
+    | '/educacao-transito'
+    | '/escolas'
+    | '/eventos'
+    | '/historico'
+    | '/ordens-servico'
+    | '/orientadores'
+    | '/painel'
+    | '/solicitantes'
+    | '/usuarios'
+    | '/veiculos-abandonados'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/agentes'
+    | '/_authenticated/educacao-transito'
+    | '/_authenticated/escolas'
+    | '/_authenticated/eventos'
+    | '/_authenticated/historico'
+    | '/_authenticated/ordens-servico'
+    | '/_authenticated/orientadores'
+    | '/_authenticated/painel'
+    | '/_authenticated/solicitantes'
+    | '/_authenticated/usuarios'
+    | '/_authenticated/veiculos-abandonados'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +224,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/agentes': {
+      id: '/_authenticated/agentes'
+      path: '/agentes'
+      fullPath: '/agentes'
+      preLoaderRoute: typeof AuthenticatedAgentesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/educacao-transito': {
+      id: '/_authenticated/educacao-transito'
+      path: '/educacao-transito'
+      fullPath: '/educacao-transito'
+      preLoaderRoute: typeof AuthenticatedEducacaoTransitoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/escolas': {
+      id: '/_authenticated/escolas'
+      path: '/escolas'
+      fullPath: '/escolas'
+      preLoaderRoute: typeof AuthenticatedEscolasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/eventos': {
+      id: '/_authenticated/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof AuthenticatedEventosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/historico': {
+      id: '/_authenticated/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ordens-servico': {
+      id: '/_authenticated/ordens-servico'
+      path: '/ordens-servico'
+      fullPath: '/ordens-servico'
+      preLoaderRoute: typeof AuthenticatedOrdensServicoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orientadores': {
+      id: '/_authenticated/orientadores'
+      path: '/orientadores'
+      fullPath: '/orientadores'
+      preLoaderRoute: typeof AuthenticatedOrientadoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -95,15 +280,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/solicitantes': {
+      id: '/_authenticated/solicitantes'
+      path: '/solicitantes'
+      fullPath: '/solicitantes'
+      preLoaderRoute: typeof AuthenticatedSolicitantesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/usuarios': {
+      id: '/_authenticated/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/veiculos-abandonados': {
+      id: '/_authenticated/veiculos-abandonados'
+      path: '/veiculos-abandonados'
+      fullPath: '/veiculos-abandonados'
+      preLoaderRoute: typeof AuthenticatedVeiculosAbandonadosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAgentesRoute: typeof AuthenticatedAgentesRoute
+  AuthenticatedEducacaoTransitoRoute: typeof AuthenticatedEducacaoTransitoRoute
+  AuthenticatedEscolasRoute: typeof AuthenticatedEscolasRoute
+  AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
+  AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
+  AuthenticatedOrdensServicoRoute: typeof AuthenticatedOrdensServicoRoute
+  AuthenticatedOrientadoresRoute: typeof AuthenticatedOrientadoresRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedSolicitantesRoute: typeof AuthenticatedSolicitantesRoute
+  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
+  AuthenticatedVeiculosAbandonadosRoute: typeof AuthenticatedVeiculosAbandonadosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAgentesRoute: AuthenticatedAgentesRoute,
+  AuthenticatedEducacaoTransitoRoute: AuthenticatedEducacaoTransitoRoute,
+  AuthenticatedEscolasRoute: AuthenticatedEscolasRoute,
+  AuthenticatedEventosRoute: AuthenticatedEventosRoute,
+  AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
+  AuthenticatedOrdensServicoRoute: AuthenticatedOrdensServicoRoute,
+  AuthenticatedOrientadoresRoute: AuthenticatedOrientadoresRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedSolicitantesRoute: AuthenticatedSolicitantesRoute,
+  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
+  AuthenticatedVeiculosAbandonadosRoute: AuthenticatedVeiculosAbandonadosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

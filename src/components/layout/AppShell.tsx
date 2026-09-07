@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-function Icone({ nome, className }: { nome: string; className?: string }) {
-  const Componente = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[
-    nome
-  ];
+function Icone({ nome, className }: { nome: string; className: string }) {
+  const Componente = (
+    Icons as unknown as Record<string, React.ComponentType<{ className: string }> | undefined>
+  )[nome];
   if (!Componente) return null;
   return <Componente className={className} />;
 }
