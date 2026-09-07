@@ -92,9 +92,9 @@ export async function obterOrdem(id: string) {
   if (!dados) throw new Error("Ordem de serviço não encontrada.");
   return {
     ordem: dados,
-    servicos: checar(servicos),
-    agentes: checar(agentes),
-    orientadores: checar(orientadores),
+    servicos: checar(servicos) ?? [],
+    agentes: checar(agentes) ?? [],
+    orientadores: checar(orientadores) ?? [],
   };
 }
 
