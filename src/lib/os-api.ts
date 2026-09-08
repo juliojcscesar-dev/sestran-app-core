@@ -38,6 +38,12 @@ function checar<T>(res: { data: T; error: unknown }): T {
   return res.data;
 }
 
+function checarUnico<T>(res: { data: T; error: unknown }): NonNullable<T> {
+  const dados = checar(res);
+  if (!dados) throw new Error("Não foi possível concluir o cadastro.");
+  return dados;
+}
+
 const SELECAO_LISTA =
   "id, numero, ano, data_servico, hora_inicio, hora_fim, local, status, arquivada, natureza, evento_id, solicitante_id, eventos(titulo), solicitantes(nome)";
 
@@ -274,31 +280,31 @@ export async function listarTiposServico() {
 }
 
 export async function criarSolicitante(nome: string) {
-  return checar(
+  return checarUnico(
     await supabase.from("solicitantes").insert({ nome }).select("id, nome, tipo").single(),
   );
 }
 
 export async function criarAgente(nome: string) {
-  return checar(
+  return checarUnico(
     await supabase.from("agentes").insert({ nome }).select("id, nome, matricula").single(),
   );
 }
 
 export async function criarOrientador(nome: string) {
-  return checar(
+  return checarUnico(
     await supabase.from("orientadores").insert({ nome }).select("id, nome, matricula").single(),
   );
 }
 
 export async function criarLocal(nome: string) {
-  return checar(
+  return checarUnico(
     await supabase.from("locais").insert({ nome }).select("id, nome, endereco").single(),
   );
 }
 
 export async function criarTipoServico(nome: string) {
-  return checar(await supabase.from("tipos_servico").insert({ nome }).select("id, nome").single());
+  return checarUnico(await supabase.from("tipos_servico").insert({ nome }).select("id, nome").single());
 }
 
 export async function obterConfiguracoes() {
