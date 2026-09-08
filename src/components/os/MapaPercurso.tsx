@@ -1,0 +1,482 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import L from "leaflet";
+import { MapPin, Route as RotaIcone, Search, Trash2, Undo2, Ban, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  CENTRO_PARANAVAI,
+  ZOOM_PADRAO,
+  coordenadaTexto,
+  rotuloEtapa,
+  type InterdicaoMapa,
+  type PercursoMapa,
+  type PontoMapa,
+} from "@/lib/mapa";
+
+type Modo = "navegar" | "percurso" | "ponto" | "interdicao";
+
+export type MapaPercursoProps = {
+  percurso: PercursoMapa;
+  onPercursoChange?: (percurso: PercursoMapa) => void;
+  interdicoes?: InterdicaoMapa[];
+  onInterdicoesChange?: (interdicoes: InterdicaoMapa[]) => void;
+  permitirInterdicoes?: boolean;
+  somenteLeitura?: boolean;
+  altura?: number;
+};
+
+function icone(texto: string, cor: string) {
+  return L.divIcon({
+    className: "",
+    html: `<span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9999px;background:${cor};color:#fff;font:600 11px/1 'IBM Plex Sans',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.4);border:2px solid #fff">${texto}</span>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  });
+}
+
+export default function MapaPercurso({
+  percurso,
+  onPercursoChange,
+  interdicoes = [],
+  onInterdicoesChange,
+  permitirInterdicoes = false,
+  somenteLeitura = false,
+  altura = 420,
+}: MapaPercursoProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapaRef = useRef<L.Map | null>(null);
+  const camadaRef = useRef<L.LayerGroup | null>(null);
+  const modoRef = useRef<Modo>("navegar");
+  const [modo, setModo] = useState<Modo>("navegar");
+  const [busca, setBusca] = useState("");
+  const [buscando, setBuscando] = useState(false);
+  const rascunhoRef = useRef<PontoMapa[]>([]);
+
+  const estadoRef = useRef({ percurso, interdicoes });
+  estadoRef.current = { percurso, interdicoes };
+
+  const atualizar = useCallback(
+    (parcial: Partial<PercursoMapa>) => {
+      onPercursoChange?.({ ...estadoRef.current.percurso, ...parcial });
+    },
+    [onPercursoChange],
+  );
+
+  const clicarMapa = useCallback(
+    (lat: number, lng: number) => {
+      const atual = estadoRef.current.percurso;
+      if (modoRef.current === "percurso") {
+        atualizar({ pontos: [...atual.pontos, { lat, lng }] });
+      } else if (modoRef.current === "ponto") {
+        atualizar({ marcadores: [...atual.marcadores, { lat, lng }] });
+      } else if (modoRef.current === "interdicao") {
+        rascunhoRef.current = [...rascunhoRef.current, { lat, lng }];
+        if (rascunhoRef.current.length === 2) {
+          const geometria = rascunhoRef.current;
+          rascunhoRef.current = [];
+          onInterdicoesChange?.([
+            ...estadoRef.current.interdicoes,
+            { rua: "", trecho_inicial: "", trecho_final: "", observacao: "", geometria },
+          ]);
+          toast.success("Trecho de interdição marcado. Informe o nome da rua abaixo do mapa.");
+        } else {
+          toast.info("Agora clique no fim do trecho interditado.");
+        }
+      }
+    },
+    [atualizar, onInterdicoesChange],
+  );
+
+  // cria o mapa uma única vez
+  useEffect(() => {
+    if (!containerRef.current || mapaRef.current) return;
+    const inicial = estadoRef.current.percurso;
+    const mapa = L.map(containerRef.current, { zoomControl: true }).setView(
+      inicial.centro ?? CENTRO_PARANAVAI,
+      inicial.zoom ?? ZOOM_PADRAO,
+    );
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(mapa);
+    camadaRef.current = L.layerGroup().addTo(mapa);
+    mapa.on("click", (e: L.LeafletMouseEvent) => clicarMapa(e.latlng.lat, e.latlng.lng));
+    mapa.on("moveend", () => {
+      if (somenteLeitura) return;
+      const c = mapa.getCenter();
+      atualizar({ centro: [c.lat, c.lng], zoom: mapa.getZoom() });
+    });
+    mapaRef.current = mapa;
+    setTimeout(() => mapa.invalidateSize(), 200);
+    return () => {
+      mapa.remove();
+      mapaRef.current = null;
+      camadaRef.current = null;
+    };
+  }, [clicarMapa, atualizar, somenteLeitura]);
+
+  // redesenha marcadores, trajeto e interdições
+  useEffect(() => {
+    const camada = camadaRef.current;
+    if (!camada) return;
+    camada.clearLayers();
+
+    percurso.pontos.forEach((p, i) => {
+      const total = percurso.pontos.length;
+      const cor = i === 0 ? "#166534" : i === total - 1 && total > 1 ? "#b91c1c" : "#1e3a8a";
+      const marcador = L.marker([p.lat, p.lng], {
+        icon: icone(String(i + 1), cor),
+        draggable: !somenteLeitura,
+      })
+        .bindTooltip(rotuloEtapa(i, total, p.rotulo))
+        .addTo(camada);
+      marcador.on("dragend", () => {
+        const ll = marcador.getLatLng();
+        const pontos = estadoRef.current.percurso.pontos.map((atual, indice) =>
+          indice === i ? { ...atual, lat: ll.lat, lng: ll.lng } : atual,
+        );
+        atualizar({ pontos });
+      });
+    });
+
+    if (percurso.pontos.length > 1) {
+      L.polyline(
+        percurso.pontos.map((p) => [p.lat, p.lng] as [number, number]),
+        { color: "#1d4ed8", weight: 5, opacity: 0.85 },
+      ).addTo(camada);
+    }
+
+    percurso.marcadores.forEach((p, i) => {
+      const marcador = L.marker([p.lat, p.lng], {
+        icon: icone("•", "#b45309"),
+        draggable: !somenteLeitura,
+      })
+        .bindTooltip(p.rotulo?.trim() || `Ponto ${i + 1}`)
+        .addTo(camada);
+      marcador.on("dragend", () => {
+        const ll = marcador.getLatLng();
+        const marcadores = estadoRef.current.percurso.marcadores.map((atual, indice) =>
+          indice === i ? { ...atual, lat: ll.lat, lng: ll.lng } : atual,
+        );
+        atualizar({ marcadores });
+      });
+    });
+
+    interdicoes.forEach((item) => {
+      if (!item.geometria || item.geometria.length < 2) return;
+      L.polyline(
+        item.geometria.map((p) => [p.lat, p.lng] as [number, number]),
+        { color: "#dc2626", weight: 6, dashArray: "8 6" },
+      )
+        .bindTooltip(item.rua.trim() || "Rua interditada")
+        .addTo(camada);
+    });
+  }, [percurso, interdicoes, somenteLeitura, atualizar]);
+
+  // enquadra o percurso salvo ao abrir em modo leitura
+  useEffect(() => {
+    const mapa = mapaRef.current;
+    if (!mapa || !somenteLeitura) return;
+    const todos = [
+      ...percurso.pontos,
+      ...percurso.marcadores,
+      ...interdicoes.flatMap((i) => i.geometria ?? []),
+    ];
+    if (todos.length < 2) return;
+    mapa.fitBounds(L.latLngBounds(todos.map((p) => [p.lat, p.lng] as [number, number])), {
+      padding: [30, 30],
+    });
+  }, [percurso, interdicoes, somenteLeitura]);
+
+  function trocarModo(novo: Modo) {
+    rascunhoRef.current = [];
+    const valor = modo === novo ? "navegar" : novo;
+    modoRef.current = valor;
+    setModo(valor);
+    if (containerRef.current) {
+      containerRef.current.style.cursor = valor === "navegar" ? "" : "crosshair";
+    }
+  }
+
+  async function pesquisar(evento: React.FormEvent) {
+    evento.preventDefault();
+    const termo = busca.trim();
+    if (termo.length < 3) return;
+    setBuscando(true);
+    try {
+      const url = new URL("https://nominatim.openstreetmap.org/search");
+      url.searchParams.set("q", `${termo}, Paranavaí, Paraná, Brasil`);
+      url.searchParams.set("format", "json");
+      url.searchParams.set("limit", "1");
+      const resposta = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+      const lista = (await resposta.json()) as { lat: string; lon: string; display_name: string }[];
+      const primeiro = lista[0];
+      if (!primeiro) {
+        toast.error("Endereço não encontrado.");
+        return;
+      }
+      mapaRef.current?.setView([Number(primeiro.lat), Number(primeiro.lon)], 17);
+      toast.success(primeiro.display_name);
+    } catch {
+      toast.error("Não foi possível pesquisar o endereço agora.");
+    } finally {
+      setBuscando(false);
+    }
+  }
+
+  const editavel = !somenteLeitura;
+
+  return (
+    <div className="space-y-3">
+      {editavel && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={modo === "percurso" ? "default" : "outline"}
+            onClick={() => trocarModo("percurso")}
+          >
+            <RotaIcone className="mr-2 h-4 w-4" aria-hidden="true" />
+            {modo === "percurso" ? "Clique no mapa para marcar" : "Adicionar percurso"}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={modo === "ponto" ? "default" : "outline"}
+            onClick={() => trocarModo("ponto")}
+          >
+            <MapPin className="mr-2 h-4 w-4" aria-hidden="true" />
+            Marcar ponto / local
+          </Button>
+          {permitirInterdicoes && (
+            <Button
+              type="button"
+              size="sm"
+              variant={modo === "interdicao" ? "destructive" : "outline"}
+              onClick={() => trocarModo("interdicao")}
+            >
+              <Ban className="mr-2 h-4 w-4" aria-hidden="true" />
+              Marcar rua interditada
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={!percurso.pontos.length}
+            onClick={() => atualizar({ pontos: percurso.pontos.slice(0, -1) })}
+          >
+            <Undo2 className="mr-2 h-4 w-4" aria-hidden="true" />
+            Desfazer último
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={!percurso.pontos.length && !percurso.marcadores.length}
+            onClick={() => atualizar({ pontos: [], marcadores: [] })}
+          >
+            <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+            Excluir percurso
+          </Button>
+        </div>
+      )}
+
+      <form onSubmit={pesquisar} className="flex gap-2">
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Pesquisar rua ou endereço em Paranavaí"
+          aria-label="Pesquisar endereço no mapa"
+        />
+        <Button type="submit" variant="outline" disabled={buscando}>
+          <Search className="mr-2 h-4 w-4" aria-hidden="true" />
+          Pesquisar
+        </Button>
+      </form>
+
+      <div
+        ref={containerRef}
+        style={{ height: altura }}
+        className="w-full overflow-hidden rounded-md border"
+        role="application"
+        aria-label="Mapa do percurso da ordem de serviço"
+      />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div>
+          <p className="text-sm font-semibold">Etapas do percurso</p>
+          {percurso.pontos.length === 0 ? (
+            <p className="mt-1 text-sm text-muted-foreground">Nenhum ponto marcado no mapa.</p>
+          ) : (
+            <ol className="mt-2 space-y-2">
+              {percurso.pontos.map((p, i) => (
+                <li key={`${p.lat}-${p.lng}-${i}`} className="flex items-center gap-2">
+                  <span className="w-6 text-xs text-muted-foreground">{i + 1}.</span>
+                  {editavel ? (
+                    <Input
+                      value={p.rotulo ?? ""}
+                      placeholder={rotuloEtapa(i, percurso.pontos.length)}
+                      aria-label={`Nome da etapa ${i + 1}`}
+                      onChange={(e) =>
+                        atualizar({
+                          pontos: percurso.pontos.map((atual, indice) =>
+                            indice === i ? { ...atual, rotulo: e.target.value } : atual,
+                          ),
+                        })
+                      }
+                    />
+                  ) : (
+                    <span className="text-sm">{rotuloEtapa(i, percurso.pontos.length, p.rotulo)}</span>
+                  )}
+                  <span className="hidden text-xs text-muted-foreground xl:inline">
+                    {coordenadaTexto(p)}
+                  </span>
+                  {editavel && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Remover etapa ${i + 1}`}
+                      onClick={() =>
+                        atualizar({ pontos: percurso.pontos.filter((_, indice) => indice !== i) })
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+
+        {permitirInterdicoes && (
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold">Ruas interditadas</p>
+              {editavel && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    onInterdicoesChange?.([
+                      ...interdicoes,
+                      {
+                        rua: "",
+                        trecho_inicial: "",
+                        trecho_final: "",
+                        observacao: "",
+                        geometria: null,
+                      },
+                    ])
+                  }
+                >
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Adicionar
+                </Button>
+              )}
+            </div>
+            {interdicoes.length === 0 ? (
+              <p className="mt-1 text-sm text-muted-foreground">Nenhuma rua interditada.</p>
+            ) : (
+              <div className="mt-2 space-y-3">
+                {interdicoes.map((item, i) => (
+                  <div key={i} className="space-y-2 rounded-md border p-3">
+                    {editavel ? (
+                      <>
+                        <div>
+                          <Label htmlFor={`rua-${i}`}>Rua</Label>
+                          <Input
+                            id={`rua-${i}`}
+                            value={item.rua}
+                            onChange={(e) =>
+                              onInterdicoesChange?.(
+                                interdicoes.map((atual, indice) =>
+                                  indice === i ? { ...atual, rua: e.target.value } : atual,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Trecho inicial"
+                            aria-label="Trecho inicial"
+                            value={item.trecho_inicial}
+                            onChange={(e) =>
+                              onInterdicoesChange?.(
+                                interdicoes.map((atual, indice) =>
+                                  indice === i
+                                    ? { ...atual, trecho_inicial: e.target.value }
+                                    : atual,
+                                ),
+                              )
+                            }
+                          />
+                          <Input
+                            placeholder="Trecho final"
+                            aria-label="Trecho final"
+                            value={item.trecho_final}
+                            onChange={(e) =>
+                              onInterdicoesChange?.(
+                                interdicoes.map((atual, indice) =>
+                                  indice === i ? { ...atual, trecho_final: e.target.value } : atual,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                        <Input
+                          placeholder="Observação"
+                          aria-label="Observação da interdição"
+                          value={item.observacao}
+                          onChange={(e) =>
+                            onInterdicoesChange?.(
+                              interdicoes.map((atual, indice) =>
+                                indice === i ? { ...atual, observacao: e.target.value } : atual,
+                              ),
+                            )
+                          }
+                        />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {item.geometria?.length
+                              ? "Trecho marcado no mapa"
+                              : "Sem trecho marcado no mapa"}
+                          </span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() =>
+                              onInterdicoesChange?.(interdicoes.filter((_, indice) => indice !== i))
+                            }
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                            Remover
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-sm">
+                        <strong>{item.rua || "Rua não informada"}</strong>
+                        {item.trecho_inicial || item.trecho_final
+                          ? ` — de ${item.trecho_inicial || "?"} até ${item.trecho_final || "?"}`
+                          : ""}
+                        {item.observacao ? ` — ${item.observacao}` : ""}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
