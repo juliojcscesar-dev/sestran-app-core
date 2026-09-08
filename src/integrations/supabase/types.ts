@@ -363,6 +363,50 @@ export type Database = {
           },
         ]
       }
+      ordem_servico_interdicoes: {
+        Row: {
+          created_at: string
+          geometria: Json | null
+          id: string
+          observacao: string | null
+          ordem_servico_id: string
+          rua: string
+          trecho_final: string | null
+          trecho_inicial: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          geometria?: Json | null
+          id?: string
+          observacao?: string | null
+          ordem_servico_id: string
+          rua: string
+          trecho_final?: string | null
+          trecho_inicial?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          geometria?: Json | null
+          id?: string
+          observacao?: string | null
+          ordem_servico_id?: string
+          rua?: string
+          trecho_final?: string | null
+          trecho_inicial?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordem_servico_interdicoes_ordem_servico_id_fkey"
+            columns: ["ordem_servico_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ordem_servico_orientadores: {
         Row: {
           created_at: string
@@ -459,9 +503,11 @@ export type Database = {
           id: string
           ipm: string | null
           local: string | null
+          mapa_imagem: string | null
           natureza: string | null
           numero: string
           observacoes: string | null
+          percurso: Json | null
           prioridade: string
           remetente: string | null
           sequencial: number | null
@@ -489,9 +535,11 @@ export type Database = {
           id?: string
           ipm?: string | null
           local?: string | null
+          mapa_imagem?: string | null
           natureza?: string | null
           numero: string
           observacoes?: string | null
+          percurso?: Json | null
           prioridade?: string
           remetente?: string | null
           sequencial?: number | null
@@ -519,9 +567,11 @@ export type Database = {
           id?: string
           ipm?: string | null
           local?: string | null
+          mapa_imagem?: string | null
           natureza?: string | null
           numero?: string
           observacoes?: string | null
+          percurso?: Json | null
           prioridade?: string
           remetente?: string | null
           sequencial?: number | null

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { StatusOS } from "@/lib/os";
+import type { InterdicaoMapa, PercursoMapa } from "@/lib/mapa";
 
 export type AgenteOS = {
   agente_id: string;
@@ -28,10 +29,13 @@ export type DadosOS = {
   trajeto: string | null;
   observacoes: string | null;
   status: StatusOS;
+  percurso: PercursoMapa | null;
   servicos: { tipo_servico_id: string; detalhe: string | null }[];
   agentes: AgenteOS[];
   orientadores: OrientadorOS[];
+  interdicoes: InterdicaoMapa[];
 };
+
 
 function checar<T>(res: { data: T; error: unknown }): T {
   if (res.error) throw res.error;
