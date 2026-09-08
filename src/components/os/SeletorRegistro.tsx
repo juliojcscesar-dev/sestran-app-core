@@ -12,7 +12,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-export type OpcaoSeletor = { id: string; rotulo: string; detalhe?: string };
+export type OpcaoSeletor = { id: string; rotulo: string; detalhe?: string | undefined };
 
 type Props = {
   opcoes: OpcaoSeletor[];

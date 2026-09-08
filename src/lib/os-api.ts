@@ -38,6 +38,12 @@ function checar<T>(res: { data: T; error: unknown }): T {
   return res.data;
 }
 
+function checarUnico<T>(res: { data: T | null; error: unknown }): T {
+  const dados = checar(res);
+  if (!dados) throw new Error("Não foi possível concluir o cadastro.");
+  return dados;
+}
+
 const SELECAO_LISTA =
   "id, numero, ano, data_servico, hora_inicio, hora_fim, local, status, arquivada, natureza, evento_id, solicitante_id, eventos(titulo), solicitantes(nome)";
 
