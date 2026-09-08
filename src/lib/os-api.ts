@@ -38,7 +38,7 @@ function checar<T>(res: { data: T; error: unknown }): T {
   return res.data;
 }
 
-function checarUnico<T>(res: { data: T | null; error: unknown }): T {
+function checarUnico<T>(res: { data: T; error: unknown }): NonNullable<T> {
   const dados = checar(res);
   if (!dados) throw new Error("Não foi possível concluir o cadastro.");
   return dados;
