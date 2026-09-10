@@ -594,6 +594,31 @@ export function FormularioOS({ modo, inicial, id }: Props) {
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Mapa e percurso</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Marque no mapa o ponto inicial, as ruas do trajeto e o ponto final. O percurso é salvo
+            junto com a ordem de serviço.
+          </p>
+          <MapaOS
+            percurso={percurso}
+            onPercursoChange={setPercurso}
+            interdicoes={interdicoes}
+            onInterdicoesChange={setInterdicoes}
+            permitirInterdicoes={temInterdicao}
+          />
+          {!temInterdicao && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Selecione um serviço de interdição para registrar ruas interditadas.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Observações</CardTitle>
         </CardHeader>
         <CardContent>
