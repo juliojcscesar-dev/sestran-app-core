@@ -18,7 +18,14 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SeletorRegistro } from "@/components/os/SeletorRegistro";
+import { MapaOS } from "@/components/os/MapaOS";
 import { STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
+import {
+  lerPercurso,
+  PERCURSO_VAZIO,
+  type InterdicaoMapa,
+  type PercursoMapa,
+} from "@/lib/mapa";
 import {
   atualizarOrdem,
   criarAgente,
@@ -36,6 +43,7 @@ import {
   type DadosOS,
   type OrdemCompleta,
 } from "@/lib/os-api";
+
 
 const esquema = z.object({
   data_emissao: z.string().min(10, "Informe a data de emissão."),
