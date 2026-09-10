@@ -109,7 +109,20 @@ export function FormularioOS({ modo, inicial, id }: Props) {
       observacao: r.observacao ?? "",
     })),
   );
+  const [percurso, setPercurso] = useState<PercursoMapa>(
+    inicial ? lerPercurso((inicial.ordem as Record<string, unknown>)["percurso"]) : { ...PERCURSO_VAZIO },
+  );
+  const [interdicoes, setInterdicoes] = useState<InterdicaoMapa[]>(
+    (inicial?.interdicoes ?? []).map((i) => ({
+      rua: i.rua,
+      trecho_inicial: i.trecho_inicial,
+      trecho_final: i.trecho_final,
+      observacao: i.observacao,
+      geometria: i.geometria,
+    })),
+  );
   const [erros, setErros] = useState<Record<string, string>>({});
+
 
   const solicitantesQ = useQuery({ queryKey: ["solicitantes"], queryFn: listarSolicitantes });
   const agentesQ = useQuery({ queryKey: ["agentes"], queryFn: listarAgentes });
@@ -142,7 +155,10 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         trajeto: trajeto.trim() || null,
         observacoes: observacoes.trim() || null,
         status,
+        percurso,
+        interdicoes,
         servicos: servicos.map((tipo_servico_id) => ({ tipo_servico_id, detalhe: null })),
+
         agentes: agentes
           .filter((a) => a.agente_id)
           .map((a) => ({
