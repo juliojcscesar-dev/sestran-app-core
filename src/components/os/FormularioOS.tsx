@@ -136,7 +136,16 @@ export function FormularioOS({ modo, inicial, id }: Props) {
     [locaisQ.data],
   );
 
+  const temInterdicao = useMemo(
+    () =>
+      (tiposQ.data ?? []).some(
+        (t) => servicos.includes(t.id) && t.nome.toLowerCase().includes("interdi"),
+      ),
+    [tiposQ.data, servicos],
+  );
+
   const [novoTipo, setNovoTipo] = useState("");
+
 
   const salvar = useMutation({
     mutationFn: async () => {
