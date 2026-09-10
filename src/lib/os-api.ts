@@ -77,7 +77,7 @@ export async function listarOrdens(filtros: FiltrosOS) {
 }
 
 export async function obterOrdem(id: string) {
-  const [ordem, servicos, agentes, orientadores] = await Promise.all([
+  const [ordem, servicos, agentes, orientadores, interdicoes] = await Promise.all([
     supabase
       .from("ordens_servico")
       .select(
@@ -97,6 +97,11 @@ export async function obterOrdem(id: string) {
       .from("ordem_servico_orientadores")
       .select("orientador_id, observacao, orientadores(nome, matricula)")
       .eq("ordem_servico_id", id),
+    supabase
+      .from("ordem_servico_interdicoes")
+      .select("id, rua, trecho_inicial, trecho_final, observacao, geometria")
+      .eq("ordem_servico_id", id)
+      .order("created_at"),
   ]);
   const dados = checar(ordem);
   if (!dados) throw new Error("Ordem de serviço não encontrada.");
@@ -105,8 +110,28 @@ export async function obterOrdem(id: string) {
     servicos: checar(servicos) ?? [],
     agentes: checar(agentes) ?? [],
     orientadores: checar(orientadores) ?? [],
+    interdicoes: (checar(interdicoes) ?? []).map((i) => ({
+      id: i.id,
+      rua: i.rua ?? "",
+      trecho_inicial: i.trecho_inicial ?? "",
+      trecho_final: i.trecho_final ?? "",
+      observacao: i.observacao ?? "",
+      geometria: lerGeometria(i.geometria),
+    })) as InterdicaoMapa[],
   };
 }
+
+function lerGeometria(valor: unknown): PontoMapaLido[] | null {
+  if (!Array.isArray(valor)) return null;
+  const pontos = valor
+    .map((p) => (p && typeof p === "object" ? (p as Record<string, unknown>) : null))
+    .filter(Boolean)
+    .map((p) => ({ lat: Number(p!["lat"]), lng: Number(p!["lng"]) }))
+    .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+  return pontos.length ? pontos : null;
+}
+
+type PontoMapaLido = { lat: number; lng: number };
 
 export type OrdemCompleta = Awaited<ReturnType<typeof obterOrdem>>;
 
@@ -115,6 +140,7 @@ async function sincronizarFilhos(id: string, dados: DadosOS) {
     supabase.from("ordem_servico_servicos").delete().eq("ordem_servico_id", id),
     supabase.from("ordem_servico_agentes").delete().eq("ordem_servico_id", id),
     supabase.from("ordem_servico_orientadores").delete().eq("ordem_servico_id", id),
+    supabase.from("ordem_servico_interdicoes").delete().eq("ordem_servico_id", id),
   ]);
 
   if (dados.servicos.length) {
@@ -141,6 +167,24 @@ async function sincronizarFilhos(id: string, dados: DadosOS) {
         .select("id"),
     );
   }
+  const interdicoes = dados.interdicoes.filter((i) => i.rua.trim() || i.geometria?.length);
+  if (interdicoes.length) {
+    checar(
+      await supabase
+        .from("ordem_servico_interdicoes")
+        .insert(
+          interdicoes.map((i) => ({
+            ordem_servico_id: id,
+            rua: i.rua.trim() || "Rua não informada",
+            trecho_inicial: i.trecho_inicial.trim() || null,
+            trecho_final: i.trecho_final.trim() || null,
+            observacao: i.observacao.trim() || null,
+            geometria: i.geometria ? (i.geometria as unknown as never) : null,
+          })),
+        )
+        .select("id"),
+    );
+  }
 }
 
 function camposOrdem(dados: DadosOS) {
@@ -161,8 +205,10 @@ function camposOrdem(dados: DadosOS) {
     trajeto: dados.trajeto,
     observacoes: dados.observacoes,
     status: dados.status,
+    percurso: dados.percurso ? (dados.percurso as unknown as never) : null,
   };
 }
+
 
 export async function criarOrdem(dados: DadosOS) {
   const { data: userData } = await supabase.auth.getUser();

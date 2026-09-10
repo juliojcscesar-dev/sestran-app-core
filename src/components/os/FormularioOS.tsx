@@ -18,7 +18,14 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SeletorRegistro } from "@/components/os/SeletorRegistro";
+import { MapaOS } from "@/components/os/MapaOS";
 import { STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
+import {
+  lerPercurso,
+  PERCURSO_VAZIO,
+  type InterdicaoMapa,
+  type PercursoMapa,
+} from "@/lib/mapa";
 import {
   atualizarOrdem,
   criarAgente,
@@ -36,6 +43,7 @@ import {
   type DadosOS,
   type OrdemCompleta,
 } from "@/lib/os-api";
+
 
 const esquema = z.object({
   data_emissao: z.string().min(10, "Informe a data de emissão."),
@@ -101,7 +109,20 @@ export function FormularioOS({ modo, inicial, id }: Props) {
       observacao: r.observacao ?? "",
     })),
   );
+  const [percurso, setPercurso] = useState<PercursoMapa>(
+    inicial ? lerPercurso((inicial.ordem as Record<string, unknown>)["percurso"]) : { ...PERCURSO_VAZIO },
+  );
+  const [interdicoes, setInterdicoes] = useState<InterdicaoMapa[]>(
+    (inicial?.interdicoes ?? []).map((i) => ({
+      rua: i.rua,
+      trecho_inicial: i.trecho_inicial,
+      trecho_final: i.trecho_final,
+      observacao: i.observacao,
+      geometria: i.geometria,
+    })),
+  );
   const [erros, setErros] = useState<Record<string, string>>({});
+
 
   const solicitantesQ = useQuery({ queryKey: ["solicitantes"], queryFn: listarSolicitantes });
   const agentesQ = useQuery({ queryKey: ["agentes"], queryFn: listarAgentes });
@@ -115,7 +136,16 @@ export function FormularioOS({ modo, inicial, id }: Props) {
     [locaisQ.data],
   );
 
+  const temInterdicao = useMemo(
+    () =>
+      (tiposQ.data ?? []).some(
+        (t) => servicos.includes(t.id) && t.nome.toLowerCase().includes("interdi"),
+      ),
+    [tiposQ.data, servicos],
+  );
+
   const [novoTipo, setNovoTipo] = useState("");
+
 
   const salvar = useMutation({
     mutationFn: async () => {
@@ -134,7 +164,10 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         trajeto: trajeto.trim() || null,
         observacoes: observacoes.trim() || null,
         status,
+        percurso,
+        interdicoes,
         servicos: servicos.map((tipo_servico_id) => ({ tipo_servico_id, detalhe: null })),
+
         agentes: agentes
           .filter((a) => a.agente_id)
           .map((a) => ({
@@ -567,6 +600,31 @@ export function FormularioOS({ modo, inicial, id }: Props) {
           ))}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Mapa e percurso</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Marque no mapa o ponto inicial, as ruas do trajeto e o ponto final. O percurso é salvo
+            junto com a ordem de serviço.
+          </p>
+          <MapaOS
+            percurso={percurso}
+            onPercursoChange={setPercurso}
+            interdicoes={interdicoes}
+            onInterdicoesChange={setInterdicoes}
+            permitirInterdicoes={temInterdicao}
+          />
+          {!temInterdicao && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Selecione um serviço de interdição para registrar ruas interditadas.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>
