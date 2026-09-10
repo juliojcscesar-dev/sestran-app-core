@@ -17,7 +17,6 @@ import { Route as AuthenticatedEducacaoTransitoRouteImport } from './routes/_aut
 import { Route as AuthenticatedEscolasRouteImport } from './routes/_authenticated/escolas'
 import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
-import { Route as AuthenticatedOrdensServicoRouteImport } from './routes/_authenticated/ordens-servico'
 import { Route as AuthenticatedOrientadoresRouteImport } from './routes/_authenticated/orientadores'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedSolicitantesRouteImport } from './routes/_authenticated/solicitantes'
@@ -64,12 +63,6 @@ const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedOrdensServicoRoute =
-  AuthenticatedOrdensServicoRouteImport.update({
-    id: '/ordens-servico',
-    path: '/ordens-servico',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedOrientadoresRoute =
   AuthenticatedOrientadoresRouteImport.update({
     id: '/orientadores',
@@ -107,7 +100,6 @@ export interface FileRoutesByFullPath {
   '/escolas': typeof AuthenticatedEscolasRoute
   '/eventos': typeof AuthenticatedEventosRoute
   '/historico': typeof AuthenticatedHistoricoRoute
-  '/ordens-servico': typeof AuthenticatedOrdensServicoRoute
   '/orientadores': typeof AuthenticatedOrientadoresRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/solicitantes': typeof AuthenticatedSolicitantesRoute
@@ -122,7 +114,6 @@ export interface FileRoutesByTo {
   '/escolas': typeof AuthenticatedEscolasRoute
   '/eventos': typeof AuthenticatedEventosRoute
   '/historico': typeof AuthenticatedHistoricoRoute
-  '/ordens-servico': typeof AuthenticatedOrdensServicoRoute
   '/orientadores': typeof AuthenticatedOrientadoresRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/solicitantes': typeof AuthenticatedSolicitantesRoute
@@ -139,7 +130,6 @@ export interface FileRoutesById {
   '/_authenticated/escolas': typeof AuthenticatedEscolasRoute
   '/_authenticated/eventos': typeof AuthenticatedEventosRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
-  '/_authenticated/ordens-servico': typeof AuthenticatedOrdensServicoRoute
   '/_authenticated/orientadores': typeof AuthenticatedOrientadoresRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/solicitantes': typeof AuthenticatedSolicitantesRoute
@@ -156,7 +146,6 @@ export interface FileRouteTypes {
     | '/escolas'
     | '/eventos'
     | '/historico'
-    | '/ordens-servico'
     | '/orientadores'
     | '/painel'
     | '/solicitantes'
@@ -171,7 +160,6 @@ export interface FileRouteTypes {
     | '/escolas'
     | '/eventos'
     | '/historico'
-    | '/ordens-servico'
     | '/orientadores'
     | '/painel'
     | '/solicitantes'
@@ -187,7 +175,6 @@ export interface FileRouteTypes {
     | '/_authenticated/escolas'
     | '/_authenticated/eventos'
     | '/_authenticated/historico'
-    | '/_authenticated/ordens-servico'
     | '/_authenticated/orientadores'
     | '/_authenticated/painel'
     | '/_authenticated/solicitantes'
@@ -259,13 +246,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/ordens-servico': {
-      id: '/_authenticated/ordens-servico'
-      path: '/ordens-servico'
-      fullPath: '/ordens-servico'
-      preLoaderRoute: typeof AuthenticatedOrdensServicoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/orientadores': {
       id: '/_authenticated/orientadores'
       path: '/orientadores'
@@ -310,7 +290,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEscolasRoute: typeof AuthenticatedEscolasRoute
   AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
-  AuthenticatedOrdensServicoRoute: typeof AuthenticatedOrdensServicoRoute
   AuthenticatedOrientadoresRoute: typeof AuthenticatedOrientadoresRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedSolicitantesRoute: typeof AuthenticatedSolicitantesRoute
@@ -324,7 +303,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEscolasRoute: AuthenticatedEscolasRoute,
   AuthenticatedEventosRoute: AuthenticatedEventosRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
-  AuthenticatedOrdensServicoRoute: AuthenticatedOrdensServicoRoute,
   AuthenticatedOrientadoresRoute: AuthenticatedOrientadoresRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedSolicitantesRoute: AuthenticatedSolicitantesRoute,
