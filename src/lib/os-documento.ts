@@ -1,5 +1,7 @@
 import { formatarDataBr, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import type { OrdemCompleta } from "@/lib/os-api";
+import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
+
 
 export type IdentificacaoOrgao = { orgao: string; secretaria: string; logo_url: string };
 
@@ -50,7 +52,13 @@ export function montarConteudo(dados: OrdemCompleta) {
           .join(", ") || "—",
     },
     { rotulo: "Trajeto / Percurso", valor: texto(o["trajeto"]) },
+    { rotulo: "Percurso no mapa", valor: texto(descreverPercurso(lerPercurso(o["percurso"]))) },
+    {
+      rotulo: "Ruas interditadas",
+      valor: texto(descreverInterdicoes(dados.interdicoes ?? []).join("; ")),
+    },
   ];
+
 
   const agentes = dados.agentes.map((a) => {
     const nome = (a as { agentes?: { nome?: string; matricula?: string | null } }).agentes;
