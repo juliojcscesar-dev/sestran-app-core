@@ -92,7 +92,7 @@ export function montarConteudo(dados: OrdemCompleta) {
   };
 }
 
-}
+
 
 async function carregarLogo(url: string) {
   if (!url) return null;
