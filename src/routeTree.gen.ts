@@ -24,6 +24,9 @@ import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedVeiculosAbandonadosRouteImport } from './routes/_authenticated/veiculos-abandonados'
 import { Route as AuthenticatedOrdensServicoIndexRouteImport } from './routes/_authenticated/ordens-servico/index'
 import { Route as AuthenticatedOrdensServicoNovaRouteImport } from './routes/_authenticated/ordens-servico/nova'
+import { Route as AuthenticatedOrdensServicoDuplicarIdRouteImport } from './routes/_authenticated/ordens-servico/duplicar.$id'
+import { Route as AuthenticatedOrdensServicoEditarIdRouteImport } from './routes/_authenticated/ordens-servico/editar.$id'
+import { Route as AuthenticatedOrdensServicoVisualizarIdRouteImport } from './routes/_authenticated/ordens-servico/visualizar.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -105,6 +108,24 @@ const AuthenticatedOrdensServicoNovaRoute =
     path: '/ordens-servico/nova',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOrdensServicoDuplicarIdRoute =
+  AuthenticatedOrdensServicoDuplicarIdRouteImport.update({
+    id: '/ordens-servico/duplicar/$id',
+    path: '/ordens-servico/duplicar/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrdensServicoEditarIdRoute =
+  AuthenticatedOrdensServicoEditarIdRouteImport.update({
+    id: '/ordens-servico/editar/$id',
+    path: '/ordens-servico/editar/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrdensServicoVisualizarIdRoute =
+  AuthenticatedOrdensServicoVisualizarIdRouteImport.update({
+    id: '/ordens-servico/visualizar/$id',
+    path: '/ordens-servico/visualizar/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -121,6 +142,9 @@ export interface FileRoutesByFullPath {
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
   '/ordens-servico/': typeof AuthenticatedOrdensServicoIndexRoute
+  '/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
+  '/ordens-servico/editar/$id': typeof AuthenticatedOrdensServicoEditarIdRoute
+  '/ordens-servico/visualizar/$id': typeof AuthenticatedOrdensServicoVisualizarIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -137,6 +161,9 @@ export interface FileRoutesByTo {
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
   '/ordens-servico': typeof AuthenticatedOrdensServicoIndexRoute
+  '/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
+  '/ordens-servico/editar/$id': typeof AuthenticatedOrdensServicoEditarIdRoute
+  '/ordens-servico/visualizar/$id': typeof AuthenticatedOrdensServicoVisualizarIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -155,6 +182,9 @@ export interface FileRoutesById {
   '/_authenticated/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/_authenticated/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
   '/_authenticated/ordens-servico/': typeof AuthenticatedOrdensServicoIndexRoute
+  '/_authenticated/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
+  '/_authenticated/ordens-servico/editar/$id': typeof AuthenticatedOrdensServicoEditarIdRoute
+  '/_authenticated/ordens-servico/visualizar/$id': typeof AuthenticatedOrdensServicoVisualizarIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -173,6 +203,9 @@ export interface FileRouteTypes {
     | '/veiculos-abandonados'
     | '/ordens-servico/nova'
     | '/ordens-servico/'
+    | '/ordens-servico/duplicar/$id'
+    | '/ordens-servico/editar/$id'
+    | '/ordens-servico/visualizar/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -189,6 +222,9 @@ export interface FileRouteTypes {
     | '/veiculos-abandonados'
     | '/ordens-servico/nova'
     | '/ordens-servico'
+    | '/ordens-servico/duplicar/$id'
+    | '/ordens-servico/editar/$id'
+    | '/ordens-servico/visualizar/$id'
   id:
     | '__root__'
     | '/'
@@ -206,6 +242,9 @@ export interface FileRouteTypes {
     | '/_authenticated/veiculos-abandonados'
     | '/_authenticated/ordens-servico/nova'
     | '/_authenticated/ordens-servico/'
+    | '/_authenticated/ordens-servico/duplicar/$id'
+    | '/_authenticated/ordens-servico/editar/$id'
+    | '/_authenticated/ordens-servico/visualizar/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -321,6 +360,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdensServicoNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ordens-servico/duplicar/$id': {
+      id: '/_authenticated/ordens-servico/duplicar/$id'
+      path: '/ordens-servico/duplicar/$id'
+      fullPath: '/ordens-servico/duplicar/$id'
+      preLoaderRoute: typeof AuthenticatedOrdensServicoDuplicarIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ordens-servico/editar/$id': {
+      id: '/_authenticated/ordens-servico/editar/$id'
+      path: '/ordens-servico/editar/$id'
+      fullPath: '/ordens-servico/editar/$id'
+      preLoaderRoute: typeof AuthenticatedOrdensServicoEditarIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ordens-servico/visualizar/$id': {
+      id: '/_authenticated/ordens-servico/visualizar/$id'
+      path: '/ordens-servico/visualizar/$id'
+      fullPath: '/ordens-servico/visualizar/$id'
+      preLoaderRoute: typeof AuthenticatedOrdensServicoVisualizarIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -337,6 +397,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedVeiculosAbandonadosRoute: typeof AuthenticatedVeiculosAbandonadosRoute
   AuthenticatedOrdensServicoNovaRoute: typeof AuthenticatedOrdensServicoNovaRoute
   AuthenticatedOrdensServicoIndexRoute: typeof AuthenticatedOrdensServicoIndexRoute
+  AuthenticatedOrdensServicoDuplicarIdRoute: typeof AuthenticatedOrdensServicoDuplicarIdRoute
+  AuthenticatedOrdensServicoEditarIdRoute: typeof AuthenticatedOrdensServicoEditarIdRoute
+  AuthenticatedOrdensServicoVisualizarIdRoute: typeof AuthenticatedOrdensServicoVisualizarIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -352,6 +415,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedVeiculosAbandonadosRoute: AuthenticatedVeiculosAbandonadosRoute,
   AuthenticatedOrdensServicoNovaRoute: AuthenticatedOrdensServicoNovaRoute,
   AuthenticatedOrdensServicoIndexRoute: AuthenticatedOrdensServicoIndexRoute,
+  AuthenticatedOrdensServicoDuplicarIdRoute:
+    AuthenticatedOrdensServicoDuplicarIdRoute,
+  AuthenticatedOrdensServicoEditarIdRoute:
+    AuthenticatedOrdensServicoEditarIdRoute,
+  AuthenticatedOrdensServicoVisualizarIdRoute:
+    AuthenticatedOrdensServicoVisualizarIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

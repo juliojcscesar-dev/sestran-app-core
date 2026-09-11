@@ -200,8 +200,9 @@ export default function MapaPercurso({
     }
   }
 
-  async function pesquisar(evento: React.FormEvent) {
-    evento.preventDefault();
+  async function pesquisar(evento?: { preventDefault: () => void }) {
+    evento?.preventDefault();
+
     const termo = busca.trim();
     if (termo.length < 3) return;
     setBuscando(true);
@@ -284,18 +285,25 @@ export default function MapaPercurso({
         </div>
       )}
 
-      <form onSubmit={pesquisar} className="flex gap-2">
+      <div className="flex gap-2">
         <Input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void pesquisar();
+            }
+          }}
           placeholder="Pesquisar rua ou endereço em Paranavaí"
           aria-label="Pesquisar endereço no mapa"
         />
-        <Button type="submit" variant="outline" disabled={buscando}>
+        <Button type="button" variant="outline" disabled={buscando} onClick={() => void pesquisar()}>
           <Search className="mr-2 h-4 w-4" aria-hidden="true" />
           Pesquisar
         </Button>
-      </form>
+      </div>
+
 
       <div
         ref={containerRef}

@@ -15,3 +15,12 @@
 - [ ] Integração no formulário (salvar) e na visualização (carregar)
 - [ ] Percurso e interdições nos documentos PDF/DOCX + preparo da imagem do mapa
 - [ ] Testar salvamento e carregamento do percurso
+
+## Etapa 3 — Veículos Abandonados (solicitado 11/09)
+- [ ] Cadastro completo (endereço, bairro, marca/modelo/placa/chassi, datas, denúncia ouvidoria/informal, observações, fotos)
+- [ ] Upload e visualização de múltiplas fotos
+- [ ] Ciclo de status com prazo de 15 dias e alerta de "A recolher"
+- [ ] Cards do painel com indicadores por status
+- [ ] Tela "Cronograma de Veículos" com colunas e filtros
+- [ ] Relatório PDF por período, com opção de incluir fotos
+- [ ] Histórico de alterações e confirmação de exclusão/arquivamento

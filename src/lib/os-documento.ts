@@ -1,5 +1,7 @@
 import { formatarDataBr, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import type { OrdemCompleta } from "@/lib/os-api";
+import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
+
 
 export type IdentificacaoOrgao = { orgao: string; secretaria: string; logo_url: string };
 
@@ -50,7 +52,13 @@ export function montarConteudo(dados: OrdemCompleta) {
           .join(", ") || "—",
     },
     { rotulo: "Trajeto / Percurso", valor: texto(o["trajeto"]) },
+    { rotulo: "Percurso no mapa", valor: texto(descreverPercurso(lerPercurso(o["percurso"]))) },
+    {
+      rotulo: "Ruas interditadas",
+      valor: texto(descreverInterdicoes(dados.interdicoes ?? []).join("; ")),
+    },
   ];
+
 
   const agentes = dados.agentes.map((a) => {
     const nome = (a as { agentes?: { nome?: string; matricula?: string | null } }).agentes;
@@ -79,8 +87,12 @@ export function montarConteudo(dados: OrdemCompleta) {
     agentes,
     orientadores,
     observacoes: texto(o["observacoes"]),
+    /* Preparado para exportar a imagem do mapa nos documentos. */
+    mapaImagem: typeof o["mapa_imagem"] === "string" ? (o["mapa_imagem"] as string) : null,
   };
 }
+
+
 
 async function carregarLogo(url: string) {
   if (!url) return null;

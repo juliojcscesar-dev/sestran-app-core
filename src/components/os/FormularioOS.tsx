@@ -197,7 +197,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
           ? "Ordem de serviço atualizada."
           : `Ordem de serviço ${res.numero} criada.`,
       );
-      navigate({ to: "/ordens-servico" });
+      navigate({ to: "/ordens-servico/visualizar/$id", params: { id: res.id } });
     },
     onError: (erro: unknown) => {
       const msg = erro instanceof Error ? erro.message : "Erro ao salvar.";
