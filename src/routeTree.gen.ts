@@ -26,6 +26,7 @@ import { Route as AuthenticatedOrdensServicoIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedOrdensServicoNovaRouteImport } from './routes/_authenticated/ordens-servico/nova'
 import { Route as AuthenticatedOrdensServicoDuplicarIdRouteImport } from './routes/_authenticated/ordens-servico/duplicar.$id'
 import { Route as AuthenticatedOrdensServicoEditarIdRouteImport } from './routes/_authenticated/ordens-servico/editar.$id'
+import { Route as AuthenticatedOrdensServicoVisualizarIdRouteImport } from './routes/_authenticated/ordens-servico/visualizar.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -119,6 +120,12 @@ const AuthenticatedOrdensServicoEditarIdRoute =
     path: '/ordens-servico/editar/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOrdensServicoVisualizarIdRoute =
+  AuthenticatedOrdensServicoVisualizarIdRouteImport.update({
+    id: '/ordens-servico/visualizar/$id',
+    path: '/ordens-servico/visualizar/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/ordens-servico/': typeof AuthenticatedOrdensServicoIndexRoute
   '/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
   '/ordens-servico/editar/$id': typeof AuthenticatedOrdensServicoEditarIdRoute
+  '/ordens-servico/visualizar/$id': typeof AuthenticatedOrdensServicoVisualizarIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/ordens-servico': typeof AuthenticatedOrdensServicoIndexRoute
   '/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
   '/ordens-servico/editar/$id': typeof AuthenticatedOrdensServicoEditarIdRoute
+  '/ordens-servico/visualizar/$id': typeof AuthenticatedOrdensServicoVisualizarIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -175,6 +184,7 @@ export interface FileRoutesById {
   '/_authenticated/ordens-servico/': typeof AuthenticatedOrdensServicoIndexRoute
   '/_authenticated/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
   '/_authenticated/ordens-servico/editar/$id': typeof AuthenticatedOrdensServicoEditarIdRoute
+  '/_authenticated/ordens-servico/visualizar/$id': typeof AuthenticatedOrdensServicoVisualizarIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/ordens-servico/'
     | '/ordens-servico/duplicar/$id'
     | '/ordens-servico/editar/$id'
+    | '/ordens-servico/visualizar/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/ordens-servico'
     | '/ordens-servico/duplicar/$id'
     | '/ordens-servico/editar/$id'
+    | '/ordens-servico/visualizar/$id'
   id:
     | '__root__'
     | '/'
@@ -232,6 +244,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ordens-servico/'
     | '/_authenticated/ordens-servico/duplicar/$id'
     | '/_authenticated/ordens-servico/editar/$id'
+    | '/_authenticated/ordens-servico/visualizar/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -361,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdensServicoEditarIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ordens-servico/visualizar/$id': {
+      id: '/_authenticated/ordens-servico/visualizar/$id'
+      path: '/ordens-servico/visualizar/$id'
+      fullPath: '/ordens-servico/visualizar/$id'
+      preLoaderRoute: typeof AuthenticatedOrdensServicoVisualizarIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -379,6 +399,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOrdensServicoIndexRoute: typeof AuthenticatedOrdensServicoIndexRoute
   AuthenticatedOrdensServicoDuplicarIdRoute: typeof AuthenticatedOrdensServicoDuplicarIdRoute
   AuthenticatedOrdensServicoEditarIdRoute: typeof AuthenticatedOrdensServicoEditarIdRoute
+  AuthenticatedOrdensServicoVisualizarIdRoute: typeof AuthenticatedOrdensServicoVisualizarIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -398,6 +419,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedOrdensServicoDuplicarIdRoute,
   AuthenticatedOrdensServicoEditarIdRoute:
     AuthenticatedOrdensServicoEditarIdRoute,
+  AuthenticatedOrdensServicoVisualizarIdRoute:
+    AuthenticatedOrdensServicoVisualizarIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
