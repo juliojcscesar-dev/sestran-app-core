@@ -87,7 +87,11 @@ export function montarConteudo(dados: OrdemCompleta) {
     agentes,
     orientadores,
     observacoes: texto(o["observacoes"]),
+    /* Preparado para exportar a imagem do mapa nos documentos. */
+    mapaImagem: typeof o["mapa_imagem"] === "string" ? (o["mapa_imagem"] as string) : null,
   };
+}
+
 }
 
 async function carregarLogo(url: string) {
