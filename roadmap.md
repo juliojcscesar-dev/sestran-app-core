@@ -24,3 +24,12 @@
 - [ ] Tela "Cronograma de Veículos" com colunas e filtros
 - [ ] Relatório PDF por período, com opção de incluir fotos
 - [ ] Histórico de alterações e confirmação de exclusão/arquivamento
+
+## Etapa 4 — Educação no Trânsito (solicitado 12/09)
+- [ ] Categorias: Eventos nas escolas, Blitz educativa, Palestra (formulários específicos)
+- [ ] Cadastro/autocomplete de escolas e temas reutilizáveis
+- [ ] Ciclo de status: agendada, em andamento, realizada, cancelada
+- [ ] Calendário mensal/semanal/diário/lista com filtros
+- [ ] Abas: atividades do dia, futuras e realizadas
+- [ ] Cards clicáveis no painel integrados aos filtros
+- [ ] Histórico de alterações e confirmação de exclusão

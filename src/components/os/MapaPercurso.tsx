@@ -89,7 +89,16 @@ export default function MapaPercurso({
     [atualizar, onInterdicoesChange],
   );
 
+  // mantém as callbacks acessíveis sem recriar o mapa
+  const clicarRef = useRef(clicarMapa);
+  const atualizarRef = useRef(atualizar);
+  const leituraRef = useRef(somenteLeitura);
+  clicarRef.current = clicarMapa;
+  atualizarRef.current = atualizar;
+  leituraRef.current = somenteLeitura;
+
   // cria o mapa uma única vez
+  const [pronto, setPronto] = useState(false);
   useEffect(() => {
     if (!containerRef.current || mapaRef.current) return;
     const inicial = estadoRef.current.percurso;
@@ -102,20 +111,24 @@ export default function MapaPercurso({
       attribution: "&copy; OpenStreetMap",
     }).addTo(mapa);
     camadaRef.current = L.layerGroup().addTo(mapa);
-    mapa.on("click", (e: L.LeafletMouseEvent) => clicarMapa(e.latlng.lat, e.latlng.lng));
+    mapa.on("click", (e: L.LeafletMouseEvent) => clicarRef.current(e.latlng.lat, e.latlng.lng));
     mapa.on("moveend", () => {
-      if (somenteLeitura) return;
+      if (leituraRef.current) return;
       const c = mapa.getCenter();
-      atualizar({ centro: [c.lat, c.lng], zoom: mapa.getZoom() });
+      atualizarRef.current({ centro: [c.lat, c.lng], zoom: mapa.getZoom() });
     });
     mapaRef.current = mapa;
-    setTimeout(() => mapa.invalidateSize(), 200);
+    const tempo = setTimeout(() => mapa.invalidateSize(), 200);
+    setPronto(true);
     return () => {
+      clearTimeout(tempo);
       mapa.remove();
       mapaRef.current = null;
       camadaRef.current = null;
+      setPronto(false);
     };
-  }, [clicarMapa, atualizar, somenteLeitura]);
+  }, []);
+
 
   // redesenha marcadores, trajeto e interdições
   useEffect(() => {
@@ -173,7 +186,7 @@ export default function MapaPercurso({
         .bindTooltip(item.rua.trim() || "Rua interditada")
         .addTo(camada);
     });
-  }, [percurso, interdicoes, somenteLeitura, atualizar]);
+  }, [percurso, interdicoes, somenteLeitura, atualizar, pronto]);
 
   // enquadra o percurso salvo ao abrir em modo leitura
   useEffect(() => {
@@ -188,7 +201,7 @@ export default function MapaPercurso({
     mapa.fitBounds(L.latLngBounds(todos.map((p) => [p.lat, p.lng] as [number, number])), {
       padding: [30, 30],
     });
-  }, [percurso, interdicoes, somenteLeitura]);
+  }, [percurso, interdicoes, somenteLeitura, pronto]);
 
   function trocarModo(novo: Modo) {
     rascunhoRef.current = [];

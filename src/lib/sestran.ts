@@ -17,7 +17,7 @@ export type ModuloNav = {
 
 export const MODULOS: ModuloNav[] = [
   { titulo: "Painel", href: "/painel", icone: "LayoutDashboard", disponivel: true },
-  { titulo: "Ordens de Serviço", href: "/ordens-servico", icone: "ClipboardList", disponivel: false },
+  { titulo: "Ordens de Serviço", href: "/ordens-servico", icone: "ClipboardList", disponivel: true },
   { titulo: "Eventos", href: "/eventos", icone: "CalendarDays", disponivel: false },
   { titulo: "Agentes de Trânsito", href: "/agentes", icone: "ShieldCheck", disponivel: false },
   { titulo: "Orientadores", href: "/orientadores", icone: "Users", disponivel: false },
