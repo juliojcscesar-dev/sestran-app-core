@@ -186,7 +186,7 @@ export default function MapaPercurso({
         .bindTooltip(item.rua.trim() || "Rua interditada")
         .addTo(camada);
     });
-  }, [percurso, interdicoes, somenteLeitura, atualizar]);
+  }, [percurso, interdicoes, somenteLeitura, atualizar, pronto]);
 
   // enquadra o percurso salvo ao abrir em modo leitura
   useEffect(() => {
@@ -201,7 +201,7 @@ export default function MapaPercurso({
     mapa.fitBounds(L.latLngBounds(todos.map((p) => [p.lat, p.lng] as [number, number])), {
       padding: [30, 30],
     });
-  }, [percurso, interdicoes, somenteLeitura]);
+  }, [percurso, interdicoes, somenteLeitura, pronto]);
 
   function trocarModo(novo: Modo) {
     rascunhoRef.current = [];
