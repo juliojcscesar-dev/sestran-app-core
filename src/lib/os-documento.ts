@@ -388,6 +388,28 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
     );
   }
 
+  const imagemMapa = await obterImagemMapa(conteudo);
+  const blocoMapa: InstanceType<typeof Paragraph>[] = [];
+  if (imagemMapa) {
+    blocoMapa.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            type: "png",
+            data: dataUrlParaBytes(imagemMapa),
+            transformation: { width: 560, height: 324 },
+            altText: {
+              title: "Mapa do percurso",
+              description: "Percurso e interdições da ordem de serviço",
+              name: "mapa",
+            },
+          }),
+        ],
+      }),
+    );
+  }
+
   const larguraAgentes = [3000, 1400, 2200, 1200, 1226];
   const tabelaAgentes = conteudo.agentes.length
     ? new Table({
