@@ -221,6 +221,20 @@ export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) 
   titulo("Dados do serviço");
   linhas(conteudo.corpo);
 
+  const imagemMapa = await obterImagemMapa(conteudo);
+  if (imagemMapa) {
+    const alturaMapa = (largura * 520) / 900;
+    titulo("Mapa do percurso");
+    novaPaginaSePreciso(alturaMapa + 4);
+    try {
+      doc.addImage(imagemMapa, "PNG", margem, y, largura, alturaMapa);
+      y += alturaMapa + 8;
+    } catch {
+      /* imagem inválida: segue sem o mapa */
+    }
+  }
+
+
   titulo("Agentes de trânsito");
   if (!conteudo.agentes.length) {
     doc.setFont("helvetica", "normal");
