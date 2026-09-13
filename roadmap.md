@@ -13,7 +13,7 @@
 - [x] Biblioteca de mapa (Leaflet + OpenStreetMap) e utilidades
 - [x] Componente de mapa com pontos, percurso, edição, exclusão, busca de endereço e interdições
 - [ ] Integração no formulário (salvar) e na visualização (carregar)
-- [ ] Percurso e interdições nos documentos PDF/DOCX + preparo da imagem do mapa
+- [x] Percurso, interdições e imagem automática do mapa nos documentos PDF/DOCX
 - [ ] Testar salvamento e carregamento do percurso
 
 ## Etapa 3 — Veículos Abandonados (solicitado 11/09)

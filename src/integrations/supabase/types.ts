@@ -770,50 +770,153 @@ export type Database = {
         }
         Relationships: []
       }
+      veiculo_fotos: {
+        Row: {
+          caminho: string
+          created_at: string
+          descricao: string | null
+          id: string
+          url: string
+          veiculo_id: string
+        }
+        Insert: {
+          caminho: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          url: string
+          veiculo_id: string
+        }
+        Update: {
+          caminho?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          url?: string
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "veiculo_fotos_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos_abandonados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      veiculo_historico: {
+        Row: {
+          acao: string
+          alteracoes: Json | null
+          created_at: string
+          id: string
+          user_id: string | null
+          veiculo_id: string
+        }
+        Insert: {
+          acao: string
+          alteracoes?: Json | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+          veiculo_id: string
+        }
+        Update: {
+          acao?: string
+          alteracoes?: Json | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "veiculo_historico_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos_abandonados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       veiculos_abandonados: {
         Row: {
+          arquivado: boolean
+          arquivado_em: string | null
+          arquivado_por: string | null
           bairro: string | null
+          chassi: string | null
           cor: string | null
           created_at: string
           data_constatacao: string
+          data_notificacao: string | null
+          data_recolhimento: string | null
+          data_retirada: string | null
+          data_verificacao: string | null
           endereco: string
           id: string
           marca: string | null
           modelo: string | null
+          numero_denuncia: string | null
           observacoes: string | null
           placa: string | null
+          prazo_recolhimento: string | null
           registrado_por: string | null
           status: string
+          tipo_denuncia: string
           updated_at: string
         }
         Insert: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           bairro?: string | null
+          chassi?: string | null
           cor?: string | null
           created_at?: string
           data_constatacao?: string
+          data_notificacao?: string | null
+          data_recolhimento?: string | null
+          data_retirada?: string | null
+          data_verificacao?: string | null
           endereco: string
           id?: string
           marca?: string | null
           modelo?: string | null
+          numero_denuncia?: string | null
           observacoes?: string | null
           placa?: string | null
+          prazo_recolhimento?: string | null
           registrado_por?: string | null
           status?: string
+          tipo_denuncia?: string
           updated_at?: string
         }
         Update: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           bairro?: string | null
+          chassi?: string | null
           cor?: string | null
           created_at?: string
           data_constatacao?: string
+          data_notificacao?: string | null
+          data_recolhimento?: string | null
+          data_retirada?: string | null
+          data_verificacao?: string | null
           endereco?: string
           id?: string
           marca?: string | null
           modelo?: string | null
+          numero_denuncia?: string | null
           observacoes?: string | null
           placa?: string | null
+          prazo_recolhimento?: string | null
           registrado_por?: string | null
           status?: string
+          tipo_denuncia?: string
           updated_at?: string
         }
         Relationships: []
