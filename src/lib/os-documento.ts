@@ -517,6 +517,7 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
           tabelaCampos(conteudo.cabecalho),
           secao("Dados do serviço"),
           tabelaCampos(conteudo.corpo),
+          ...(blocoMapa.length ? [secao("Mapa do percurso"), ...blocoMapa] : []),
           secao("Agentes de trânsito"),
           tabelaAgentes,
           secao("Orientadores"),
