@@ -87,9 +87,30 @@ export function montarConteudo(dados: OrdemCompleta) {
     agentes,
     orientadores,
     observacoes: texto(o["observacoes"]),
-    /* Preparado para exportar a imagem do mapa nos documentos. */
+    percurso: lerPercurso(o["percurso"]),
+    interdicoes: dados.interdicoes ?? [],
+    /* Captura já salva do mapa; quando ausente, é gerada automaticamente. */
     mapaImagem: typeof o["mapa_imagem"] === "string" ? (o["mapa_imagem"] as string) : null,
   };
+}
+
+/** Captura do mapa: usa a imagem salva ou desenha automaticamente o trajeto. */
+async function obterImagemMapa(conteudo: ReturnType<typeof montarConteudo>) {
+  if (conteudo.mapaImagem?.startsWith("data:image")) return conteudo.mapaImagem;
+  const { gerarImagemMapa } = await import("@/lib/mapa-imagem");
+  try {
+    return await gerarImagemMapa(conteudo.percurso, conteudo.interdicoes);
+  } catch {
+    return null;
+  }
+}
+
+function dataUrlParaBytes(dataUrl: string) {
+  const base64 = dataUrl.split(",")[1] ?? "";
+  const binario = atob(base64);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+  return bytes;
 }
 
 
@@ -199,6 +220,20 @@ export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) 
   linhas(conteudo.cabecalho);
   titulo("Dados do serviço");
   linhas(conteudo.corpo);
+
+  const imagemMapa = await obterImagemMapa(conteudo);
+  if (imagemMapa) {
+    const alturaMapa = (largura * 520) / 900;
+    titulo("Mapa do percurso");
+    novaPaginaSePreciso(alturaMapa + 4);
+    try {
+      doc.addImage(imagemMapa, "PNG", margem, y, largura, alturaMapa);
+      y += alturaMapa + 8;
+    } catch {
+      /* imagem inválida: segue sem o mapa */
+    }
+  }
+
 
   titulo("Agentes de trânsito");
   if (!conteudo.agentes.length) {
@@ -353,6 +388,28 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
     );
   }
 
+  const imagemMapa = await obterImagemMapa(conteudo);
+  const blocoMapa: InstanceType<typeof Paragraph>[] = [];
+  if (imagemMapa) {
+    blocoMapa.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            type: "png",
+            data: dataUrlParaBytes(imagemMapa),
+            transformation: { width: 560, height: 324 },
+            altText: {
+              title: "Mapa do percurso",
+              description: "Percurso e interdições da ordem de serviço",
+              name: "mapa",
+            },
+          }),
+        ],
+      }),
+    );
+  }
+
   const larguraAgentes = [3000, 1400, 2200, 1200, 1226];
   const tabelaAgentes = conteudo.agentes.length
     ? new Table({
@@ -460,6 +517,7 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
           tabelaCampos(conteudo.cabecalho),
           secao("Dados do serviço"),
           tabelaCampos(conteudo.corpo),
+          ...(blocoMapa.length ? [secao("Mapa do percurso"), ...blocoMapa] : []),
           secao("Agentes de trânsito"),
           tabelaAgentes,
           secao("Orientadores"),
