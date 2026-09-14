@@ -14,6 +14,7 @@ import {
   type PercursoMapa,
   type PontoMapa,
 } from "@/lib/mapa";
+import { pesquisarEnderecoOficial } from "@/lib/territorio-api";
 
 type Modo = "navegar" | "percurso" | "ponto" | "interdicao";
 
@@ -52,6 +53,7 @@ export default function MapaPercurso({
   const [modo, setModo] = useState<Modo>("navegar");
   const [busca, setBusca] = useState("");
   const [buscando, setBuscando] = useState(false);
+  const [sugestoes, setSugestoes] = useState<{ id: string; nome_completo: string; geometria: unknown; bairros: { nome: string } | null }[]>([]);
   const rascunhoRef = useRef<PontoMapa[]>([]);
 
   const estadoRef = useRef({ percurso, interdicoes });
@@ -220,6 +222,16 @@ export default function MapaPercurso({
     if (termo.length < 3) return;
     setBuscando(true);
     try {
+      const oficiais = await pesquisarEnderecoOficial(termo);
+      setSugestoes(oficiais as typeof sugestoes);
+      const oficial = oficiais[0];
+      const geometria = oficial?.geometria as { lat?: number; lng?: number }[] | null | undefined;
+      const pontoOficial = geometria?.find((p) => typeof p.lat === "number" && typeof p.lng === "number");
+      if (oficial && pontoOficial?.lat !== undefined && pontoOficial.lng !== undefined) {
+        mapaRef.current?.setView([pontoOficial.lat, pontoOficial.lng], 17);
+        toast.success(`${oficial.nome_completo} · base oficial`);
+        return;
+      }
       const url = new URL("https://nominatim.openstreetmap.org/search");
       url.searchParams.set("q", `${termo}, Paranavaí, Paraná, Brasil`);
       url.searchParams.set("format", "json");
@@ -316,6 +328,11 @@ export default function MapaPercurso({
           Pesquisar
         </Button>
       </div>
+      {sugestoes.length > 0 && (
+        <div className="flex flex-wrap gap-2" aria-label="Ruas da base oficial">
+          {sugestoes.map((rua) => <Button key={rua.id} type="button" size="sm" variant="secondary" onClick={() => { setBusca(rua.nome_completo); const geo = rua.geometria as { lat?: number; lng?: number }[] | null; const p = geo?.[0]; if (p?.lat !== undefined && p.lng !== undefined) mapaRef.current?.setView([p.lat, p.lng], 17); }}>{rua.nome_completo}{rua.bairros?.nome ? ` · ${rua.bairros.nome}` : ""}</Button>)}
+        </div>
+      )}
 
 
       <div

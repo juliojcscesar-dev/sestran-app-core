@@ -20,6 +20,7 @@ import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOrientadoresRouteImport } from './routes/_authenticated/orientadores'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedSolicitantesRouteImport } from './routes/_authenticated/solicitantes'
+import { Route as AuthenticatedTerritorioRouteImport } from './routes/_authenticated/territorio'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedVeiculosAbandonadosRouteImport } from './routes/_authenticated/veiculos-abandonados'
 import { Route as AuthenticatedOrdensServicoIndexRouteImport } from './routes/_authenticated/ordens-servico/index'
@@ -85,6 +86,11 @@ const AuthenticatedSolicitantesRoute =
     path: '/solicitantes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTerritorioRoute = AuthenticatedTerritorioRouteImport.update({
+  id: '/territorio',
+  path: '/territorio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/orientadores': typeof AuthenticatedOrientadoresRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/solicitantes': typeof AuthenticatedSolicitantesRoute
+  '/territorio': typeof AuthenticatedTerritorioRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/orientadores': typeof AuthenticatedOrientadoresRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/solicitantes': typeof AuthenticatedSolicitantesRoute
+  '/territorio': typeof AuthenticatedTerritorioRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/_authenticated/orientadores': typeof AuthenticatedOrientadoresRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/solicitantes': typeof AuthenticatedSolicitantesRoute
+  '/_authenticated/territorio': typeof AuthenticatedTerritorioRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/_authenticated/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/orientadores'
     | '/painel'
     | '/solicitantes'
+    | '/territorio'
     | '/usuarios'
     | '/veiculos-abandonados'
     | '/ordens-servico/nova'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/orientadores'
     | '/painel'
     | '/solicitantes'
+    | '/territorio'
     | '/usuarios'
     | '/veiculos-abandonados'
     | '/ordens-servico/nova'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/_authenticated/orientadores'
     | '/_authenticated/painel'
     | '/_authenticated/solicitantes'
+    | '/_authenticated/territorio'
     | '/_authenticated/usuarios'
     | '/_authenticated/veiculos-abandonados'
     | '/_authenticated/ordens-servico/nova'
@@ -332,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSolicitantesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/territorio': {
+      id: '/_authenticated/territorio'
+      path: '/territorio'
+      fullPath: '/territorio'
+      preLoaderRoute: typeof AuthenticatedTerritorioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/usuarios': {
       id: '/_authenticated/usuarios'
       path: '/usuarios'
@@ -393,6 +412,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOrientadoresRoute: typeof AuthenticatedOrientadoresRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedSolicitantesRoute: typeof AuthenticatedSolicitantesRoute
+  AuthenticatedTerritorioRoute: typeof AuthenticatedTerritorioRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVeiculosAbandonadosRoute: typeof AuthenticatedVeiculosAbandonadosRoute
   AuthenticatedOrdensServicoNovaRoute: typeof AuthenticatedOrdensServicoNovaRoute
@@ -411,6 +431,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOrientadoresRoute: AuthenticatedOrientadoresRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedSolicitantesRoute: AuthenticatedSolicitantesRoute,
+  AuthenticatedTerritorioRoute: AuthenticatedTerritorioRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVeiculosAbandonadosRoute: AuthenticatedVeiculosAbandonadosRoute,
   AuthenticatedOrdensServicoNovaRoute: AuthenticatedOrdensServicoNovaRoute,

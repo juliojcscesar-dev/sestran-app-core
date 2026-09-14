@@ -23,8 +23,9 @@ export const MODULOS: ModuloNav[] = [
   { titulo: "Orientadores", href: "/orientadores", icone: "Users", disponivel: false },
   { titulo: "Solicitantes", href: "/solicitantes", icone: "Building2", disponivel: false },
   { titulo: "Escolas", href: "/escolas", icone: "School", disponivel: false },
-  { titulo: "Veículos Abandonados", href: "/veiculos-abandonados", icone: "Car", disponivel: false },
-  { titulo: "Educação no Trânsito", href: "/educacao-transito", icone: "GraduationCap", disponivel: false },
+  { titulo: "Veículos Abandonados", href: "/veiculos-abandonados", icone: "Car", disponivel: true },
+  { titulo: "Educação no Trânsito", href: "/educacao-transito", icone: "GraduationCap", disponivel: true },
+  { titulo: "Ruas e Bairros", href: "/territorio", icone: "MapPinned", disponivel: true },
   {
     titulo: "Histórico",
     href: "/historico",
