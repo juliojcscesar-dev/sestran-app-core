@@ -93,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="border-t border-sidebar-border px-5 py-4 text-xs text-sidebar-foreground/70">
           Prefeitura Municipal de Paranavaí
           <br />
-          Secretaria de Trânsito — Etapa 1
+          Secretaria Municipal de Trânsito
         </div>
       </aside>
 

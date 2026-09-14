@@ -17,6 +17,10 @@ export type DadosVeiculo = {
   data_recolhimento: string | null;
   data_retirada: string | null;
   observacoes: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  bairro_id: string | null;
+  rua_id: string | null;
 };
 
 function checar<T>(res: { data: T; error: unknown }): T {
@@ -25,7 +29,7 @@ function checar<T>(res: { data: T; error: unknown }): T {
 }
 
 const SELECAO =
-  "id, placa, chassi, marca, modelo, cor, endereco, bairro, tipo_denuncia, numero_denuncia, data_constatacao, data_verificacao, data_notificacao, prazo_recolhimento, data_recolhimento, data_retirada, status, observacoes, arquivado, arquivado_em, created_at";
+  "id, placa, chassi, marca, modelo, cor, endereco, bairro, tipo_denuncia, numero_denuncia, data_constatacao, data_verificacao, data_notificacao, prazo_recolhimento, data_recolhimento, data_retirada, status, observacoes, arquivado, arquivado_em, created_at, latitude, longitude, bairro_id, rua_id";
 
 export type VeiculoLista = {
   id: string;
@@ -49,6 +53,10 @@ export type VeiculoLista = {
   arquivado: boolean;
   arquivado_em: string | null;
   created_at: string;
+  latitude: number | null;
+  longitude: number | null;
+  bairro_id: string | null;
+  rua_id: string | null;
 };
 
 export type FiltrosVeiculo = {

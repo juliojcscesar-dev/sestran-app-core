@@ -64,6 +64,39 @@ function centroDe(pontos: PontoMapa[]): [number, number] {
   return [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lngs) + Math.max(...lngs)) / 2];
 }
 
+function metrosPorPixel(lat: number, zoom: number) {
+  return (156543.03392 * Math.cos((lat * Math.PI) / 180)) / Math.pow(2, zoom);
+}
+
+function escalaAgradavel(metros: number) {
+  const potencia = Math.pow(10, Math.floor(Math.log10(Math.max(1, metros))));
+  const normalizado = metros / potencia;
+  const fator = normalizado >= 5 ? 5 : normalizado >= 2 ? 2 : 1;
+  return fator * potencia;
+}
+
+function desenharEscala(ctx: CanvasRenderingContext2D, lat: number, zoom: number) {
+  const maxPixels = 130;
+  const metros = escalaAgradavel(metrosPorPixel(lat, zoom) * maxPixels);
+  const pixels = metros / metrosPorPixel(lat, zoom);
+  const x = 24;
+  const y = ALTURA - 28;
+  ctx.fillStyle = "rgba(255,255,255,0.86)";
+  ctx.fillRect(x - 10, y - 24, pixels + 20, 38);
+  ctx.strokeStyle = "#1f2937";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x + pixels, y);
+  ctx.moveTo(x, y - 6); ctx.lineTo(x, y + 2);
+  ctx.moveTo(x + pixels, y - 6); ctx.lineTo(x + pixels, y + 2);
+  ctx.stroke();
+  ctx.fillStyle = "#1f2937";
+  ctx.font = "bold 12px sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(metros >= 1000 ? `${metros / 1000} km` : `${Math.round(metros)} m`, x, y - 7);
+}
+
 function desenharMarcador(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -189,6 +222,8 @@ export async function gerarImagemMapa(
     const [x, y] = paraTela(p);
     desenharMarcador(ctx, x, y, "#b45309", "•");
   });
+
+  desenharEscala(ctx, latCentro, zoom);
 
   // Crédito obrigatório do OpenStreetMap
   ctx.fillStyle = "rgba(255,255,255,0.8)";

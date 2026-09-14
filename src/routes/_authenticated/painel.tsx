@@ -302,19 +302,19 @@ function Painel() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Etapa 1 concluída</CardTitle>
+            <CardTitle className="text-base">Módulos disponíveis</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>
-              Estão prontos: acesso seguro, níveis de permissão, menu completo dos módulos e a base
-              de dados de todos os cadastros.
+              Estão disponíveis o painel, as Ordens de Serviço com mapa e documentos, e o calendário
+              de Educação no Trânsito.
             </p>
             <p>
-              A Etapa 2 abrirá o módulo de{" "}
+              Acesse o módulo de{" "}
               <Link to="/ordens-servico" className="font-medium text-primary underline">
                 Ordem de Serviço
               </Link>{" "}
-              com cadastro, equipe e acompanhamento.
+              para cadastro, equipe, percurso e acompanhamento.
             </p>
           </CardContent>
         </Card>

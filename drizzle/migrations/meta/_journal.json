@@ -15,6 +15,20 @@
       "when": 1789325181818,
       "tag": "0001_veiculos_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789389236230,
+      "tag": "0002_educacao_transito_calendario",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789389423731,
+      "tag": "0003_cadastro_territorial_e_mapa_veiculos",
+      "breakpoints": true
     }
   ]
 }

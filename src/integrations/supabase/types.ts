@@ -14,43 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      acao_educativa_historico: {
+        Row: {
+          acao: string
+          acao_educativa_id: string
+          alteracoes: Json | null
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          acao_educativa_id: string
+          alteracoes?: Json | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          acao_educativa_id?: string
+          alteracoes?: Json | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acao_educativa_historico_acao_educativa_id_fkey"
+            columns: ["acao_educativa_id"]
+            isOneToOne: false
+            referencedRelation: "acoes_educativas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acoes_educativas: {
         Row: {
+          arquivada: boolean
+          arquivada_em: string | null
+          arquivada_por: string | null
+          categoria: string
           created_at: string
+          criado_por: string | null
           data_acao: string
           descricao: string | null
           escola_id: string | null
+          horario_fim: string | null
+          horario_inicio: string | null
           id: string
+          local: string | null
+          observacoes: string | null
           orientador_id: string | null
           participantes: number | null
           publico_alvo: string | null
           status: string
+          tema_id: string | null
           titulo: string
           updated_at: string
         }
         Insert: {
+          arquivada?: boolean
+          arquivada_em?: string | null
+          arquivada_por?: string | null
+          categoria?: string
           created_at?: string
+          criado_por?: string | null
           data_acao: string
           descricao?: string | null
           escola_id?: string | null
+          horario_fim?: string | null
+          horario_inicio?: string | null
           id?: string
+          local?: string | null
+          observacoes?: string | null
           orientador_id?: string | null
           participantes?: number | null
           publico_alvo?: string | null
           status?: string
+          tema_id?: string | null
           titulo: string
           updated_at?: string
         }
         Update: {
+          arquivada?: boolean
+          arquivada_em?: string | null
+          arquivada_por?: string | null
+          categoria?: string
           created_at?: string
+          criado_por?: string | null
           data_acao?: string
           descricao?: string | null
           escola_id?: string | null
+          horario_fim?: string | null
+          horario_inicio?: string | null
           id?: string
+          local?: string | null
+          observacoes?: string | null
           orientador_id?: string | null
           participantes?: number | null
           publico_alvo?: string | null
           status?: string
+          tema_id?: string | null
           titulo?: string
           updated_at?: string
         }
@@ -67,6 +132,13 @@ export type Database = {
             columns: ["orientador_id"]
             isOneToOne: false
             referencedRelation: "orientadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acoes_educativas_tema_id_fkey"
+            columns: ["tema_id"]
+            isOneToOne: false
+            referencedRelation: "temas_educativos"
             referencedColumns: ["id"]
           },
         ]
@@ -100,6 +172,42 @@ export type Database = {
           matricula?: string | null
           nome?: string
           telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bairros: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          codigo_oficial: string | null
+          created_at: string
+          fonte: string
+          fonte_url: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo_oficial?: string | null
+          created_at?: string
+          fonte: string
+          fonte_url?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo_oficial?: string | null
+          created_at?: string
+          fonte?: string
+          fonte_url?: string | null
+          id?: string
+          nome?: string
           updated_at?: string
         }
         Relationships: []
@@ -683,6 +791,62 @@ export type Database = {
         }
         Relationships: []
       }
+      ruas: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          bairro_id: string | null
+          codigo_oficial: string | null
+          created_at: string
+          fonte: string
+          fonte_url: string | null
+          geometria: Json | null
+          id: string
+          nome: string
+          nome_completo: string
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          bairro_id?: string | null
+          codigo_oficial?: string | null
+          created_at?: string
+          fonte: string
+          fonte_url?: string | null
+          geometria?: Json | null
+          id?: string
+          nome: string
+          nome_completo: string
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          bairro_id?: string | null
+          codigo_oficial?: string | null
+          created_at?: string
+          fonte?: string
+          fonte_url?: string | null
+          geometria?: Json | null
+          id?: string
+          nome?: string
+          nome_completo?: string
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ruas_bairro_id_fkey"
+            columns: ["bairro_id"]
+            isOneToOne: false
+            referencedRelation: "bairros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solicitantes: {
         Row: {
           ativo: boolean
@@ -718,6 +882,33 @@ export type Database = {
           nome?: string
           telefone?: string | null
           tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      temas_educativos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
           updated_at?: string
         }
         Relationships: []
@@ -846,6 +1037,7 @@ export type Database = {
           arquivado_em: string | null
           arquivado_por: string | null
           bairro: string | null
+          bairro_id: string | null
           chassi: string | null
           cor: string | null
           created_at: string
@@ -856,6 +1048,8 @@ export type Database = {
           data_verificacao: string | null
           endereco: string
           id: string
+          latitude: number | null
+          longitude: number | null
           marca: string | null
           modelo: string | null
           numero_denuncia: string | null
@@ -863,6 +1057,7 @@ export type Database = {
           placa: string | null
           prazo_recolhimento: string | null
           registrado_por: string | null
+          rua_id: string | null
           status: string
           tipo_denuncia: string
           updated_at: string
@@ -872,6 +1067,7 @@ export type Database = {
           arquivado_em?: string | null
           arquivado_por?: string | null
           bairro?: string | null
+          bairro_id?: string | null
           chassi?: string | null
           cor?: string | null
           created_at?: string
@@ -882,6 +1078,8 @@ export type Database = {
           data_verificacao?: string | null
           endereco: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           marca?: string | null
           modelo?: string | null
           numero_denuncia?: string | null
@@ -889,6 +1087,7 @@ export type Database = {
           placa?: string | null
           prazo_recolhimento?: string | null
           registrado_por?: string | null
+          rua_id?: string | null
           status?: string
           tipo_denuncia?: string
           updated_at?: string
@@ -898,6 +1097,7 @@ export type Database = {
           arquivado_em?: string | null
           arquivado_por?: string | null
           bairro?: string | null
+          bairro_id?: string | null
           chassi?: string | null
           cor?: string | null
           created_at?: string
@@ -908,6 +1108,8 @@ export type Database = {
           data_verificacao?: string | null
           endereco?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           marca?: string | null
           modelo?: string | null
           numero_denuncia?: string | null
@@ -915,11 +1117,27 @@ export type Database = {
           placa?: string | null
           prazo_recolhimento?: string | null
           registrado_por?: string | null
+          rua_id?: string | null
           status?: string
           tipo_denuncia?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "veiculos_abandonados_bairro_id_fkey"
+            columns: ["bairro_id"]
+            isOneToOne: false
+            referencedRelation: "bairros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "veiculos_abandonados_rua_id_fkey"
+            columns: ["rua_id"]
+            isOneToOne: false
+            referencedRelation: "ruas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
