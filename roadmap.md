@@ -1,20 +1,20 @@
 # Roadmap — SESTRAN
 
 ## Etapa 2 — Ordem de Serviço
-- [ ] Corrigir erros de tipagem/build (formulário e componentes)
-- [ ] Listagem de O.S. com filtros, colunas e ações (visualizar, editar, duplicar, PDF, DOCX, arquivar)
-- [ ] Página de visualização detalhada com histórico e geração de documentos
-- [ ] Edição preservando permissões e histórico
-- [ ] Duplicação com nova numeração ao salvar
-- [ ] Build 100% verde, Etapa 1 preservada
+- [x] Corrigir erros de tipagem/build (formulário e componentes)
+- [x] Listagem de O.S. com filtros, colunas e ações (visualizar, editar, duplicar, PDF, DOCX, arquivar)
+- [x] Página de visualização detalhada com histórico e geração de documentos
+- [x] Edição preservando permissões e histórico
+- [x] Duplicação com nova numeração ao salvar
+- [x] Build 100% verde, Etapa 1 preservada
 
 ## Mapa e percurso
 - [x] Banco: percurso (jsonb), imagem do mapa e tabela de interdições
 - [x] Biblioteca de mapa (Leaflet + OpenStreetMap) e utilidades
 - [x] Componente de mapa com pontos, percurso, edição, exclusão, busca de endereço e interdições
-- [ ] Integração no formulário (salvar) e na visualização (carregar)
+- [x] Integração no formulário (salvar) e na visualização (carregar)
 - [x] Percurso, interdições e imagem automática do mapa nos documentos PDF/DOCX
-- [ ] Testar salvamento e carregamento do percurso
+- [x] Testar salvamento, edição e carregamento do percurso
 
 ## Etapa 3 — Veículos Abandonados (solicitado 11/09)
 - [ ] Cadastro completo (endereço, bairro, marca/modelo/placa/chassi, datas, denúncia ouvidoria/informal, observações, fotos)
