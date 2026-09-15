@@ -6,6 +6,7 @@
 - [x] Página de visualização detalhada com histórico e geração de documentos
 - [x] Edição preservando permissões e histórico
 - [x] Duplicação com nova numeração ao salvar
+- [x] Exclusão irreversível com confirmação e permissão restrita a Administrador/Gestor
 - [x] Build 100% verde, Etapa 1 preservada
 
 ## Mapa e percurso

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { FormularioOS } from "@/components/os/FormularioOS";
+import { ExcluirOSButton } from "@/components/os/ExcluirOSButton";
 import { useSessao, temPapel } from "@/hooks/useSessao";
 import { obterOrdem } from "@/lib/os-api";
 
@@ -56,13 +57,19 @@ function EditarOS() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold">
-          Editar O.S. {(ordemQ.data.ordem as Record<string, unknown>)["numero"] as string}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          As alterações ficam registradas no histórico da ordem.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold">
+            Editar O.S. {(ordemQ.data.ordem as Record<string, unknown>)["numero"] as string}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            As alterações ficam registradas no histórico da ordem.
+          </p>
+        </div>
+        <ExcluirOSButton
+          id={id}
+          numero={String((ordemQ.data.ordem as Record<string, unknown>)["numero"] ?? "")}
+        />
       </div>
       <FormularioOS modo="editar" inicial={ordemQ.data} id={id} />
     </div>
