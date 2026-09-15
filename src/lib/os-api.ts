@@ -264,6 +264,12 @@ export async function arquivarOrdem(id: string, arquivar: boolean) {
   );
 }
 
+export async function excluirOrdem(id: string) {
+  checarUnico(
+    await supabase.from("ordens_servico").delete().eq("id", id).select("id").single(),
+  );
+}
+
 export async function historicoOrdem(id: string) {
   return checar(
     await supabase

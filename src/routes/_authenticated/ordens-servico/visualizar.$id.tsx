@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MapaOS } from "@/components/os/MapaOS";
+import { ExcluirOSButton } from "@/components/os/ExcluirOSButton";
 import { useSessao, temPapel } from "@/hooks/useSessao";
 import {
   ACAO_HISTORICO_LABEL,
@@ -158,6 +159,7 @@ function VisualizarOS() {
               </Button>
             </>
           )}
+          <ExcluirOSButton id={id} numero={String(o["numero"] ?? "")} />
         </div>
       </div>
 

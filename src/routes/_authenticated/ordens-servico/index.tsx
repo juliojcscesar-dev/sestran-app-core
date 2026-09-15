@@ -45,6 +45,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useSessao, temPapel } from "@/hooks/useSessao";
+import { ExcluirOSButton } from "@/components/os/ExcluirOSButton";
 import {
   STATUS_OS,
   STATUS_OS_CLASSE,
@@ -403,6 +404,7 @@ function ListaOS() {
                             <ArchiveRestore className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         )}
+                        <ExcluirOSButton id={os.id} numero={os.numero} somenteIcone />
                       </div>
                     </TableCell>
                   </TableRow>
