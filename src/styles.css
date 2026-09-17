@@ -170,3 +170,41 @@
     letter-spacing: -0.01em;
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 15mm;
+  }
+
+  .cabecalho-os-impressao {
+    display: block !important;
+    text-align: center;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 4mm;
+    margin-bottom: 6mm;
+  }
+
+  .cabecalho-os-impressao img {
+    display: block;
+    width: 65mm;
+    height: auto;
+    max-height: 10mm;
+    object-fit: contain;
+    margin: 0 auto 4mm;
+  }
+
+  .cabecalho-os-impressao h1 {
+    font-size: 14pt;
+    font-weight: 700;
+  }
+
+  .os-impressao {
+    max-width: 180mm;
+    margin: 0 auto;
+  }
+
+  .os-impressao > * {
+    break-inside: avoid;
+  }
+}

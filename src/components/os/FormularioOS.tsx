@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -40,6 +40,9 @@ import {
   listarOrientadores,
   listarSolicitantes,
   listarTiposServico,
+  normalizarNumeroOS,
+  numeroOSDisponivel,
+  proximoNumeroOS,
   type DadosOS,
   type OrdemCompleta,
 } from "@/lib/os-api";
@@ -75,6 +78,8 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const [dataEmissao, setDataEmissao] = useState(
     duplicando ? hoje() : ((o?.["data_emissao"] as string) ?? hoje()),
   );
+  const [numero, setNumero] = useState(modo === "editar" ? ((o?.["numero"] as string) ?? "") : "");
+  const [numeroPersonalizado, setNumeroPersonalizado] = useState(false);
   const [ipm, setIpm] = useState((o?.["ipm"] as string) ?? "");
   const [remetente, setRemetente] = useState((o?.["remetente"] as string) ?? "");
   const [destinatario, setDestinatario] = useState((o?.["destinatario"] as string) ?? "");
@@ -130,6 +135,18 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const eventosQ = useQuery({ queryKey: ["eventos"], queryFn: listarEventos });
   const locaisQ = useQuery({ queryKey: ["locais"], queryFn: listarLocais });
   const tiposQ = useQuery({ queryKey: ["tipos-servico"], queryFn: listarTiposServico });
+  const anoEmissao = Number(dataEmissao.slice(0, 4));
+  const sugestaoNumeroQ = useQuery({
+    queryKey: ["proximo-numero-os", anoEmissao],
+    queryFn: () => proximoNumeroOS(anoEmissao),
+    enabled: modo !== "editar" && Number.isInteger(anoEmissao),
+  });
+
+  useEffect(() => {
+    if (modo !== "editar" && !numeroPersonalizado && sugestaoNumeroQ.data) {
+      setNumero(sugestaoNumeroQ.data);
+    }
+  }, [modo, numeroPersonalizado, sugestaoNumeroQ.data]);
 
   const opcoesLocal = useMemo(
     () => (locaisQ.data ?? []).map((l) => ({ id: l.nome, rotulo: l.nome, detalhe: l.endereco ?? undefined })),
@@ -150,6 +167,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const salvar = useMutation({
     mutationFn: async () => {
       const dados: DadosOS = {
+        ...(modo === "editar" ? {} : { numero }),
         data_emissao: dataEmissao,
         ipm: ipm.trim() || null,
         remetente: remetente.trim() || null,
@@ -200,12 +218,22 @@ export function FormularioOS({ modo, inicial, id }: Props) {
       navigate({ to: "/ordens-servico/visualizar/$id", params: { id: res.id } });
     },
     onError: (erro: unknown) => {
-      const msg = erro instanceof Error ? erro.message : "Erro ao salvar.";
+      const detalhe = erro && typeof erro === "object" ? (erro as Record<string, unknown>) : {};
+      const textoErro = [detalhe["message"], detalhe["details"], detalhe["code"]]
+        .filter((item): item is string => typeof item === "string")
+        .join(" ");
+      const duplicado = textoErro.includes("23505") || textoErro.toLowerCase().includes("já está em uso");
+      const msg = duplicado
+        ? "Este número de O.S. já está em uso neste ano. Escolha outro número."
+        : erro instanceof Error
+          ? erro.message
+          : "Erro ao salvar.";
+      if (duplicado) setErros((atuais) => ({ ...atuais, numero: msg }));
       toast.error(`Não foi possível salvar: ${msg}`);
     },
   });
 
-  function enviar(evento: React.FormEvent) {
+  async function enviar(evento: React.FormEvent) {
     evento.preventDefault();
     const resultado = esquema.safeParse({
       data_emissao: dataEmissao,
@@ -226,10 +254,35 @@ export function FormularioOS({ modo, inicial, id }: Props) {
       novosErros["hora_fim"] = "O término deve ser depois do início.";
     }
     if (!servicos.length) novosErros["servicos"] = "Selecione ao menos um serviço.";
+    if (modo !== "editar") {
+      try {
+        const validado = normalizarNumeroOS(numero, anoEmissao);
+        setNumero(validado.numero);
+      } catch (erro) {
+        novosErros["numero"] = erro instanceof Error ? erro.message : "Número inválido.";
+      }
+    }
     setErros(novosErros);
     if (Object.keys(novosErros).length) {
       toast.error("Revise os campos destacados.");
       return;
+    }
+    if (modo !== "editar") {
+      try {
+        const resultadoNumero = await numeroOSDisponivel(numero, anoEmissao);
+        setNumero(resultadoNumero.numero);
+        if (!resultadoNumero.disponivel) {
+          const mensagem = "Este número de O.S. já está em uso neste ano. Escolha outro número.";
+          setErros((atuais) => ({ ...atuais, numero: mensagem }));
+          toast.error(mensagem);
+          return;
+        }
+      } catch (erro) {
+        const mensagem = erro instanceof Error ? erro.message : "Não foi possível validar o número.";
+        setErros((atuais) => ({ ...atuais, numero: mensagem }));
+        toast.error(mensagem);
+        return;
+      }
     }
     salvar.mutate();
   }
@@ -245,14 +298,29 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <div>
-            <Label>Número da O.S.</Label>
+            <Label htmlFor="numero_os">Ordem de Serviço Nº</Label>
             <Input
-              value={
-                modo === "editar" ? ((o?.["numero"] as string) ?? "") : "Gerado ao salvar (001/2026)"
-              }
-              readOnly
-              disabled
+              id="numero_os"
+              inputMode="numeric"
+              value={numero}
+              onChange={(e) => {
+                setNumero(e.target.value);
+                setNumeroPersonalizado(true);
+                setErros((atuais) => ({ ...atuais, numero: "" }));
+              }}
+              onBlur={() => {
+                if (modo === "editar") return;
+                try {
+                  setNumero(normalizarNumeroOS(numero, anoEmissao).numero);
+                } catch {
+                  /* A mensagem é exibida no envio. */
+                }
+              }}
+              readOnly={modo === "editar"}
+              disabled={modo === "editar"}
+              placeholder={sugestaoNumeroQ.isLoading ? "Consultando próximo número…" : "Ex.: 160 ou 160/2026"}
             />
+            {erroTexto("numero")}
           </div>
           <div>
             <Label htmlFor="data_emissao">Data de emissão *</Label>

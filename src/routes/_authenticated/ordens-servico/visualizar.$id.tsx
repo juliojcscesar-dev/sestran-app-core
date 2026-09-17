@@ -109,7 +109,11 @@ function VisualizarOS() {
   const percurso = lerPercurso(o["percurso"]);
 
   return (
-    <div className="space-y-6">
+    <div className="os-impressao space-y-6">
+      <div className="cabecalho-os-impressao hidden">
+        <img src="/assets/logo-header.png" alt="Prefeitura de Paranavaí — Secretaria Municipal de Segurança e Trânsito" />
+        <h1>ORDEM DE SERVIÇO Nº {String(o["numero"] ?? "")}</h1>
+      </div>
       <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
         <div>
           <h1 className="font-display text-2xl font-semibold">

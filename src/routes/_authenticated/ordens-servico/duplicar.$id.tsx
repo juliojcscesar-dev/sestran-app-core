@@ -52,7 +52,7 @@ function DuplicarOS() {
           Duplicar O.S. {(ordemQ.data.ordem as Record<string, unknown>)["numero"] as string}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Revise os dados. Um novo número sequencial do ano será gerado somente ao salvar.
+          Revise os dados. Um novo número anual é sugerido e o registro só será criado ao salvar.
         </p>
       </div>
       <FormularioOS modo="duplicar" inicial={ordemQ.data} />

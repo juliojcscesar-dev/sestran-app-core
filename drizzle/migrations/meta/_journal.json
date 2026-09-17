@@ -36,6 +36,13 @@
       "when": 1789491156335,
       "tag": "0004_proteger_exclusao_ordens_servico",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789605159971,
+      "tag": "0005_numero_manual_ordem_servico",
+      "breakpoints": true
     }
   ]
 }
