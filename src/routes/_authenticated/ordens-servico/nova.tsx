@@ -40,7 +40,7 @@ function NovaOS() {
       <div>
         <h1 className="font-display text-2xl font-semibold">Nova Ordem de Serviço</h1>
         <p className="text-sm text-muted-foreground">
-          O número é gerado automaticamente ao salvar, em sequência anual.
+          O próximo número anual é sugerido e pode ser ajustado antes de salvar.
         </p>
       </div>
       <FormularioOS modo="nova" />

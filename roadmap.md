@@ -1,6 +1,8 @@
 # Roadmap — SESTRAN
 
 ## Etapa 2 — Ordem de Serviço
+- [x] Número manual com sugestão anual, normalização e bloqueio de duplicidade
+- [x] Cabeçalho institucional oficial em PDF, DOCX, impressão e relatório de veículos
 - [x] Corrigir erros de tipagem/build (formulário e componentes)
 - [x] Listagem de O.S. com filtros, colunas e ações (visualizar, editar, duplicar, PDF, DOCX, arquivar)
 - [x] Página de visualização detalhada com histórico e geração de documentos

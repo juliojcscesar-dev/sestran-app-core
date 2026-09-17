@@ -4,6 +4,7 @@ import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa
 
 
 export type IdentificacaoOrgao = { orgao: string; secretaria: string; logo_url: string };
+const LOGO_INSTITUCIONAL = "/assets/logo-header.png";
 
 type Linha = { rotulo: string; valor: string };
 
@@ -159,23 +160,19 @@ export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) 
   const largura = 210 - margem * 2;
   let y = margem;
 
-  const logo = await carregarLogo(ident.logo_url);
+  const logo = await carregarLogo(ident.logo_url || LOGO_INSTITUCIONAL);
   if (logo?.base64) {
     try {
-      doc.addImage(logo.base64, margem, y, 20, 20);
+      doc.addImage(logo.base64, "PNG", 72.5, 10, 65, 10);
     } catch {
       /* logotipo inválido: segue sem imagem */
     }
   }
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text(ident.orgao, 105, y + 6, { align: "center" });
-  doc.setFontSize(11);
-  doc.text(ident.secretaria, 105, y + 12, { align: "center" });
   doc.setFontSize(14);
-  doc.text(`ORDEM DE SERVIÇO Nº ${conteudo.numero}`, 105, y + 22, { align: "center" });
-  y += 28;
+  doc.text(`ORDEM DE SERVIÇO Nº ${conteudo.numero}`, 105, y + 17, { align: "center" });
+  y += 22;
   doc.setLineWidth(0.4);
   doc.line(margem, y, margem + largura, y);
   y += 8;
@@ -323,6 +320,7 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
     BorderStyle,
     ShadingType,
     ImageRun,
+    Header,
   } = await import("docx");
 
   const conteudo = montarConteudo(dados);
@@ -369,7 +367,7 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
     });
   }
 
-  const logo = await carregarLogo(ident.logo_url);
+  const logo = await carregarLogo(ident.logo_url || LOGO_INSTITUCIONAL);
   const cabecalhoLogo: InstanceType<typeof Paragraph>[] = [];
   if (logo?.arrayBuffer) {
     const tipo = logo.tipo.includes("png") ? "png" : logo.tipo.includes("gif") ? "gif" : "jpg";
@@ -380,7 +378,7 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
           new ImageRun({
             type: tipo as "png" | "jpg" | "gif",
             data: logo.arrayBuffer,
-            transformation: { width: 70, height: 70 },
+            transformation: { width: 246, height: 38 },
             altText: { title: "Logotipo", description: ident.orgao, name: "logotipo" },
           }),
         ],
@@ -492,16 +490,10 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
             margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
           },
         },
+        headers: {
+          default: new Header({ children: cabecalhoLogo }),
+        },
         children: [
-          ...cabecalhoLogo,
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [new TextRun({ text: ident.orgao, bold: true, size: 26 })],
-          }),
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [new TextRun({ text: ident.secretaria, size: 22 })],
-          }),
           new Paragraph({
             alignment: AlignmentType.CENTER,
             spacing: { before: 240, after: 240 },

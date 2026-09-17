@@ -15,6 +15,7 @@ export type OrientadorOS = {
 };
 
 export type DadosOS = {
+  numero?: string;
   data_emissao: string;
   ipm: string | null;
   remetente: string | null;
@@ -217,8 +218,8 @@ export async function criarOrdem(dados: DadosOS) {
       .from("ordens_servico")
       .insert({
         ...camposOrdem(dados),
-        // o número é gerado pelo banco (formato 001/2026)
-        numero: "",
+        // O banco normaliza números manuais e mantém o contador anual consistente.
+        numero: dados.numero?.trim() ?? "",
         criado_por: userData.user?.id ?? null,
       })
       .select("id, numero")
@@ -227,6 +228,52 @@ export async function criarOrdem(dados: DadosOS) {
   if (!criada) throw new Error("Não foi possível criar a ordem de serviço.");
   await sincronizarFilhos(criada.id, dados);
   return criada;
+}
+
+export async function proximoNumeroOS(ano: number) {
+  const [{ data: contador, error: erroContador }, { data: maior, error: erroMaior }] =
+    await Promise.all([
+      supabase.from("os_contador").select("ultimo").eq("ano", ano).maybeSingle(),
+      supabase
+        .from("ordens_servico")
+        .select("sequencial")
+        .eq("ano", ano)
+        .order("sequencial", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+  if (erroContador) throw erroContador;
+  if (erroMaior) throw erroMaior;
+  const proximo = Math.max(contador?.ultimo ?? 0, maior?.sequencial ?? 0) + 1;
+  return `${String(proximo).padStart(3, "0")}/${ano}`;
+}
+
+export function normalizarNumeroOS(valor: string, ano: number) {
+  const limpo = valor.trim();
+  const correspondencia = /^(\d+)(?:\/(\d{4}))?$/.exec(limpo);
+  if (!correspondencia) throw new Error("Use somente o número ou o formato número/ano.");
+  const sequencial = Number(correspondencia[1]);
+  const anoInformado = correspondencia[2] ? Number(correspondencia[2]) : ano;
+  if (!Number.isInteger(sequencial) || sequencial < 1) {
+    throw new Error("O número da O.S. deve ser maior que zero.");
+  }
+  if (anoInformado !== ano) {
+    throw new Error("O ano do número deve corresponder ao ano da data de emissão.");
+  }
+  return { sequencial, ano, numero: `${String(sequencial).padStart(3, "0")}/${ano}` };
+}
+
+export async function numeroOSDisponivel(numero: string, ano: number) {
+  const normalizado = normalizarNumeroOS(numero, ano);
+  const { data, error } = await supabase
+    .from("ordens_servico")
+    .select("id")
+    .eq("ano", ano)
+    .eq("sequencial", normalizado.sequencial)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return { disponivel: !data, numero: normalizado.numero };
 }
 
 export async function atualizarOrdem(id: string, dados: DadosOS) {
