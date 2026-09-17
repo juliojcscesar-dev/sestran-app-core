@@ -167,7 +167,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const salvar = useMutation({
     mutationFn: async () => {
       const dados: DadosOS = {
-        numero: modo === "editar" ? undefined : numero,
+        ...(modo === "editar" ? {} : { numero }),
         data_emissao: dataEmissao,
         ipm: ipm.trim() || null,
         remetente: remetente.trim() || null,
