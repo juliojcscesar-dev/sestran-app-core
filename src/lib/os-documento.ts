@@ -160,7 +160,7 @@ export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) 
   const largura = 210 - margem * 2;
   let y = margem;
 
-  const logo = await carregarLogo(ident.logo_url || LOGO_INSTITUCIONAL);
+  const logo = await carregarLogo(LOGO_INSTITUCIONAL);
   if (logo?.base64) {
     try {
       doc.addImage(logo.base64, "PNG", 72.5, 10, 65, 10);
@@ -367,7 +367,7 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
     });
   }
 
-  const logo = await carregarLogo(ident.logo_url || LOGO_INSTITUCIONAL);
+  const logo = await carregarLogo(LOGO_INSTITUCIONAL);
   const cabecalhoLogo: InstanceType<typeof Paragraph>[] = [];
   if (logo?.arrayBuffer) {
     const tipo = logo.tipo.includes("png") ? "png" : logo.tipo.includes("gif") ? "gif" : "jpg";
