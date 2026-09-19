@@ -46,6 +46,6 @@
 - [x] Integrar a pesquisa oficial de ruas ao mapa e ao percurso das Ordens de Serviço
 
 ## Ajustes de navegação e painel (solicitado 19/09)
-- [ ] Ocultar Solicitantes, Escolas e Ruas e Bairros do menu lateral
-- [ ] Remover os indicadores de Solicitantes e Escolas do Painel
-- [ ] Preservar os campos internos, tabelas e dados existentes
+- [x] Ocultar Solicitantes, Escolas e Ruas e Bairros do menu lateral
+- [x] Remover os indicadores de Solicitantes e Escolas do Painel
+- [x] Preservar os campos internos, tabelas e dados existentes
