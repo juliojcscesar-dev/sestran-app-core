@@ -6,9 +6,7 @@ import {
   ClipboardList,
   GraduationCap,
   ShieldCheck,
-  School,
   Users,
-  Building2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/useSessao";
@@ -42,8 +40,6 @@ type Indicadores = {
   eventosProximos: number;
   agentesAtivos: number;
   orientadoresAtivos: number;
-  solicitantes: number;
-  escolas: number;
   veiculosPendentes: number;
   acoesPlanejadas: number;
 };
@@ -67,8 +63,6 @@ function Painel() {
         eventosProximos,
         agentesAtivos,
         orientadoresAtivos,
-        solicitantes,
-        escolas,
         veiculosPendentes,
         acoesPlanejadas,
       ] = await Promise.all([
@@ -81,8 +75,6 @@ function Painel() {
         supabase.from("eventos").select("id", cabecalho).gte("data_inicio", agora).then(total),
         supabase.from("agentes").select("id", cabecalho).eq("ativo", true).then(total),
         supabase.from("orientadores").select("id", cabecalho).eq("ativo", true).then(total),
-        supabase.from("solicitantes").select("id", cabecalho).then(total),
-        supabase.from("escolas").select("id", cabecalho).then(total),
         supabase
           .from("veiculos_abandonados")
           .select("id", cabecalho)
@@ -98,8 +90,6 @@ function Painel() {
         eventosProximos,
         agentesAtivos,
         orientadoresAtivos,
-        solicitantes,
-        escolas,
         veiculosPendentes,
         acoesPlanejadas,
       };
@@ -202,18 +192,6 @@ function Painel() {
       valor: indicadores.data?.acoesPlanejadas,
       icone: GraduationCap,
       nota: "Planejadas",
-    },
-    {
-      titulo: "Escolas cadastradas",
-      valor: indicadores.data?.escolas,
-      icone: School,
-      nota: "Rede atendida",
-    },
-    {
-      titulo: "Solicitantes",
-      valor: indicadores.data?.solicitantes,
-      icone: Building2,
-      nota: "Órgãos, empresas e cidadãos",
     },
   ];
 
