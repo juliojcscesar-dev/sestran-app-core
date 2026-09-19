@@ -44,3 +44,8 @@
 - [x] Tela de cadastro e pesquisa de bairros e ruas
 - [x] Aceitar somente dados reais com fonte oficial e data de atualização, sem carga fictícia
 - [x] Integrar a pesquisa oficial de ruas ao mapa e ao percurso das Ordens de Serviço
+
+## Ajustes de navegação e painel (solicitado 19/09)
+- [x] Ocultar Solicitantes, Escolas e Ruas e Bairros do menu lateral
+- [x] Remover os indicadores de Solicitantes e Escolas do Painel
+- [x] Preservar os campos internos, tabelas e dados existentes
