@@ -49,3 +49,5 @@
 - [x] Ocultar Solicitantes, Escolas e Ruas e Bairros do menu lateral
 - [x] Remover os indicadores de Solicitantes e Escolas do Painel
 - [x] Preservar os campos internos, tabelas e dados existentes
+
+- [ ] Recorte personalizado do mapa para documentos da O.S.
