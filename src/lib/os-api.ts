@@ -31,6 +31,7 @@ export type DadosOS = {
   observacoes: string | null;
   status: StatusOS;
   percurso: PercursoMapa | null;
+  mapa_imagem?: string | null;
   servicos: { tipo_servico_id: string; detalhe: string | null }[];
   agentes: AgenteOS[];
   orientadores: OrientadorOS[];
@@ -207,6 +208,7 @@ function camposOrdem(dados: DadosOS) {
     observacoes: dados.observacoes,
     status: dados.status,
     percurso: dados.percurso ? (dados.percurso as unknown as never) : null,
+    mapa_imagem: dados.mapa_imagem !== undefined ? dados.mapa_imagem : null,
   };
 }
 

@@ -16,6 +16,14 @@ export type InterdicaoMapa = {
   geometria: PontoMapa[] | null;
 };
 
+/** Limites geográficos escolhidos para a imagem usada nos documentos da O.S. */
+export type EnquadramentoMapa = {
+  norte: number;
+  sul: number;
+  leste: number;
+  oeste: number;
+};
+
 export const CENTRO_PARANAVAI: [number, number] = [-23.0731, -52.465];
 export const ZOOM_PADRAO = 14;
 

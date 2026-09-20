@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { MapPin, Route as RotaIcone, Search, Trash2, Undo2, Ban, Plus } from "lucide-react";
+import { Ban, Check, Crop, Eye, Loader2, MapPin, Plus, RotateCcw, Route as RotaIcone, Search, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,13 @@ import {
   coordenadaTexto,
   rotuloEtapa,
   type InterdicaoMapa,
+  type EnquadramentoMapa,
   type PercursoMapa,
   type PontoMapa,
 } from "@/lib/mapa";
 import { pesquisarEnderecoOficial } from "@/lib/territorio-api";
 
-type Modo = "navegar" | "percurso" | "ponto" | "interdicao";
+type Modo = "navegar" | "percurso" | "ponto" | "interdicao" | "recorte";
 
 export type MapaPercursoProps = {
   percurso: PercursoMapa;
@@ -26,6 +27,8 @@ export type MapaPercursoProps = {
   permitirInterdicoes?: boolean;
   somenteLeitura?: boolean;
   altura?: number;
+  onMapaImagemChange?: (imagem: string) => void;
+  solicitarRecorte?: number;
 };
 
 function icone(texto: string, cor: string) {
@@ -45,6 +48,8 @@ export default function MapaPercurso({
   permitirInterdicoes = false,
   somenteLeitura = false,
   altura = 420,
+  onMapaImagemChange,
+  solicitarRecorte = 0,
 }: MapaPercursoProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapaRef = useRef<L.Map | null>(null);
@@ -55,6 +60,11 @@ export default function MapaPercurso({
   const [buscando, setBuscando] = useState(false);
   const [sugestoes, setSugestoes] = useState<{ id: string; nome_completo: string; geometria: unknown; bairros: { nome: string } | null }[]>([]);
   const rascunhoRef = useRef<PontoMapa[]>([]);
+  const selecaoRef = useRef<L.Rectangle | null>(null);
+  const inicioRecorteRef = useRef<L.LatLng | null>(null);
+  const [enquadramento, setEnquadramento] = useState<EnquadramentoMapa | null>(null);
+  const [gerandoRecorte, setGerandoRecorte] = useState(false);
+  const [preVisualizacao, setPreVisualizacao] = useState<string | null>(null);
 
   const estadoRef = useRef({ percurso, interdicoes });
   estadoRef.current = { percurso, interdicoes };
@@ -113,7 +123,39 @@ export default function MapaPercurso({
       attribution: "&copy; OpenStreetMap",
     }).addTo(mapa);
     camadaRef.current = L.layerGroup().addTo(mapa);
-    mapa.on("click", (e: L.LeafletMouseEvent) => clicarRef.current(e.latlng.lat, e.latlng.lng));
+    mapa.on("click", (e: L.LeafletMouseEvent) => {
+      if (modoRef.current !== "recorte") clicarRef.current(e.latlng.lat, e.latlng.lng);
+    });
+    mapa.on("mousedown", (e: L.LeafletMouseEvent) => {
+      if (modoRef.current !== "recorte") return;
+      inicioRecorteRef.current = e.latlng;
+      mapa.dragging.disable();
+      selecaoRef.current?.remove();
+      selecaoRef.current = L.rectangle(L.latLngBounds(e.latlng, e.latlng), {
+        color: "#d97706",
+        weight: 3,
+        dashArray: "8 6",
+        fillColor: "#f59e0b",
+        fillOpacity: 0.18,
+      }).addTo(mapa);
+    });
+    mapa.on("mousemove", (e: L.LeafletMouseEvent) => {
+      if (modoRef.current !== "recorte" || !inicioRecorteRef.current) return;
+      selecaoRef.current?.setBounds(L.latLngBounds(inicioRecorteRef.current, e.latlng));
+    });
+    mapa.on("mouseup", (e: L.LeafletMouseEvent) => {
+      if (modoRef.current !== "recorte" || !inicioRecorteRef.current) return;
+      const limites = L.latLngBounds(inicioRecorteRef.current, e.latlng);
+      inicioRecorteRef.current = null;
+      mapa.dragging.enable();
+      if (!limites.isValid() || limites.getNorth() === limites.getSouth()) return;
+      setEnquadramento({
+        norte: limites.getNorth(),
+        sul: limites.getSouth(),
+        leste: limites.getEast(),
+        oeste: limites.getWest(),
+      });
+    });
     mapa.on("moveend", () => {
       if (leituraRef.current) return;
       const c = mapa.getCenter();
@@ -130,6 +172,10 @@ export default function MapaPercurso({
       setPronto(false);
     };
   }, []);
+
+  useEffect(() => {
+    if (solicitarRecorte > 0 && !somenteLeitura) trocarModo("recorte");
+  }, [solicitarRecorte, somenteLeitura]);
 
 
   // redesenha marcadores, trajeto e interdições
@@ -213,6 +259,44 @@ export default function MapaPercurso({
     if (containerRef.current) {
       containerRef.current.style.cursor = valor === "navegar" ? "" : "crosshair";
     }
+    if (valor !== "recorte") {
+      inicioRecorteRef.current = null;
+      mapaRef.current?.dragging.enable();
+    }
+  }
+
+  function cancelarRecorte() {
+    selecaoRef.current?.remove();
+    selecaoRef.current = null;
+    setEnquadramento(null);
+    setPreVisualizacao(null);
+    modoRef.current = "navegar";
+    setModo("navegar");
+    mapaRef.current?.dragging.enable();
+    if (containerRef.current) containerRef.current.style.cursor = "";
+  }
+
+  async function gerarRecorte(confirmar: boolean) {
+    if (!enquadramento) {
+      toast.error("Desenhe um retângulo sobre o mapa para definir o recorte.");
+      return;
+    }
+    setGerandoRecorte(true);
+    try {
+      const { gerarImagemMapa } = await import("@/lib/mapa-imagem");
+      const imagem = await gerarImagemMapa(percurso, interdicoes, enquadramento);
+      if (!imagem) throw new Error("A captura não pôde ser gerada.");
+      setPreVisualizacao(imagem);
+      if (confirmar) {
+        onMapaImagemChange?.(imagem);
+        toast.success("Recorte do mapa definido para a O.S.");
+        cancelarRecorte();
+      }
+    } catch (erro) {
+      toast.error(erro instanceof Error ? erro.message : "Não foi possível gerar o recorte.");
+    } finally {
+      setGerandoRecorte(false);
+    }
   }
 
   async function pesquisar(evento?: { preventDefault: () => void }) {
@@ -287,6 +371,17 @@ export default function MapaPercurso({
               Marcar rua interditada
             </Button>
           )}
+          {onMapaImagemChange && (
+            <Button
+              type="button"
+              size="sm"
+              variant={modo === "recorte" ? "default" : "outline"}
+              onClick={() => trocarModo("recorte")}
+            >
+              <Crop className="mr-2 h-4 w-4" aria-hidden="true" />
+              Recortar área para O.S.
+            </Button>
+          )}
           <Button
             type="button"
             size="sm"
@@ -342,6 +437,31 @@ export default function MapaPercurso({
         role="application"
         aria-label="Mapa do percurso da ordem de serviço"
       />
+
+      {modo === "recorte" && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+          <p className="mr-auto text-sm text-foreground">
+            Clique e arraste no mapa para desenhar a área do documento.
+          </p>
+          <Button type="button" size="sm" variant="outline" disabled={!enquadramento || gerandoRecorte} onClick={() => void gerarRecorte(false)}>
+            {gerandoRecorte ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
+            Pré-visualizar
+          </Button>
+          <Button type="button" size="sm" disabled={!enquadramento || gerandoRecorte} onClick={() => void gerarRecorte(true)}>
+            <Check className="mr-2 h-4 w-4" /> Confirmar recorte
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={cancelarRecorte}>
+            <RotateCcw className="mr-2 h-4 w-4" /> Redefinir / Cancelar
+          </Button>
+        </div>
+      )}
+
+      {preVisualizacao && modo === "recorte" && (
+        <div className="overflow-hidden rounded-md border bg-muted/20 p-2">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Pré-visualização do recorte</p>
+          <img src={preVisualizacao} alt="Pré-visualização do recorte do mapa" className="aspect-[45/26] w-full object-contain" />
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
