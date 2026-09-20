@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Crop, Loader2, RotateCcw, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -126,6 +126,10 @@ export function FormularioOS({ modo, inicial, id }: Props) {
       geometria: i.geometria,
     })),
   );
+  const [mapaImagem, setMapaImagem] = useState<string | null>(
+    typeof o?.["mapa_imagem"] === "string" ? (o["mapa_imagem"] as string) : null,
+  );
+  const [solicitarRecorte, setSolicitarRecorte] = useState(0);
   const [erros, setErros] = useState<Record<string, string>>({});
 
 
@@ -183,6 +187,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         observacoes: observacoes.trim() || null,
         status,
         percurso,
+        mapa_imagem: mapaImagem,
         interdicoes,
         servicos: servicos.map((tipo_servico_id) => ({ tipo_servico_id, detalhe: null })),
 
@@ -684,7 +689,29 @@ export function FormularioOS({ modo, inicial, id }: Props) {
             interdicoes={interdicoes}
             onInterdicoesChange={setInterdicoes}
             permitirInterdicoes={temInterdicao}
+            onMapaImagemChange={setMapaImagem}
+            solicitarRecorte={solicitarRecorte}
           />
+          {mapaImagem && (
+            <div className="mt-4 grid gap-4 rounded-md border bg-muted/20 p-4 md:grid-cols-[240px_1fr]">
+              <img
+                src={mapaImagem}
+                alt="Recorte do mapa definido para o documento da O.S."
+                className="aspect-[45/26] w-full rounded-sm border object-cover"
+              />
+              <div className="flex flex-col justify-center gap-3">
+                <p className="text-sm font-medium">Recorte do mapa definido para o documento da O.S.</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => setSolicitarRecorte((valor) => valor + 1)}>
+                    <Crop className="mr-2 h-4 w-4" /> Alterar recorte
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setMapaImagem(null)}>
+                    <RotateCcw className="mr-2 h-4 w-4" /> Restaurar enquadramento automático
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           {!temInterdicao && (
             <p className="mt-2 text-xs text-muted-foreground">
               Selecione um serviço de interdição para registrar ruas interditadas.

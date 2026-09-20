@@ -3,6 +3,7 @@ import {
   ZOOM_PADRAO,
   percursoVazio,
   type InterdicaoMapa,
+  type EnquadramentoMapa,
   type PercursoMapa,
   type PontoMapa,
 } from "@/lib/mapa";
@@ -55,6 +56,22 @@ function escolherZoom(pontos: PontoMapa[]) {
     if (largura <= LARGURA - MARGEM && altura <= ALTURA - MARGEM) return zoom;
   }
   return ZOOM_MIN;
+}
+
+function escolherZoomEnquadramento(enquadramento: EnquadramentoMapa) {
+  for (let zoom = ZOOM_MAX; zoom >= ZOOM_MIN; zoom--) {
+    const largura = Math.abs(xDeLng(enquadramento.leste, zoom) - xDeLng(enquadramento.oeste, zoom));
+    const altura = Math.abs(yDeLat(enquadramento.sul, zoom) - yDeLat(enquadramento.norte, zoom));
+    if (largura <= LARGURA && altura <= ALTURA) return zoom;
+  }
+  return ZOOM_MIN;
+}
+
+function centroDoEnquadramento(enquadramento: EnquadramentoMapa): [number, number] {
+  return [
+    (enquadramento.norte + enquadramento.sul) / 2,
+    (enquadramento.leste + enquadramento.oeste) / 2,
+  ];
 }
 
 function centroDe(pontos: PontoMapa[]): [number, number] {
@@ -126,13 +143,16 @@ function desenharMarcador(
 export async function gerarImagemMapa(
   percurso: PercursoMapa | null,
   interdicoes: InterdicaoMapa[] = [],
+  enquadramento?: EnquadramentoMapa | null,
 ): Promise<string | null> {
   if (typeof document === "undefined") return null;
   const pontos = pontosDoMapa(percurso, interdicoes);
-  if (!pontos.length || (percursoVazio(percurso) && !pontos.length)) return null;
+  if (!pontos.length && !enquadramento) return null;
 
-  const zoom = escolherZoom(pontos);
-  const [latCentro, lngCentro] = centroDe(pontos);
+  const zoom = enquadramento ? escolherZoomEnquadramento(enquadramento) : escolherZoom(pontos);
+  const [latCentro, lngCentro] = enquadramento
+    ? centroDoEnquadramento(enquadramento)
+    : centroDe(pontos);
   const centroX = xDeLng(lngCentro, zoom);
   const centroY = yDeLat(latCentro, zoom);
   const origemX = centroX - LARGURA / 2;

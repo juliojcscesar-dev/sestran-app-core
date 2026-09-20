@@ -278,6 +278,16 @@ function VisualizarOS() {
           <CardTitle className="text-base">Mapa e percurso</CardTitle>
         </CardHeader>
         <CardContent>
+          {typeof o["mapa_imagem"] === "string" && o["mapa_imagem"].startsWith("data:image") && (
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-medium">Recorte definido para o documento</p>
+              <img
+                src={o["mapa_imagem"]}
+                alt="Recorte do mapa da ordem de serviço"
+                className="aspect-[45/26] w-full rounded-md border object-contain"
+              />
+            </div>
+          )}
           <MapaOS percurso={percurso} interdicoes={dados.interdicoes} somenteLeitura />
         </CardContent>
       </Card>
