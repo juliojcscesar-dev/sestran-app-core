@@ -171,40 +171,69 @@
   }
 }
 
+.os-paper {
+  --os-blue: #0b5d8f;
+  --os-blue-dark: #075783;
+  --os-blue-ink: #083f69;
+  --os-blue-light: #e5f2fb;
+  --os-blue-pale: #f5fbff;
+  --os-blue-border: #8ebddd;
+  --os-line: #9bc9e8;
+  box-sizing: border-box;
+  width: min(210mm, 100%);
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 20mm 8mm 8mm;
+  border: 2px solid var(--os-blue);
+  border-radius: 7px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 2px 14px rgb(0 0 0 / 12%);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+}
+.os-a4-table { width: 100%; border-collapse: collapse; }
+.os-a4-table > thead { display: table-header-group; }
+.os-a4-table > tbody { display: table-row-group; }
+.os-a4-table > tfoot { display: table-footer-group; }
+.os-a4-table > :is(thead, tbody, tfoot) > tr > td { padding: 0; vertical-align: top; }
+.os-doc-header { display: grid; grid-template-columns: minmax(0, 1fr) 55mm; gap: 5mm; align-items: center; margin-bottom: 2mm; }
+.os-doc-logo img { display: block; width: 100%; max-width: 125mm; height: 22mm; object-fit: contain; object-position: left center; }
+.os-doc-ident { padding: 1.5mm 2.5mm; border: 1px solid var(--os-blue-border); border-radius: 7px; background: #eaf5fc; }
+.os-doc-ident > div { display: grid; grid-template-columns: auto 1fr; gap: 2mm; align-items: center; margin: .8mm 0; }
+.os-doc-ident strong, .os-doc-label { color: var(--os-blue-ink); font-weight: 800; }
+.os-doc-ident span { min-height: 4.5mm; border-bottom: 1px solid var(--os-blue); text-align: right; }
+.os-doc-title { margin-bottom: 2mm; padding: 1.8mm 2.5mm; border-radius: 7px; background: linear-gradient(90deg, var(--os-blue-dark), #1677ad); color: #fff; font-size: 1.6em; font-weight: 800; text-align: center; }
+.os-doc-box { margin-bottom: 1.8mm; padding: 1.8mm 2mm; break-inside: avoid; border: 1px solid var(--os-blue-border); border-radius: 7px; background: var(--os-blue-pale); }
+.os-doc-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1mm 2.5mm; }
+.os-doc-inline { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5mm; align-items: center; min-width: 0; }
+.os-doc-full { grid-column: 1 / -1; min-width: 0; }
+.os-doc-line { min-height: 5mm; margin-top: .4mm; padding: .8mm 1.5mm; border: 1px solid var(--os-line); border-radius: 4px; background: #fff; color: #111; overflow-wrap: anywhere; }
+.os-doc-inline .os-doc-line { margin-top: 0; }
+.os-doc-pre { white-space: pre-wrap; }
+.os-doc-date-row { display: grid; grid-column: 1 / -1; grid-template-columns: 1.15fr .8fr 1fr; gap: 2.5mm; }
+.os-agents-panel { margin: .8mm 0 1.8mm; break-inside: avoid; }
+.os-agents-panel table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.os-agents-panel th, .os-agents-panel td { width: 50%; height: 5mm; padding: 1.2mm 1.5mm; border: 1px solid var(--os-line); color: #111; text-align: left; overflow-wrap: anywhere; }
+.os-agents-panel th { background: var(--os-blue-light); color: var(--os-blue-ink); font-weight: 800; text-align: center; }
+.os-photo-box { display: flex; min-height: 45mm; margin: 1.5mm auto; align-items: center; justify-content: center; break-inside: avoid; overflow: hidden; border: 2px dashed var(--os-line); border-radius: 4px; background: #fff; }
+.os-photo-box img { display: block; width: 100%; height: auto; max-height: 105mm; object-fit: contain; }
+.os-signature { padding: 6mm 0 2mm; break-inside: avoid; color: var(--os-blue-ink); text-align: center; }
+.os-signature-line { width: 82mm; margin: 0 auto 1.5mm; border-top: 1px solid var(--os-blue); }
+
+@media (max-width: 900px) {
+  .os-paper { min-height: auto; padding: 12mm 4mm 4mm; }
+  .os-doc-header { grid-template-columns: 1fr; }
+  .os-doc-logo img { object-position: center; }
+  .os-doc-fields, .os-doc-date-row { grid-template-columns: 1fr; }
+}
+
 @media print {
-  @page {
-    size: A4;
-    margin: 12mm 15mm;
-  }
-
-  .cabecalho-os-impressao {
-    display: block !important;
-    text-align: center;
-    border-bottom: 1px solid currentColor;
-    padding-bottom: 4mm;
-    margin-bottom: 6mm;
-  }
-
-  .cabecalho-os-impressao img {
-    display: block;
-    width: 65mm;
-    height: auto;
-    max-height: 10mm;
-    object-fit: contain;
-    margin: 0 auto 4mm;
-  }
-
-  .cabecalho-os-impressao h1 {
-    font-size: 14pt;
-    font-weight: 700;
-  }
-
-  .os-impressao {
-    max-width: 180mm;
-    margin: 0 auto;
-  }
-
-  .os-impressao > * {
-    break-inside: avoid;
-  }
+  @page { size: A4 portrait; margin: 20mm 8mm 15mm; }
+  html, body { width: 210mm; margin: 0; background: #fff; }
+  body * { visibility: hidden; }
+  .os-paper, .os-paper * { visibility: visible; }
+  .os-paper { position: absolute; inset: 0; width: 194mm; min-height: auto; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
+  .os-doc-header { break-inside: avoid; }
+  .os-doc-box, .os-agents-panel, .os-photo-box, .os-signature { break-inside: avoid; }
 }

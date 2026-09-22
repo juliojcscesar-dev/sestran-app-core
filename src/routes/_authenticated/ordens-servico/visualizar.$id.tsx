@@ -23,7 +23,7 @@ import {
   STATUS_OS_CLASSE,
   STATUS_OS_LABEL,
   formatarDataBr,
-  periodoHorario,
+  formatarHora,
   type StatusOS,
 } from "@/lib/os";
 import { lerPercurso } from "@/lib/mapa";
@@ -51,11 +51,11 @@ export const Route = createFileRoute("/_authenticated/ordens-servico/visualizar/
   component: VisualizarOS,
 });
 
-function Campo({ rotulo, valor }: { rotulo: string; valor: string }) {
+function LinhaDocumento({ rotulo, valor, inteira = false }: { rotulo: string; valor: string; inteira?: boolean }) {
   return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{rotulo}</p>
-      <p className="text-sm">{valor || "—"}</p>
+    <div className={`os-doc-inline${inteira ? " os-doc-full" : ""}`}>
+      <span className="os-doc-label">{rotulo}:</span>
+      <div className="os-doc-line">{valor || "—"}</div>
     </div>
   );
 }
@@ -107,13 +107,25 @@ function VisualizarOS() {
   };
   const status = (o["status"] as StatusOS) ?? "AGENDADA";
   const percurso = lerPercurso(o["percurso"]);
+  const servicos = dados.servicos
+    .map((s) => `${s.tipos_servico?.nome ?? "Serviço"}${s.detalhe ? ` — ${s.detalhe}` : ""}`)
+    .join("\n");
+  const percursoTexto = [
+    String(o["trajeto"] ?? "").trim(),
+    percurso.pontos.length ? percurso.pontos.map((p, i) => `${i + 1}. ${p.nome}`).join(" → ") : "",
+    ...(dados.interdicoes ?? []).map((item) =>
+      [item.rua, item.trecho_inicio && `de ${item.trecho_inicio}`, item.trecho_fim && `até ${item.trecho_fim}`, item.observacao]
+        .filter(Boolean)
+        .join(" — "),
+    ),
+  ].filter(Boolean).join("\n");
+  const observacoes = String(o["observacoes"] ?? "").trim();
+  const mapaImagem = typeof o["mapa_imagem"] === "string" && o["mapa_imagem"].startsWith("data:image")
+    ? o["mapa_imagem"]
+    : null;
 
   return (
-    <div className="os-impressao space-y-6">
-      <div className="cabecalho-os-impressao hidden">
-        <img src="/assets/logo-header.png" alt="Prefeitura de Paranavaí — Secretaria Municipal de Segurança e Trânsito" />
-        <h1>ORDEM DE SERVIÇO Nº {String(o["numero"] ?? "")}</h1>
-      </div>
+    <div className="os-view space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
         <div>
           <h1 className="font-display text-2xl font-semibold">
@@ -188,117 +200,58 @@ function VisualizarOS() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Identificação</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <Campo rotulo="Número" valor={String(o["numero"] ?? "")} />
-          <Campo rotulo="Data de emissão" valor={formatarDataBr(o["data_emissao"] as string)} />
-          <Campo rotulo="IPM" valor={String(o["ipm"] ?? "")} />
-          <Campo rotulo="De" valor={String(o["remetente"] ?? "")} />
-          <Campo rotulo="Para" valor={String(o["destinatario"] ?? "")} />
-          <Campo rotulo="Situação" valor={STATUS_OS_LABEL[status] ?? status} />
-        </CardContent>
-      </Card>
+      <article className="os-paper" aria-label={`Ordem de Serviço ${String(o["numero"] ?? "")}`}>
+        <table className="os-a4-table">
+          <thead>
+            <tr><td>
+              <div className="os-doc-header">
+                <div className="os-doc-logo"><img src="/assets/logo-header.png" alt="Prefeitura de Paranavaí — Secretaria Municipal de Segurança e Trânsito" /></div>
+                <div className="os-doc-ident">
+                  <div><strong>Nº:</strong><span>{String(o["numero"] ?? "—")}</span></div>
+                  <div><strong>Data:</strong><span>{formatarDataBr(o["data_emissao"] as string)}</span></div>
+                  <div><strong>IPM:</strong><span>{String(o["ipm"] ?? "") || "—"}</span></div>
+                </div>
+              </div>
+              <div className="os-doc-title">ORDEM DE SERVIÇO</div>
+            </td></tr>
+          </thead>
+          <tbody><tr><td>
+            <section className="os-doc-box os-doc-fields">
+              <LinhaDocumento rotulo="De" valor={String(o["remetente"] ?? "")} />
+              <LinhaDocumento rotulo="Para" valor={String(o["destinatario"] ?? "")} />
+              <LinhaDocumento rotulo="Natureza" valor={String(o["natureza"] ?? "")} />
+              <LinhaDocumento rotulo="Solicitante" valor={o.solicitantes?.nome ?? ""} />
+              <LinhaDocumento rotulo="Local" valor={String(o["local"] ?? "")} inteira />
+              <div className="os-doc-date-row">
+                <div><span className="os-doc-label">Data do Serviço:</span><div className="os-doc-line">{formatarDataBr(o["data_servico"] as string)}</div></div>
+                <div><span className="os-doc-label">Horário:</span><div className="os-doc-line">{formatarHora(o["hora_inicio"] as string)}</div></div>
+                <div><span className="os-doc-label">Encerramento:</span><div className="os-doc-line">{formatarHora(o["hora_fim"] as string)}</div></div>
+              </div>
+              <div className="os-doc-full"><span className="os-doc-label">Evento:</span><div className="os-doc-line">{o.eventos?.titulo ?? "—"}</div></div>
+            </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Dados do serviço</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <div className="md:col-span-3">
-            <Campo rotulo="Natureza" valor={String(o["natureza"] ?? "")} />
-          </div>
-          <Campo rotulo="Solicitante" valor={o.solicitantes?.nome ?? ""} />
-          <Campo rotulo="Evento" valor={o.eventos?.titulo ?? ""} />
-          <Campo rotulo="Local" valor={String(o["local"] ?? "")} />
-          <Campo rotulo="Data" valor={formatarDataBr(o["data_servico"] as string)} />
-          <Campo
-            rotulo="Horário"
-            valor={periodoHorario(o["hora_inicio"] as string, o["hora_fim"] as string)}
-          />
-          <div className="md:col-span-3">
-            <Campo rotulo="Trajeto / Percurso" valor={String(o["trajeto"] ?? "")} />
-          </div>
-          <div className="md:col-span-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Serviços</p>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {dados.servicos.length === 0 && <span className="text-sm">—</span>}
-              {dados.servicos.map((s, i) => (
-                <Badge key={i} variant="secondary">
-                  {s.tipos_servico?.nome ?? "Serviço"}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <section className="os-doc-box"><span className="os-doc-label">1 - Serviço</span><div className="os-doc-line os-doc-pre">{servicos || "—"}</div></section>
+            {percursoTexto && <section className="os-doc-box"><span className="os-doc-label">2 - Percurso</span><div className="os-doc-line os-doc-pre">{percursoTexto}</div></section>}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Equipe designada</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
-          <div>
-            <p className="mb-2 text-sm font-medium">Agentes de trânsito</p>
-            {dados.agentes.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum agente designado.</p>
-            )}
-            <ul className="space-y-1 text-sm">
-              {dados.agentes.map((a, i) => (
-                <li key={i}>
-                  {a.agentes?.nome ?? "Agente"}
-                  {a.funcao ? ` — ${a.funcao}` : ""}
-                  {a.hora_chegada ? ` — chegada ${String(a.hora_chegada).slice(0, 5)}` : ""}
-                  {a.observacao ? ` (${a.observacao})` : ""}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="mb-2 text-sm font-medium">Orientadores</p>
-            {dados.orientadores.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum orientador designado.</p>
-            )}
-            <ul className="space-y-1 text-sm">
-              {dados.orientadores.map((r, i) => (
-                <li key={i}>
-                  {r.orientadores?.nome ?? "Orientador"}
-                  {r.observacao ? ` (${r.observacao})` : ""}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+            <section className="os-agents-panel">
+              <table><thead><tr><th>Agentes de Trânsito</th><th>Horário no Local</th></tr></thead>
+                <tbody>
+                  {dados.agentes.length === 0 && <tr><td>—</td><td>—</td></tr>}
+                  {dados.agentes.map((a, i) => <tr key={`a-${i}`}><td>{a.agentes?.nome ?? "Agente"}{a.agentes?.matricula ? ` — Matrícula ${a.agentes.matricula}` : ""}</td><td>{[a.hora_chegada && formatarHora(a.hora_chegada), a.funcao, a.observacao].filter(Boolean).join(" — ") || "—"}</td></tr>)}
+                  {dados.orientadores.map((r, i) => <tr key={`o-${i}`}><td>{r.orientadores?.nome ?? "Orientador"}{r.orientadores?.matricula ? ` — Matrícula ${r.orientadores.matricula}` : ""} <strong>(Orientador)</strong></td><td>{r.observacao || "—"}</td></tr>)}
+                </tbody>
+              </table>
+            </section>
+            {observacoes && <section className="os-doc-box"><span className="os-doc-label">Observações</span><div className="os-doc-line os-doc-pre">{observacoes}</div></section>}
+            {mapaImagem && <figure className="os-photo-box"><img src={mapaImagem} alt="Mapa e percurso da ordem de serviço" /></figure>}
+          </td></tr></tbody>
+          <tfoot><tr><td><div className="os-signature"><div className="os-signature-line" /><div>Carlos Hideki de Souza Fujimori</div><strong>Diretor de Trânsito</strong></div></td></tr></tfoot>
+        </table>
+      </article>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Mapa e percurso</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {typeof o["mapa_imagem"] === "string" && o["mapa_imagem"].startsWith("data:image") && (
-            <div className="mb-4">
-              <p className="mb-2 text-sm font-medium">Recorte definido para o documento</p>
-              <img
-                src={o["mapa_imagem"]}
-                alt="Recorte do mapa da ordem de serviço"
-                className="aspect-[45/26] w-full rounded-md border object-contain"
-              />
-            </div>
-          )}
-          <MapaOS percurso={percurso} interdicoes={dados.interdicoes} somenteLeitura />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Observações</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="whitespace-pre-wrap text-sm">{String(o["observacoes"] ?? "") || "—"}</p>
-        </CardContent>
+      <Card className="print:hidden">
+        <CardHeader><CardTitle className="text-base">Mapa interativo</CardTitle></CardHeader>
+        <CardContent><MapaOS percurso={percurso} interdicoes={dados.interdicoes} somenteLeitura /></CardContent>
       </Card>
 
       <Card className="print:hidden">

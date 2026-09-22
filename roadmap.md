@@ -51,3 +51,8 @@
 - [x] Preservar os campos internos, tabelas e dados existentes
 
 - [x] Recorte personalizado do mapa para documentos da O.S.
+
+## Padronização documental da O.S. (solicitado 22/09)
+- [ ] Aplicar o modelo institucional anexado na visualização e impressão A4
+- [ ] Aplicar o mesmo padrão visual no PDF e no DOCX
+- [ ] Validar tela, impressão e arquivos exportados sem regressões
