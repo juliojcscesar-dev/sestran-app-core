@@ -420,6 +420,8 @@ export async function obterConfiguracoes() {
     orgao: mapa["orgao"] || "Prefeitura Municipal de Paranavaí",
     secretaria: mapa["secretaria"] || "Secretaria Municipal de Trânsito — SESTRAN",
     logo_url: mapa["logo_url"] || "",
+    autoridade: mapa["autoridade_transito"] || "Carlos Hideki de Souza Fujimori",
+    cargo_autoridade: mapa["cargo_autoridade"] || "Diretor de Trânsito",
   };
 }
 
