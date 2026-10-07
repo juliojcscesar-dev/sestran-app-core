@@ -167,7 +167,7 @@ function camposDocumento(dados: OrdemCompleta) {
 function textosDocumento(dados: OrdemCompleta) {
   return {
     servico: dados.servicos.map((s) => [s.tipos_servico?.nome, s.detalhe].filter(Boolean).join(" — ")).join("\n"),
-    percurso: [dados.ordem.trajeto, descreverPercurso(lerPercurso(dados.ordem.percurso)), ...descreverInterdicoes(dados.interdicoes)].filter(Boolean).join("\n"),
+    percurso: [dados.ordem.trajeto, descreverPercurso(lerPercurso(dados.ordem.percurso)).replaceAll("→", " até "), ...descreverInterdicoes(dados.interdicoes)].filter(Boolean).join("\n"),
   };
 }
 export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) {
@@ -232,7 +232,16 @@ export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) 
     } y += 2;
   }
   if (conteudo.observacoes !== "—") caixa(conteudo.observacoes, "Observações");
-  if (mapa) { const props = doc.getImageProperties(mapa); const h = Math.min(105, largura * props.height / props.width); garantir(h + 4); doc.setDrawColor(PALETA.borda); doc.rect(x, y, largura, h); const w = h * props.width / props.height; doc.addImage(mapa, "PNG", x + (largura - w) / 2, y, w, h); }
+  if (mapa) {
+    const props = doc.getImageProperties(mapa);
+    const ideal = Math.min(105, largura * props.height / props.width);
+    const disponivel = 265 - y;
+    const h = disponivel >= 65 ? Math.min(ideal, disponivel) : ideal;
+    garantir(h + 4);
+    doc.setDrawColor(PALETA.borda); doc.rect(x, y, largura, h);
+    const w = h * props.width / props.height;
+    doc.addImage(mapa, "PNG", x + (largura - w) / 2, y, w, h);
+  }
   baixar(doc.output("blob"), nomeArquivo(conteudo.numero, "pdf"));
 }
 

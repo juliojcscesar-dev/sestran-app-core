@@ -247,5 +247,10 @@
   .os-paper, .os-paper * { visibility: visible; }
   .os-paper { position: absolute; inset: 0; width: 194mm; min-height: auto; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
   .os-doc-header { break-inside: avoid; }
+  .os-doc-header { display: grid; grid-template-columns: minmax(0, 1fr) 55mm; }
+  .os-doc-logo img { object-position: left center; }
+  .os-doc-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .os-doc-date-row { grid-template-columns: 1.15fr .8fr 1fr; }
+  .os-paper { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .os-doc-box, .os-agents-panel, .os-photo-box, .os-signature { break-inside: avoid; }
 }
