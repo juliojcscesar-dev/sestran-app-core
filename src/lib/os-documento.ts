@@ -246,7 +246,7 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
   const cell = (children: InstanceType<typeof Paragraph>[], w: number, fill = "FFFFFF") => new TableCell({ width: { size: w, type: WidthType.DXA }, borders, shading: { fill }, margins: { top: 90, bottom: 90, left: 100, right: 100 }, children });
   function tabela(linhas: { valores: string[]; titulo?: boolean }[]) {
     const colunas = linhas[0]?.valores.length ?? 1;
-    return new Table({ width: { size: width, type: WidthType.DXA }, layout: TableLayoutType.FIXED, columnWidths: Array(colunas).fill(Math.floor(width / colunas)), rows: linhas.map((l) => new TableRow({ tableHeader: l.titulo, cantSplit: true, children: l.valores.map((v) => cell(v.split("\n").map((t) => p(t, l.titulo)), Math.floor(width / colunas), l.titulo ? "E5F2FB" : "F5FBFF")) })) });
+    return new Table({ width: { size: width, type: WidthType.DXA }, layout: TableLayoutType.FIXED, columnWidths: Array(colunas).fill(Math.floor(width / colunas)), rows: linhas.map((l) => new TableRow({ tableHeader: Boolean(l.titulo), cantSplit: true, children: l.valores.map((v) => cell(v.split("\n").map((t) => p(t, l.titulo)), Math.floor(width / colunas), l.titulo ? "E5F2FB" : "F5FBFF")) })) });
   }
   const espaco = () => new Paragraph({ spacing: { after: 70 }, children: [] });
   const headLogo = new Paragraph({ children: logo ? [new ImageRun({ type: "png", data: logo.arrayBuffer, transformation: { width: 435, height: 66 } })] : [new TextRun(ident.orgao)] });
