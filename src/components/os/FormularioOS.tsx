@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Crop, Loader2, RotateCcw, Plus, Trash2 } from "lucide-react";
+import { Crop, Loader2, RotateCcw, Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { SeletorRegistro } from "@/components/os/SeletorRegistro";
 import { MapaOS } from "@/components/os/MapaOS";
+import { EditorMapaImagem } from "@/components/os/EditorMapaImagem";
+import { useSessao, temPapel } from "@/hooks/useSessao";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import {
   lerPercurso,
@@ -34,6 +37,9 @@ import {
   criarOrientador,
   criarSolicitante,
   criarTipoServico,
+  criarEvento,
+  editarTipoServico,
+  excluirTipoServico,
   listarAgentes,
   listarEventos,
   listarLocais,
@@ -72,6 +78,8 @@ const hoje = () => new Date().toISOString().slice(0, 10);
 export function FormularioOS({ modo, inicial, id }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: sessao } = useSessao();
+  const gestor = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR"]);
   const o = inicial?.ordem as (Record<string, unknown> & { status?: string }) | undefined;
   const duplicando = modo === "duplicar";
 
@@ -100,6 +108,12 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const [servicos, setServicos] = useState<string[]>(
     (inicial?.servicos ?? []).map((s) => s.tipo_servico_id),
   );
+  const [detalhesServicos, setDetalhesServicos] = useState<Record<string, string>>(
+    Object.fromEntries((inicial?.servicos ?? []).map((s) => [s.tipo_servico_id, s.detalhe ?? ""])),
+  );
+  const [tipoEditando, setTipoEditando] = useState<string | null>(null);
+  const [nomeTipoEditando, setNomeTipoEditando] = useState("");
+  const [tipoExcluindo, setTipoExcluindo] = useState<{ id: string; nome: string } | null>(null);
   const [agentes, setAgentes] = useState<LinhaAgente[]>(
     (inicial?.agentes ?? []).map((a) => ({
       agente_id: a.agente_id,
@@ -130,6 +144,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
     typeof o?.["mapa_imagem"] === "string" ? (o["mapa_imagem"] as string) : null,
   );
   const [solicitarRecorte, setSolicitarRecorte] = useState(0);
+  const [editandoImagem, setEditandoImagem] = useState(false);
   const [erros, setErros] = useState<Record<string, string>>({});
 
 
@@ -166,6 +181,22 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   );
 
   const [novoTipo, setNovoTipo] = useState("");
+  const tiposDisponiveis = [
+    ...(tiposQ.data ?? []),
+    ...(inicial?.servicos ?? []).filter((s) => servicos.includes(s.tipo_servico_id) && !(tiposQ.data ?? []).some((t) => t.id === s.tipo_servico_id))
+      .map((s) => ({ id: s.tipo_servico_id, nome: s.tipos_servico?.nome ?? "Serviço" })),
+  ];
+  const gerenciarTipo = useMutation({
+    mutationFn: async (acao: { id: string; nome?: string }) => acao.nome !== undefined
+      ? editarTipoServico(acao.id, acao.nome) : excluirTipoServico(acao.id),
+    onSuccess: async (_, acao) => {
+      if (acao.nome === undefined) setServicos((atuais) => atuais.filter((id) => id !== acao.id));
+      setTipoEditando(null); setTipoExcluindo(null);
+      await queryClient.invalidateQueries({ queryKey: ["tipos-servico"] });
+      toast.success(acao.nome === undefined ? "Serviço retirado do catálogo ativo." : "Serviço atualizado.");
+    },
+    onError: () => toast.error("Não foi possível alterar o serviço. Verifique sua permissão."),
+  });
 
 
   const salvar = useMutation({
@@ -189,7 +220,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         percurso,
         mapa_imagem: mapaImagem,
         interdicoes,
-        servicos: servicos.map((tipo_servico_id) => ({ tipo_servico_id, detalhe: null })),
+        servicos: servicos.map((tipo_servico_id) => ({ tipo_servico_id, detalhe: detalhesServicos[tipo_servico_id]?.trim() || null })),
 
         agentes: agentes
           .filter((a) => a.agente_id)
@@ -412,6 +443,12 @@ export function FormularioOS({ modo, inicial, id }: Props) {
               valor={eventoId}
               onChange={setEventoId}
               placeholder="Pesquisar evento"
+              podeCriar
+              onCriar={async (titulo) => {
+                const novo = await criarEvento(titulo, dataServico, local.trim() || null);
+                await queryClient.invalidateQueries({ queryKey: ["eventos"] });
+                return { id: novo.id, rotulo: novo.titulo };
+              }}
             />
           </div>
           <div>
@@ -466,12 +503,14 @@ export function FormularioOS({ modo, inicial, id }: Props) {
           <div className="md:col-span-2">
             <Label>Serviços *</Label>
             <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {(tiposQ.data ?? []).map((tipo) => (
-                <label
+              {tiposDisponiveis.map((tipo) => (
+                <div
                   key={tipo.id}
-                  className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                  className="space-y-2 rounded-md border px-3 py-2 text-sm"
                 >
+                  <div className="flex items-center gap-2">
                   <Checkbox
+                    aria-label={`Selecionar ${tipo.nome}`}
                     checked={servicos.includes(tipo.id)}
                     onCheckedChange={(marcado) =>
                       setServicos((atual) =>
@@ -479,12 +518,28 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                       )
                     }
                   />
-                  {tipo.nome}
-                </label>
+                  <span className="min-w-0 flex-1 break-words">{tipo.nome}</span>
+                  {gestor && <>
+                    <Button type="button" size="icon" variant="ghost" aria-label={`Editar serviço ${tipo.nome}`} title="Editar serviço" onClick={() => { setTipoEditando(tipo.id); setNomeTipoEditando(tipo.nome); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button type="button" size="icon" variant="ghost" aria-label={`Excluir serviço ${tipo.nome}`} title="Excluir do catálogo" onClick={() => setTipoExcluindo(tipo)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </>}
+                  </div>
+                  {tipoEditando === tipo.id && <div className="flex items-center gap-1">
+                    <Input aria-label="Nome do serviço" value={nomeTipoEditando} onChange={(e) => setNomeTipoEditando(e.target.value)} />
+                    <Button type="button" size="icon" variant="outline" aria-label="Salvar nome do serviço" disabled={!nomeTipoEditando.trim() || gerenciarTipo.isPending} onClick={() => gerenciarTipo.mutate({ id: tipo.id, nome: nomeTipoEditando.trim() })}><Check className="h-4 w-4" /></Button>
+                    <Button type="button" size="icon" variant="ghost" aria-label="Cancelar edição do serviço" onClick={() => setTipoEditando(null)}><X className="h-4 w-4" /></Button>
+                  </div>}
+                </div>
               ))}
             </div>
             {erroTexto("servicos")}
-            <div className="mt-3 flex gap-2">
+            {servicos.map((id) => <div key={id} className="mt-3 flex items-start gap-2">
+              <div className="flex-1"><Label htmlFor={`detalhe-${id}`}>{tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"}</Label>
+                <Textarea id={`detalhe-${id}`} rows={2} placeholder="Detalhamento do serviço" value={detalhesServicos[id] ?? ""} onChange={(e) => setDetalhesServicos((atuais) => ({ ...atuais, [id]: e.target.value }))} />
+              </div>
+              <Button type="button" size="icon" variant="ghost" title="Remover desta O.S." aria-label={`Remover serviço da O.S. ${tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"}`} onClick={() => setServicos((atuais) => atuais.filter((s) => s !== id))}><Trash2 className="h-4 w-4" /></Button>
+            </div>)}
+            {gestor && <div className="mt-3 flex gap-2">
               <Input
                 value={novoTipo}
                 onChange={(e) => setNovoTipo(e.target.value)}
@@ -510,7 +565,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                 <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                 Adicionar tipo
               </Button>
-            </div>
+            </div>}
           </div>
           <div className="md:col-span-2">
             <Label htmlFor="trajeto">Trajeto / Percurso</Label>
@@ -702,6 +757,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
               <div className="flex flex-col justify-center gap-3">
                 <p className="text-sm font-medium">Recorte do mapa definido para o documento da O.S.</p>
                 <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => setEditandoImagem(true)}><Pencil className="mr-2 h-4 w-4" />Editar imagem</Button>
                   <Button type="button" size="sm" variant="outline" onClick={() => setSolicitarRecorte((valor) => valor + 1)}>
                     <Crop className="mr-2 h-4 w-4" /> Alterar recorte
                   </Button>
@@ -712,6 +768,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
               </div>
             </div>
           )}
+          {mapaImagem && editandoImagem && <EditorMapaImagem imagem={mapaImagem} onConfirmar={(imagem) => { setMapaImagem(imagem); setEditandoImagem(false); }} onCancelar={() => setEditandoImagem(false)} />}
           {!temInterdicao && (
             <p className="mt-2 text-xs text-muted-foreground">
               Selecione um serviço de interdição para registrar ruas interditadas.
@@ -749,6 +806,14 @@ export function FormularioOS({ modo, inicial, id }: Props) {
           Esta é uma cópia editável. O novo número será gerado somente ao salvar.
         </p>
       )}
+      <AlertDialog open={Boolean(tipoExcluindo)} onOpenChange={(aberto) => { if (!aberto && !gerenciarTipo.isPending) setTipoExcluindo(null); }}>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir serviço</AlertDialogTitle>
+          <AlertDialogDescription>Retirar “{tipoExcluindo?.nome}” dos serviços disponíveis? As ordens já emitidas manterão esse serviço.</AlertDialogDescription>
+        </AlertDialogHeader><AlertDialogFooter>
+          <AlertDialogCancel disabled={gerenciarTipo.isPending}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={gerenciarTipo.isPending} onClick={(e) => { e.preventDefault(); if (tipoExcluindo) gerenciarTipo.mutate({ id: tipoExcluindo.id }); }}>Confirmar exclusão</AlertDialogAction>
+        </AlertDialogFooter></AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }

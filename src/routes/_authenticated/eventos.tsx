@@ -4,6 +4,8 @@ import { EmBreve } from "@/components/EmBreve";
 export const Route = createFileRoute("/_authenticated/eventos")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Eventos | SESTRAN Paranavaí" },
       { name: "description", content: "Cadastro e acompanhamento dos eventos que exigem apoio de trânsito." },
       { property: "og:title", content: "Eventos | SESTRAN Paranavaí" },

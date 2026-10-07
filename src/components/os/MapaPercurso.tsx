@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { Ban, Check, Crop, Eye, Loader2, MapPin, Plus, RotateCcw, Route as RotaIcone, Search, Trash2, Undo2 } from "lucide-react";
+import { Ban, Check, Crop, Eye, Loader2, MapPin, Plus, RotateCcw, Route as RotaIcone, Search, Trash2, Undo2, Redo2, Hand, LocateFixed } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   type PontoMapa,
 } from "@/lib/mapa";
 import { pesquisarEnderecoOficial } from "@/lib/territorio-api";
+import { EditorMapaImagem } from "@/components/os/EditorMapaImagem";
 
 type Modo = "navegar" | "percurso" | "ponto" | "interdicao" | "recorte";
 
@@ -65,6 +66,31 @@ export default function MapaPercurso({
   const [enquadramento, setEnquadramento] = useState<EnquadramentoMapa | null>(null);
   const [gerandoRecorte, setGerandoRecorte] = useState(false);
   const [preVisualizacao, setPreVisualizacao] = useState<string | null>(null);
+  const [resultados, setResultados] = useState<{ lat: string; lon: string; display_name: string }[]>([]);
+  const historicoRef = useRef<{ percurso: PercursoMapa; interdicoes: InterdicaoMapa[] }[]>([]);
+  const indiceHistoricoRef = useRef(-1);
+  const restaurandoRef = useRef(false);
+  const [indiceHistorico, setIndiceHistorico] = useState(-1);
+  const assinatura = JSON.stringify({ pontos: percurso.pontos, marcadores: percurso.marcadores, estilo: percurso.estilo, interdicoes });
+  useEffect(() => {
+    if (restaurandoRef.current) { restaurandoRef.current = false; return; }
+    historicoRef.current = [...historicoRef.current.slice(0, indiceHistoricoRef.current + 1), structuredClone({ percurso, interdicoes })].slice(-50);
+    indiceHistoricoRef.current = historicoRef.current.length - 1;
+    setIndiceHistorico(indiceHistoricoRef.current);
+  }, [assinatura]);
+  function restaurarHistorico(indice: number) {
+    const estado = historicoRef.current[indice]; if (!estado) return;
+    restaurandoRef.current = true; indiceHistoricoRef.current = indice; setIndiceHistorico(indice);
+    onPercursoChange?.({ ...structuredClone(estado.percurso), centro: percurso.centro, zoom: percurso.zoom });
+    onInterdicoesChange?.(structuredClone(estado.interdicoes));
+    modoRef.current = "navegar"; setModo("navegar");
+  }
+  function mudarEstilo(campo: "corLinha" | "corMarcador" | "espessura", valor: string | number) {
+    const tela = containerRef.current;
+    const estilos = getComputedStyle(tela ?? document.documentElement);
+    const padrao = { corLinha: estilos.getPropertyValue("--map-route").trim(), corMarcador: estilos.getPropertyValue("--map-marker").trim(), espessura: 5 };
+    atualizar({ estilo: { ...padrao, ...percurso.estilo, [campo]: valor } });
+  }
 
   const estadoRef = useRef({ percurso, interdicoes });
   estadoRef.current = { percurso, interdicoes };
@@ -126,6 +152,7 @@ export default function MapaPercurso({
     mapa.on("click", (e: L.LeafletMouseEvent) => {
       if (modoRef.current !== "recorte") clicarRef.current(e.latlng.lat, e.latlng.lng);
     });
+    mapa.on("dblclick", () => { if (modoRef.current === "percurso") { modoRef.current = "navegar"; setModo("navegar"); mapa.doubleClickZoom.enable(); } });
     mapa.on("mousedown", (e: L.LeafletMouseEvent) => {
       if (modoRef.current !== "recorte") return;
       inicioRecorteRef.current = e.latlng;
@@ -205,13 +232,13 @@ export default function MapaPercurso({
     if (percurso.pontos.length > 1) {
       L.polyline(
         percurso.pontos.map((p) => [p.lat, p.lng] as [number, number]),
-        { color: "#1d4ed8", weight: 5, opacity: 0.85 },
+        { color: percurso.estilo?.corLinha ?? "#1d4ed8", weight: percurso.estilo?.espessura ?? 5, opacity: 0.85 },
       ).addTo(camada);
     }
 
     percurso.marcadores.forEach((p, i) => {
       const marcador = L.marker([p.lat, p.lng], {
-        icon: icone("•", "#b45309"),
+        icon: icone("•", percurso.estilo?.corMarcador ?? "#b45309"),
         draggable: !somenteLeitura,
       })
         .bindTooltip(p.rotulo?.trim() || `Ponto ${i + 1}`)
@@ -256,6 +283,7 @@ export default function MapaPercurso({
     const valor = modo === novo ? "navegar" : novo;
     modoRef.current = valor;
     setModo(valor);
+    if (valor === "percurso") mapaRef.current?.doubleClickZoom.disable(); else mapaRef.current?.doubleClickZoom.enable();
     if (containerRef.current) {
       containerRef.current.style.cursor = valor === "navegar" ? "" : "crosshair";
     }
@@ -319,16 +347,17 @@ export default function MapaPercurso({
       const url = new URL("https://nominatim.openstreetmap.org/search");
       url.searchParams.set("q", `${termo}, Paranavaí, Paraná, Brasil`);
       url.searchParams.set("format", "json");
-      url.searchParams.set("limit", "1");
+      url.searchParams.set("limit", "6");
+      url.searchParams.set("countrycodes", "br");
       const resposta = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+      if (!resposta.ok) throw new Error("Pesquisa indisponível");
       const lista = (await resposta.json()) as { lat: string; lon: string; display_name: string }[];
       const primeiro = lista[0];
       if (!primeiro) {
         toast.error("Endereço não encontrado.");
         return;
       }
-      mapaRef.current?.setView([Number(primeiro.lat), Number(primeiro.lon)], 17);
-      toast.success(primeiro.display_name);
+      setResultados(lista);
     } catch {
       toast.error("Não foi possível pesquisar o endereço agora.");
     } finally {
@@ -342,6 +371,7 @@ export default function MapaPercurso({
     <div className="space-y-3">
       {editavel && (
         <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" size="sm" variant={modo === "navegar" ? "default" : "outline"} onClick={() => { modoRef.current = "navegar"; setModo("navegar"); mapaRef.current?.doubleClickZoom.enable(); }}><Hand className="mr-2 h-4 w-4" />Selecionar itens</Button>
           <Button
             type="button"
             size="sm"
@@ -386,12 +416,14 @@ export default function MapaPercurso({
             type="button"
             size="sm"
             variant="ghost"
-            disabled={!percurso.pontos.length}
-            onClick={() => atualizar({ pontos: percurso.pontos.slice(0, -1) })}
+            disabled={indiceHistorico <= 0}
+            onClick={() => restaurarHistorico(indiceHistorico - 1)}
           >
             <Undo2 className="mr-2 h-4 w-4" aria-hidden="true" />
-            Desfazer último
+            Desfazer
           </Button>
+          <Button type="button" size="sm" variant="ghost" disabled={indiceHistorico >= historicoRef.current.length - 1} onClick={() => restaurarHistorico(indiceHistorico + 1)}><Redo2 className="mr-2 h-4 w-4" />Refazer</Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => mapaRef.current?.setView(CENTRO_PARANAVAI, ZOOM_PADRAO)}><LocateFixed className="mr-2 h-4 w-4" />Paranavaí</Button>
           <Button
             type="button"
             size="sm"
@@ -404,6 +436,12 @@ export default function MapaPercurso({
           </Button>
         </div>
       )}
+
+      {editavel && <div className="flex flex-wrap items-center gap-3 border-y py-2">
+        <Label htmlFor="cor-marcador">Cor do marcador</Label><Input id="cor-marcador" type="color" className="h-8 w-12 p-1" value={percurso.estilo?.corMarcador ?? "#b45309"} onChange={(e) => mudarEstilo("corMarcador", e.target.value)} />
+        <Label htmlFor="cor-linha">Cor da linha</Label><Input id="cor-linha" type="color" className="h-8 w-12 p-1" value={percurso.estilo?.corLinha ?? "#1d4ed8"} onChange={(e) => mudarEstilo("corLinha", e.target.value)} />
+        <Label htmlFor="espessura-linha">Espessura</Label><Input id="espessura-linha" type="range" className="w-32" min="1" max="14" value={percurso.estilo?.espessura ?? 5} onChange={(e) => mudarEstilo("espessura", Number(e.target.value))} /><span className="text-xs">{percurso.estilo?.espessura ?? 5} px</span>
+      </div>}
 
       <div className="flex gap-2">
         <Input
@@ -428,6 +466,7 @@ export default function MapaPercurso({
           {sugestoes.map((rua) => <Button key={rua.id} type="button" size="sm" variant="secondary" onClick={() => { setBusca(rua.nome_completo); const geo = rua.geometria as { lat?: number; lng?: number }[] | null; const p = geo?.[0]; if (p?.lat !== undefined && p.lng !== undefined) mapaRef.current?.setView([p.lat, p.lng], 17); }}>{rua.nome_completo}{rua.bairros?.nome ? ` · ${rua.bairros.nome}` : ""}</Button>)}
         </div>
       )}
+      {resultados.length > 0 && <div className="grid gap-1" aria-label="Resultados da pesquisa de endereço">{resultados.map((item, i) => <Button key={i} type="button" variant="outline" className="h-auto justify-start whitespace-normal text-left" onClick={() => { mapaRef.current?.setView([Number(item.lat), Number(item.lon)], 17); setBusca(item.display_name); setResultados([]); }}>{item.display_name}</Button>)}</div>}
 
 
       <div
@@ -456,12 +495,7 @@ export default function MapaPercurso({
         </div>
       )}
 
-      {preVisualizacao && modo === "recorte" && (
-        <div className="overflow-hidden rounded-md border bg-muted/20 p-2">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">Pré-visualização do recorte</p>
-          <img src={preVisualizacao} alt="Pré-visualização do recorte do mapa" className="aspect-[45/26] w-full object-contain" />
-        </div>
-      )}
+      {preVisualizacao && modo === "recorte" && <EditorMapaImagem imagem={preVisualizacao} onConfirmar={(imagem) => { onMapaImagemChange?.(imagem); cancelarRecorte(); toast.success("Imagem editada definida para a O.S."); }} onCancelar={() => setPreVisualizacao(null)} />}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div>

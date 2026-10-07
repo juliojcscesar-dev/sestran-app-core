@@ -43,6 +43,13 @@
       "when": 1789605159971,
       "tag": "0005_numero_manual_ordem_servico",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791403409081,
+      "tag": "0006_cadastros_rapidos_os_operadores",
+      "breakpoints": true
     }
   ]
 }

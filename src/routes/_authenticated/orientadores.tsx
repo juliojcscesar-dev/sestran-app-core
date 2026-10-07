@@ -4,6 +4,8 @@ import { EmBreve } from "@/components/EmBreve";
 export const Route = createFileRoute("/_authenticated/orientadores")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Orientadores | SESTRAN Paranavaí" },
       { name: "description", content: "Cadastro dos orientadores de trânsito e das equipes de apoio." },
       { property: "og:title", content: "Orientadores | SESTRAN Paranavaí" },

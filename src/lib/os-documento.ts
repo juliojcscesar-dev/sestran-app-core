@@ -3,7 +3,7 @@ import type { OrdemCompleta } from "@/lib/os-api";
 import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
 
 
-export type IdentificacaoOrgao = { orgao: string; secretaria: string; logo_url: string };
+export type IdentificacaoOrgao = { orgao: string; secretaria: string; logo_url: string; autoridade?: string; cargo_autoridade?: string };
 const LOGO_INSTITUCIONAL = "/assets/logo-header.png";
 
 type Linha = { rotulo: string; valor: string };
@@ -58,7 +58,7 @@ export function montarConteudo(dados: OrdemCompleta) {
       rotulo: "Ruas interditadas",
       valor: texto(descreverInterdicoes(dados.interdicoes ?? []).join("; ")),
     },
-  ];
+  ].filter((item) => item.valor !== "—");
 
 
   const agentes = dados.agentes.map((a) => {
@@ -151,404 +151,119 @@ function nomeArquivo(numero: string, extensao: string) {
 }
 
 /* ------------------------------ PDF ------------------------------ */
-
+// Document palette mirrors the institutional print tokens in styles.css.
+const PALETA = { azul: "#075783", tinta: "#083f69", claro: "#eaf5fc", painel: "#f5fbff", borda: "#9bc9e8", branco: "#ffffff" };
+function camposDocumento(dados: OrdemCompleta) {
+  const o = dados.ordem;
+  const campo = (rotulo: string, valor: string | null | undefined): Linha => ({ rotulo, valor: valor?.trim() ?? "" });
+  return [
+    [campo("De", o.remetente), campo("Para", o.destinatario)],
+    [campo("Natureza", o.natureza), campo("Solicitante", o.solicitantes?.nome)],
+    [campo("Local", o.local)],
+    [campo("Data do Serviço", formatarDataBr(o.data_servico)), campo("Horário", o.hora_inicio ? formatarHora(o.hora_inicio) : ""), campo("Encerramento", o.hora_fim ? formatarHora(o.hora_fim) : "")],
+    [campo("Evento", o.eventos?.titulo)],
+  ].map((linha) => linha.filter((c) => c.valor)).filter((linha) => linha.length);
+}
+function textosDocumento(dados: OrdemCompleta) {
+  return {
+    servico: dados.servicos.map((s) => [s.tipos_servico?.nome, s.detalhe].filter(Boolean).join(" — ")).join("\n"),
+    percurso: [dados.ordem.trajeto, descreverPercurso(lerPercurso(dados.ordem.percurso)), ...descreverInterdicoes(dados.interdicoes)].filter(Boolean).join("\n"),
+  };
+}
 export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) {
   const { jsPDF } = await import("jspdf");
-  const conteudo = montarConteudo(dados);
+  const conteudo = montarConteudo(dados); const textos = textosDocumento(dados);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const margem = 18;
-  const largura = 210 - margem * 2;
-  let y = margem;
-
   const logo = await carregarLogo(LOGO_INSTITUCIONAL);
-  if (logo?.base64) {
-    try {
-      doc.addImage(logo.base64, "PNG", 72.5, 10, 65, 10);
-    } catch {
-      /* logotipo inválido: segue sem imagem */
+  const mapa = await obterImagemMapa(conteudo);
+  const x = 12, largura = 186; let y = 55;
+  function assinatura() {
+    doc.setDrawColor(PALETA.azul); doc.line(64, 276, 146, 276);
+    doc.setTextColor(PALETA.tinta); doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    doc.text(ident.autoridade ?? "Carlos Hideki de Souza Fujimori", 105, 281, { align: "center" });
+    doc.setFont("helvetica", "bold"); doc.text(ident.cargo_autoridade ?? "Diretor de Trânsito", 105, 286, { align: "center" });
+  }
+  function cabecalho() {
+    doc.setDrawColor(PALETA.azul); doc.setLineWidth(.5); doc.roundedRect(8, 8, 194, 282, 2, 2);
+    if (logo) doc.addImage(logo.base64, "PNG", x, 23, 122, 18.5);
+    doc.setFillColor(PALETA.claro); doc.setDrawColor(PALETA.borda); doc.roundedRect(141, 20, 57, 23, 2, 2, "FD");
+    const campos = [["Nº", dados.ordem.numero], ["Data", formatarDataBr(dados.ordem.data_emissao)], ...(dados.ordem.ipm ? [["IPM", dados.ordem.ipm]] : [])];
+    campos.forEach(([label, valor], i) => { const yy = 26 + i * 6; doc.setFontSize(9); doc.setTextColor(PALETA.tinta); doc.setFont("helvetica", "bold"); doc.text(`${label}:`, 144, yy); doc.setFont("helvetica", "normal"); doc.text(valor ?? "", 195, yy, { align: "right" }); doc.line(160, yy + 1, 195, yy + 1); });
+    doc.setFillColor(PALETA.azul); doc.roundedRect(x, 46, largura, 7, 2, 2, "F"); doc.setTextColor(PALETA.branco); doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.text("ORDEM DE SERVIÇO", 105, 51, { align: "center" });
+    assinatura(); y = 56;
+  }
+  function garantir(h: number) { if (y + h > 269) { doc.addPage(); cabecalho(); } }
+  function caixa(txt: string, titulo?: string) {
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    const linhas = doc.splitTextToSize(txt, largura - 10) as string[];
+    while (linhas.length) {
+      garantir(20); const capacidade = Math.max(1, Math.floor((269 - y - (titulo ? 12 : 7)) / 4.2));
+      const parte = linhas.splice(0, capacidade); const h = parte.length * 4.2 + (titulo ? 12 : 7);
+      doc.setDrawColor(PALETA.borda); doc.setFillColor(PALETA.painel); doc.roundedRect(x, y, largura, h, 2, 2, "FD");
+      if (titulo) { doc.setFont("helvetica", "bold"); doc.setTextColor(PALETA.tinta); doc.text(titulo, x + 3, y + 5); }
+      const yy = y + (titulo ? 8 : 2); doc.setFillColor(PALETA.branco); doc.roundedRect(x + 2, yy, largura - 4, h - (titulo ? 10 : 4), 1, 1, "FD");
+      doc.setFont("helvetica", "normal"); doc.setTextColor(PALETA.tinta); doc.text(parte, x + 5, yy + 4); y += h + 2;
     }
   }
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text(`ORDEM DE SERVIÇO Nº ${conteudo.numero}`, 105, y + 17, { align: "center" });
-  y += 22;
-  doc.setLineWidth(0.4);
-  doc.line(margem, y, margem + largura, y);
-  y += 8;
-
-  function quebrar(texto: string, largura2: number) {
-    return doc.splitTextToSize(texto, largura2) as string[];
+  cabecalho();
+  for (const linha of camposDocumento(dados)) {
+    doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    const w = largura / linha.length;
+    const linhas = linha.map((c) => doc.splitTextToSize(`${c.rotulo}: ${c.valor}`, w - 8) as string[]);
+    const h = Math.max(...linhas.map((l) => l.length)) * 4.2 + 5; garantir(h);
+    linha.forEach((_, i) => { doc.setFillColor(PALETA.painel); doc.setDrawColor(PALETA.borda); doc.roundedRect(x + i * w, y, w - 1, h, 1, 1, "FD"); doc.setTextColor(PALETA.tinta); doc.text(linhas[i] ?? [], x + i * w + 3, y + 5); }); y += h + 2;
   }
-
-  function novaPaginaSePreciso(altura: number) {
-    if (y + altura > 297 - margem) {
-      doc.addPage();
-      y = margem;
-    }
-  }
-
-  function linhas(itens: Linha[]) {
-    doc.setFontSize(10);
-    for (const item of itens) {
-      const valor = quebrar(item.valor, largura - 45);
-      novaPaginaSePreciso(valor.length * 5 + 2);
-      doc.setFont("helvetica", "bold");
-      doc.text(`${item.rotulo}:`, margem, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(valor, margem + 45, y);
-      y += valor.length * 5 + 2;
-    }
-    y += 3;
-  }
-
-  function titulo(txt: string) {
-    novaPaginaSePreciso(12);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(txt, margem, y);
-    y += 2;
-    doc.setLineWidth(0.2);
-    doc.line(margem, y, margem + largura, y);
-    y += 6;
-  }
-
-  titulo("Identificação");
-  linhas(conteudo.cabecalho);
-  titulo("Dados do serviço");
-  linhas(conteudo.corpo);
-
-  const imagemMapa = await obterImagemMapa(conteudo);
-  if (imagemMapa) {
-    const alturaMapa = (largura * 520) / 900;
-    titulo("Mapa do percurso");
-    novaPaginaSePreciso(alturaMapa + 4);
-    try {
-      doc.addImage(imagemMapa, "PNG", margem, y, largura, alturaMapa);
-      y += alturaMapa + 8;
-    } catch {
-      /* imagem inválida: segue sem o mapa */
-    }
-  }
-
-
-  titulo("Agentes de trânsito");
-  if (!conteudo.agentes.length) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text("Nenhum agente designado.", margem, y);
-    y += 8;
-  } else {
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("Agente", margem, y);
-    doc.text("Matrícula", margem + 70, y);
-    doc.text("Função", margem + 100, y);
-    doc.text("Chegada", margem + 135, y);
-    y += 5;
-    doc.setFont("helvetica", "normal");
-    for (const a of conteudo.agentes) {
-      novaPaginaSePreciso(10);
-      doc.text(quebrar(a.nome, 68), margem, y);
-      doc.text(a.matricula, margem + 70, y);
-      doc.text(quebrar(a.funcao, 33), margem + 100, y);
-      doc.text(a.chegada, margem + 135, y);
-      y += 5;
-      if (a.observacao !== "—") {
-        const obs = quebrar(`Obs.: ${a.observacao}`, largura - 4);
-        novaPaginaSePreciso(obs.length * 4 + 2);
-        doc.setTextColor(90);
-        doc.text(obs, margem + 4, y);
-        doc.setTextColor(0);
-        y += obs.length * 4 + 1;
+  if (textos.servico) caixa(textos.servico, "1 - Serviço");
+  if (textos.percurso) caixa(textos.percurso, "2 - Percurso");
+  const equipe = [
+    ...conteudo.agentes.map((a) => [a.nome + (a.matricula !== "—" ? ` — Matrícula ${a.matricula}` : ""), [a.chegada, a.funcao, a.observacao].filter((v) => v !== "—").join(" — ")]),
+    ...conteudo.orientadores.map((a) => [`${a.nome} (Orientador)` + (a.matricula !== "—" ? ` — Matrícula ${a.matricula}` : ""), a.observacao !== "—" ? a.observacao : ""]),
+  ];
+  function headerEquipe() { garantir(8); doc.setFillColor(PALETA.claro); doc.setDrawColor(PALETA.borda); doc.rect(x, y, largura, 7, "FD"); doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(PALETA.tinta); doc.text(conteudo.agentes.length ? "Agentes de Trânsito" : "Orientadores de Trânsito", x + largura / 4, y + 5, { align: "center" }); doc.text("Horário no Local", x + largura * .75, y + 5, { align: "center" }); y += 7; }
+  if (equipe.length) {
+    headerEquipe();
+    for (const [nome, horario] of equipe) {
+      doc.setFont("helvetica", "normal"); const l = doc.splitTextToSize(nome ?? "", 87) as string[]; const r = doc.splitTextToSize(horario ?? "", 87) as string[];
+      while (l.length || r.length) {
+        if (y + 10 > 269) { doc.addPage(); cabecalho(); headerEquipe(); }
+        const max = Math.max(1, Math.floor((269 - y - 4) / 4.2)); const ll = l.splice(0, max); const rr = r.splice(0, max); const h = Math.max(ll.length, rr.length, 1) * 4.2 + 4;
+        doc.setDrawColor(PALETA.borda); doc.rect(x, y, largura / 2, h); doc.rect(x + largura / 2, y, largura / 2, h); doc.setTextColor(PALETA.tinta); doc.text(ll, x + 3, y + 5); doc.text(rr, x + largura / 2 + 3, y + 5); y += h;
       }
-    }
-    y += 5;
+    } y += 2;
   }
-
-  titulo("Orientadores");
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  if (!conteudo.orientadores.length) {
-    doc.text("Nenhum orientador designado.", margem, y);
-    y += 8;
-  } else {
-    for (const r of conteudo.orientadores) {
-      novaPaginaSePreciso(8);
-      const linha = `${r.nome}${r.matricula !== "—" ? ` — matrícula ${r.matricula}` : ""}${
-        r.observacao !== "—" ? ` — ${r.observacao}` : ""
-      }`;
-      const partes = quebrar(linha, largura);
-      doc.text(partes, margem, y);
-      y += partes.length * 5;
-    }
-    y += 5;
-  }
-
-  titulo("Observações");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  const obs = quebrar(conteudo.observacoes, largura);
-  novaPaginaSePreciso(obs.length * 5);
-  doc.text(obs, margem, y);
-  y += obs.length * 5 + 20;
-
-  novaPaginaSePreciso(30);
-  doc.line(margem + 20, y, margem + 90, y);
-  doc.line(margem + 100, y, margem + largura - 5, y);
-  y += 5;
-  doc.setFontSize(9);
-  doc.text("Responsável pela emissão", margem + 22, y);
-  doc.text("Autoridade de trânsito", margem + 110, y);
-
+  if (conteudo.observacoes !== "—") caixa(conteudo.observacoes, "Observações");
+  if (mapa) { const props = doc.getImageProperties(mapa); const h = Math.min(105, largura * props.height / props.width); garantir(h + 4); doc.setDrawColor(PALETA.borda); doc.rect(x, y, largura, h); const w = h * props.width / props.height; doc.addImage(mapa, "PNG", x + (largura - w) / 2, y, w, h); }
   baixar(doc.output("blob"), nomeArquivo(conteudo.numero, "pdf"));
 }
 
 /* ------------------------------ DOCX ------------------------------ */
-
 export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao) {
-  const {
-    Document,
-    Packer,
-    Paragraph,
-    TextRun,
-    Table,
-    TableRow,
-    TableCell,
-    AlignmentType,
-    WidthType,
-    BorderStyle,
-    ShadingType,
-    ImageRun,
-    Header,
-  } = await import("docx");
-
-  const conteudo = montarConteudo(dados);
-  const larguraTotal = 9026;
-  const borda = { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" };
-  const bordas = { top: borda, bottom: borda, left: borda, right: borda };
-  const margensCelula = { top: 80, bottom: 80, left: 120, right: 120 };
-
-  function paragrafo(txt: string, negrito = false) {
-    return new Paragraph({ children: [new TextRun({ text: txt, bold: negrito })] });
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, AlignmentType, WidthType, BorderStyle, ImageRun, Header, Footer, TableLayoutType } = await import("docx");
+  const c = montarConteudo(dados); const textos = textosDocumento(dados);
+  const logo = await carregarLogo(LOGO_INSTITUCIONAL); const mapa = await obterImagemMapa(c);
+  const width = 10545; const borda = { style: BorderStyle.SINGLE, size: 5, color: "9BC9E8" }; const borders = { top: borda, bottom: borda, left: borda, right: borda };
+  const p = (text: string, bold = false, color = "083F69", center = false) => new Paragraph({ alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT, spacing: { after: 70 }, children: [new TextRun({ text, bold, color, size: 19 })] });
+  const cell = (children: InstanceType<typeof Paragraph>[], w: number, fill = "FFFFFF") => new TableCell({ width: { size: w, type: WidthType.DXA }, borders, shading: { fill }, margins: { top: 90, bottom: 90, left: 100, right: 100 }, children });
+  function tabela(linhas: { valores: string[]; titulo?: boolean }[]) {
+    const colunas = linhas[0]?.valores.length ?? 1;
+    return new Table({ width: { size: width, type: WidthType.DXA }, layout: TableLayoutType.FIXED, columnWidths: Array(colunas).fill(Math.floor(width / colunas)), rows: linhas.map((l) => new TableRow({ tableHeader: l.titulo, cantSplit: true, children: l.valores.map((v) => cell(v.split("\n").map((t) => p(t, l.titulo)), Math.floor(width / colunas), l.titulo ? "E5F2FB" : "F5FBFF")) })) });
   }
-
-  function tabelaCampos(itens: Linha[]) {
-    return new Table({
-      width: { size: larguraTotal, type: WidthType.DXA },
-      columnWidths: [2600, 6426],
-      rows: itens.map(
-        (item) =>
-          new TableRow({
-            children: [
-              new TableCell({
-                borders: bordas,
-                margins: margensCelula,
-                width: { size: 2600, type: WidthType.DXA },
-                shading: { fill: "EEF2F7", type: ShadingType.CLEAR },
-                children: [paragrafo(item.rotulo, true)],
-              }),
-              new TableCell({
-                borders: bordas,
-                margins: margensCelula,
-                width: { size: 6426, type: WidthType.DXA },
-                children: item.valor.split("\n").map((l) => paragrafo(l)),
-              }),
-            ],
-          }),
-      ),
-    });
+  const espaco = () => new Paragraph({ spacing: { after: 70 }, children: [] });
+  const headLogo = new Paragraph({ children: logo ? [new ImageRun({ type: "png", data: logo.arrayBuffer, transformation: { width: 435, height: 66 } })] : [new TextRun(ident.orgao)] });
+  const header = new Table({ width: { size: width, type: WidthType.DXA }, columnWidths: [7300, 3245], rows: [new TableRow({ children: [cell([headLogo], 7300), cell([p(`Nº: ${c.numero}`, true), p(`Data: ${formatarDataBr(dados.ordem.data_emissao)}`), ...(dados.ordem.ipm ? [p(`IPM: ${dados.ordem.ipm}`)] : [])], 3245, "EAF5FC")] })] });
+  const titulo = new Table({ width: { size: width, type: WidthType.DXA }, rows: [new TableRow({ children: [cell([p("ORDEM DE SERVIÇO", true, "FFFFFF", true)], width, "075783")] })] });
+  const children: (InstanceType<typeof Paragraph> | InstanceType<typeof Table>)[] = [];
+  for (const linha of camposDocumento(dados)) { children.push(tabela([{ valores: linha.map((c) => `${c.rotulo}: ${c.valor}`) }]), espaco()); }
+  for (const [titulo, txt] of [["1 - Serviço", textos.servico], ["2 - Percurso", textos.percurso]]) { if (txt) children.push(tabela([{ valores: [titulo ?? ""], titulo: true }, { valores: [txt] }]), espaco()); }
+  const equipe = [...c.agentes.map((a) => [a.nome + (a.matricula !== "—" ? ` — Matrícula ${a.matricula}` : ""), [a.chegada, a.funcao, a.observacao].filter((v) => v !== "—").join(" — ")]), ...c.orientadores.map((a) => [`${a.nome} (Orientador)` + (a.matricula !== "—" ? ` — Matrícula ${a.matricula}` : ""), a.observacao === "—" ? "" : a.observacao])];
+  if (equipe.length) children.push(tabela([{ valores: [c.agentes.length ? "Agentes de Trânsito" : "Orientadores de Trânsito", "Horário no Local"], titulo: true }, ...equipe.map((valores) => ({ valores }))]), espaco());
+  if (c.observacoes !== "—") children.push(tabela([{ valores: ["Observações"], titulo: true }, { valores: [c.observacoes] }]), espaco());
+  if (mapa) {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = reject; i.src = mapa; });
+    const w = Math.min(690, 397 * img.width / img.height); const h = w * img.height / img.width;
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: "png", data: dataUrlParaBytes(mapa), transformation: { width: w, height: h } })] }));
   }
-
-  function secao(txt: string) {
-    return new Paragraph({
-      spacing: { before: 260, after: 140 },
-      children: [new TextRun({ text: txt.toUpperCase(), bold: true, size: 22 })],
-    });
-  }
-
-  const logo = await carregarLogo(LOGO_INSTITUCIONAL);
-  const cabecalhoLogo: InstanceType<typeof Paragraph>[] = [];
-  if (logo?.arrayBuffer) {
-    const tipo = logo.tipo.includes("png") ? "png" : logo.tipo.includes("gif") ? "gif" : "jpg";
-    cabecalhoLogo.push(
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        children: [
-          new ImageRun({
-            type: tipo as "png" | "jpg" | "gif",
-            data: logo.arrayBuffer,
-            transformation: { width: 246, height: 38 },
-            altText: { title: "Logotipo", description: ident.orgao, name: "logotipo" },
-          }),
-        ],
-      }),
-    );
-  }
-
-  const imagemMapa = await obterImagemMapa(conteudo);
-  const blocoMapa: InstanceType<typeof Paragraph>[] = [];
-  if (imagemMapa) {
-    blocoMapa.push(
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        children: [
-          new ImageRun({
-            type: "png",
-            data: dataUrlParaBytes(imagemMapa),
-            transformation: { width: 560, height: 324 },
-            altText: {
-              title: "Mapa do percurso",
-              description: "Percurso e interdições da ordem de serviço",
-              name: "mapa",
-            },
-          }),
-        ],
-      }),
-    );
-  }
-
-  const larguraAgentes = [3000, 1400, 2200, 1200, 1226];
-  const tabelaAgentes = conteudo.agentes.length
-    ? new Table({
-        width: { size: larguraTotal, type: WidthType.DXA },
-        columnWidths: larguraAgentes,
-        rows: [
-          new TableRow({
-            children: ["Agente", "Matrícula", "Função", "Chegada", "Observação"].map(
-              (t, i) =>
-                new TableCell({
-                  borders: bordas,
-                  margins: margensCelula,
-                  width: { size: larguraAgentes[i]!, type: WidthType.DXA },
-                  shading: { fill: "EEF2F7", type: ShadingType.CLEAR },
-                  children: [paragrafo(t, true)],
-                }),
-            ),
-          }),
-          ...conteudo.agentes.map(
-            (a) =>
-              new TableRow({
-                children: [a.nome, a.matricula, a.funcao, a.chegada, a.observacao].map(
-                  (t, i) =>
-                    new TableCell({
-                      borders: bordas,
-                      margins: margensCelula,
-                      width: { size: larguraAgentes[i]!, type: WidthType.DXA },
-                      children: [paragrafo(t)],
-                    }),
-                ),
-              }),
-          ),
-        ],
-      })
-    : paragrafo("Nenhum agente designado.");
-
-  const larguraOrient = [4000, 1800, 3226];
-  const tabelaOrientadores = conteudo.orientadores.length
-    ? new Table({
-        width: { size: larguraTotal, type: WidthType.DXA },
-        columnWidths: larguraOrient,
-        rows: [
-          new TableRow({
-            children: ["Orientador", "Matrícula", "Observação"].map(
-              (t, i) =>
-                new TableCell({
-                  borders: bordas,
-                  margins: margensCelula,
-                  width: { size: larguraOrient[i]!, type: WidthType.DXA },
-                  shading: { fill: "EEF2F7", type: ShadingType.CLEAR },
-                  children: [paragrafo(t, true)],
-                }),
-            ),
-          }),
-          ...conteudo.orientadores.map(
-            (r) =>
-              new TableRow({
-                children: [r.nome, r.matricula, r.observacao].map(
-                  (t, i) =>
-                    new TableCell({
-                      borders: bordas,
-                      margins: margensCelula,
-                      width: { size: larguraOrient[i]!, type: WidthType.DXA },
-                      children: [paragrafo(t)],
-                    }),
-                ),
-              }),
-          ),
-        ],
-      })
-    : paragrafo("Nenhum orientador designado.");
-
-  const doc = new Document({
-    styles: { default: { document: { run: { font: "Arial", size: 20 } } } },
-    sections: [
-      {
-        properties: {
-          page: {
-            size: { width: 11906, height: 16838 },
-            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
-          },
-        },
-        headers: {
-          default: new Header({ children: cabecalhoLogo }),
-        },
-        children: [
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 240, after: 240 },
-            children: [
-              new TextRun({
-                text: `ORDEM DE SERVIÇO Nº ${conteudo.numero}`,
-                bold: true,
-                size: 28,
-              }),
-            ],
-          }),
-          secao("Identificação"),
-          tabelaCampos(conteudo.cabecalho),
-          secao("Dados do serviço"),
-          tabelaCampos(conteudo.corpo),
-          ...(blocoMapa.length ? [secao("Mapa do percurso"), ...blocoMapa] : []),
-          secao("Agentes de trânsito"),
-          tabelaAgentes,
-          secao("Orientadores"),
-          tabelaOrientadores,
-          secao("Observações"),
-          ...conteudo.observacoes.split("\n").map((l) => paragrafo(l)),
-          new Paragraph({ spacing: { before: 900 }, children: [] }),
-          new Table({
-            width: { size: larguraTotal, type: WidthType.DXA },
-            columnWidths: [4513, 4513],
-            rows: [
-              new TableRow({
-                children: ["Responsável pela emissão", "Autoridade de trânsito"].map(
-                  (t) =>
-                    new TableCell({
-                      borders: {
-                        top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-                        bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                        left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                        right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                      },
-                      margins: margensCelula,
-                      width: { size: 4513, type: WidthType.DXA },
-                      children: [
-                        new Paragraph({
-                          alignment: AlignmentType.CENTER,
-                          children: [new TextRun({ text: t, size: 18 })],
-                        }),
-                      ],
-                    }),
-                ),
-              }),
-            ],
-          }),
-        ],
-      },
-    ],
-  });
-
-  const blob = await Packer.toBlob(doc);
-  baixar(blob, nomeArquivo(conteudo.numero, "docx"));
+  const assinatura = new Paragraph({ alignment: AlignmentType.CENTER, border: { top: { style: BorderStyle.SINGLE, size: 6, color: "0B5D8F" } }, indent: { left: 2948, right: 2948 }, children: [] });
+  const doc = new Document({ styles: { default: { document: { run: { font: "Arial", size: 19 } } } }, sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 3250, right: 680, bottom: 1500, left: 680, header: 1134, footer: 560 } } }, headers: { default: new Header({ children: [header, espaco(), titulo] }) }, footers: { default: new Footer({ children: [assinatura, p(ident.autoridade ?? "Carlos Hideki de Souza Fujimori", false, "083F69", true), p(ident.cargo_autoridade ?? "Diretor de Trânsito", true, "083F69", true)] }) }, children }] });
+  baixar(await Packer.toBlob(doc), nomeArquivo(c.numero, "docx"));
 }

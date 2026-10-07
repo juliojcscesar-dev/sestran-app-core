@@ -56,3 +56,10 @@
 - [ ] Aplicar o modelo institucional anexado na visualização e impressão A4
 - [ ] Aplicar o mesmo padrão visual no PDF e no DOCX
 - [ ] Validar tela, impressão e arquivos exportados sem regressões
+
+## Ajustes da O.S. (solicitado 07/10)
+- [ ] Cadastrar eventos diretamente no campo Evento
+- [ ] Editar e excluir serviços no formulário, preservando detalhes já salvos
+- [ ] Adicionar equipes na O.S. e ocultar opções vazias nos documentos finais
+- [ ] Adaptar ferramentas de mapa conforme o dashboard enviado, preservando recorte e dados
+- [ ] Validar os fluxos e exportações

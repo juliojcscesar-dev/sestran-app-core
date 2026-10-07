@@ -5,6 +5,7 @@ export type PercursoMapa = {
   marcadores: PontoMapa[];
   centro: [number, number];
   zoom: number;
+  estilo?: { corLinha: string; corMarcador: string; espessura: number };
 };
 
 export type InterdicaoMapa = {
@@ -67,6 +68,11 @@ export function lerPercurso(valor: unknown): PercursoMapa {
     marcadores: lerPontos(registro["marcadores"]),
     centro: lat !== null && lng !== null ? [lat, lng] : CENTRO_PARANAVAI,
     zoom: zoom !== null ? zoom : ZOOM_PADRAO,
+    ...(registro["estilo"] && typeof registro["estilo"] === "object" ? (() => {
+      const e = registro["estilo"] as Record<string, unknown>;
+      const cor = (v: unknown, padrao: string) => typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v) ? v : padrao;
+      return { estilo: { corLinha: cor(e["corLinha"], "#1d4ed8"), corMarcador: cor(e["corMarcador"], "#b45309"), espessura: Math.min(14, Math.max(1, numero(e["espessura"]) ?? 5)) } };
+    })() : {}),
   };
 }
 
