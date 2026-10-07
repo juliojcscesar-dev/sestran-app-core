@@ -18,7 +18,7 @@
 - [x] Integração no formulário (salvar) e na visualização (carregar)
 - [x] Percurso, interdições e imagem automática do mapa nos documentos PDF/DOCX
 - [x] Testar salvamento, edição e carregamento do percurso
-- [ ] Criar O.S. de teste com percurso e interdições e comparar os dados após recarregar
+- [x] Criar O.S. de teste com percurso e interdições e comparar os dados após recarregar
 - [x] Incluir zoom calculado e escala gráfica na captura usada por PDF e DOCX
 
 ## Etapa 3 — Veículos Abandonados (solicitado 11/09)
@@ -53,6 +53,13 @@
 - [x] Recorte personalizado do mapa para documentos da O.S.
 
 ## Padronização documental da O.S. (solicitado 22/09)
-- [ ] Aplicar o modelo institucional anexado na visualização e impressão A4
-- [ ] Aplicar o mesmo padrão visual no PDF e no DOCX
-- [ ] Validar tela, impressão e arquivos exportados sem regressões
+- [x] Aplicar o modelo institucional anexado na visualização e impressão A4
+- [x] Aplicar o mesmo padrão visual no PDF e no DOCX
+- [x] Validar tela, impressão e arquivos exportados sem regressões
+
+## Ajustes da O.S. (solicitado 07/10)
+- [x] Cadastrar eventos diretamente no campo Evento
+- [x] Editar e excluir serviços no formulário, preservando detalhes já salvos
+- [x] Adicionar equipes na O.S. e ocultar opções vazias nos documentos finais
+- [x] Adaptar ferramentas de mapa conforme o dashboard enviado, preservando recorte e dados
+- [x] Validar os fluxos e exportações

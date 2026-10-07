@@ -412,6 +412,23 @@ export async function criarTipoServico(nome: string) {
   return checarUnico(await supabase.from("tipos_servico").insert({ nome }).select("id, nome").single());
 }
 
+export async function criarEvento(titulo: string, data: string, local: string | null) {
+  return checarUnico(await supabase.from("eventos").insert({
+    titulo: titulo.trim(), data_inicio: `${data}T00:00:00`, local,
+  }).select("id, titulo, local").single());
+}
+
+export async function editarTipoServico(id: string, nome: string) {
+  return checarUnico(await supabase.from("tipos_servico").update({ nome: nome.trim() })
+    .eq("id", id).select("id, nome").single());
+}
+
+/** Retira do catálogo ativo sem apagar vínculos de ordens já emitidas. */
+export async function excluirTipoServico(id: string) {
+  return checarUnico(await supabase.from("tipos_servico").update({ ativo: false })
+    .eq("id", id).select("id").single());
+}
+
 export async function obterConfiguracoes() {
   const linhas = checar(await supabase.from("configuracoes").select("chave, valor"));
   const mapa: Record<string, string> = {};

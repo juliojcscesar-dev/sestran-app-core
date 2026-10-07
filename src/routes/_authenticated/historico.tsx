@@ -4,6 +4,8 @@ import { EmBreve } from "@/components/EmBreve";
 export const Route = createFileRoute("/_authenticated/historico")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Histórico | SESTRAN Paranavaí" },
       { name: "description", content: "Consulta ao histórico de atividades registradas no sistema." },
       { property: "og:title", content: "Histórico | SESTRAN Paranavaí" },

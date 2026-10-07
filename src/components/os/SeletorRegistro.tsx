@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export type OpcaoSeletor = { id: string; rotulo: string; detalhe?: string | undefined };
 
@@ -42,8 +43,10 @@ export function SeletorRegistro({
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState("");
   const [criando, setCriando] = useState(false);
+  const [criados, setCriados] = useState<OpcaoSeletor[]>([]);
 
-  const selecionado = opcoes.find((o) => o.id === valor) ?? null;
+  const todasOpcoes = [...opcoes, ...criados.filter((item) => !opcoes.some((o) => o.id === item.id))];
+  const selecionado = todasOpcoes.find((o) => o.id === valor) ?? null;
   const termo = busca.trim();
   const existeIgual = opcoes.some((o) => o.rotulo.toLowerCase() === termo.toLowerCase());
 
@@ -52,9 +55,13 @@ export function SeletorRegistro({
     setCriando(true);
     try {
       const novo = await onCriar(termo);
+      setCriados((atuais) => [...atuais, novo]);
       onChange(novo.id);
       setBusca("");
       setAberto(false);
+    } catch (erro) {
+      const mensagem = erro && typeof erro === "object" && "message" in erro ? String(erro.message) : "Verifique sua permissão e tente novamente.";
+      toast.error(`Não foi possível cadastrar: ${mensagem}`);
     } finally {
       setCriando(false);
     }
@@ -85,8 +92,10 @@ export function SeletorRegistro({
           <CommandList>
             <CommandEmpty>
               {podeCriar && termo ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  disabled={criando}
                   onClick={criar}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
                 >
@@ -96,7 +105,7 @@ export function SeletorRegistro({
                     <Plus className="h-4 w-4" aria-hidden="true" />
                   )}
                   Cadastrar “{termo}”
-                </button>
+                </Button>
               ) : (
                 <p className="px-3 py-4 text-sm text-muted-foreground">{vazio}</p>
               )}
@@ -113,7 +122,7 @@ export function SeletorRegistro({
                   <span className="text-muted-foreground">Não informar</span>
                 </CommandItem>
               )}
-              {opcoes.map((opcao) => (
+              {todasOpcoes.map((opcao) => (
                 <CommandItem
                   key={opcao.id}
                   value={`${opcao.rotulo} ${opcao.detalhe ?? ""}`}

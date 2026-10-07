@@ -4,6 +4,8 @@ import { EmBreve } from "@/components/EmBreve";
 export const Route = createFileRoute("/_authenticated/usuarios")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Usuários e Acessos | SESTRAN Paranavaí" },
       { name: "description", content: "Gestão dos usuários do sistema e dos níveis de acesso." },
       { property: "og:title", content: "Usuários e Acessos | SESTRAN Paranavaí" },

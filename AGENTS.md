@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- O.S. service deletion deactivates catalog types; it never removes references from issued orders, preserving historical documents.
+- Store map visual styles in the existing percurso JSON; store raster annotations in mapa_imagem to preserve compatibility without new tables.
+- Keep map image editing in a separate canvas component with an annotation layer so the eraser cannot damage the base map.

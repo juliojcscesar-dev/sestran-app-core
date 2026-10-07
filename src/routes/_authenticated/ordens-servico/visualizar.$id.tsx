@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, FileDown, FileText, Loader2, Pencil, Printer } from "lucide-react";
@@ -26,8 +26,8 @@ import {
   formatarHora,
   type StatusOS,
 } from "@/lib/os";
-import { lerPercurso } from "@/lib/mapa";
-import { alterarStatusOrdem, historicoOrdem, obterOrdem } from "@/lib/os-api";
+import { descreverPercurso, lerPercurso } from "@/lib/mapa";
+import { alterarStatusOrdem, historicoOrdem, obterOrdem, obterConfiguracoes } from "@/lib/os-api";
 import { baixarDocumentoOS } from "@/lib/os-docs";
 
 export const Route = createFileRoute("/_authenticated/ordens-servico/visualizar/$id")({
@@ -52,6 +52,7 @@ export const Route = createFileRoute("/_authenticated/ordens-servico/visualizar/
 });
 
 function LinhaDocumento({ rotulo, valor, inteira = false }: { rotulo: string; valor: string; inteira?: boolean }) {
+  if (!valor.trim()) return null;
   return (
     <div className={`os-doc-inline${inteira ? " os-doc-full" : ""}`}>
       <span className="os-doc-label">{rotulo}:</span>
@@ -67,7 +68,18 @@ function VisualizarOS() {
   const podeOperar = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR", "OPERADOR"]);
   const [gerando, setGerando] = useState<string | null>(null);
 
+  const configuracoesQ = useQuery({ queryKey: ["configuracoes-os"], queryFn: obterConfiguracoes });
+  const [imagemAutomatica, setImagemAutomatica] = useState<string | null>(null);
   const ordemQ = useQuery({ queryKey: ["ordem-servico", id], queryFn: () => obterOrdem(id) });
+  useEffect(() => {
+    let ativo = true; setImagemAutomatica(null);
+    const dados = ordemQ.data;
+    if (dados && !dados.ordem.mapa_imagem) {
+      import("@/lib/mapa-imagem").then(({ gerarImagemMapa }) => gerarImagemMapa(lerPercurso(dados.ordem.percurso), dados.interdicoes))
+        .then((img) => { if (ativo) setImagemAutomatica(img); }).catch(() => {});
+    }
+    return () => { ativo = false; };
+  }, [ordemQ.data]);
   const historicoQ = useQuery({
     queryKey: ["ordem-servico-historico", id],
     queryFn: () => historicoOrdem(id),
@@ -112,9 +124,9 @@ function VisualizarOS() {
     .join("\n");
   const percursoTexto = [
     String(o["trajeto"] ?? "").trim(),
-    percurso.pontos.length ? percurso.pontos.map((p, i) => `${i + 1}. ${p.nome}`).join(" → ") : "",
+    descreverPercurso(percurso),
     ...(dados.interdicoes ?? []).map((item) =>
-      [item.rua, item.trecho_inicio && `de ${item.trecho_inicio}`, item.trecho_fim && `até ${item.trecho_fim}`, item.observacao]
+      [item.rua, item.trecho_inicial && `de ${item.trecho_inicial}`, item.trecho_final && `até ${item.trecho_final}`, item.observacao]
         .filter(Boolean)
         .join(" — "),
     ),
@@ -122,7 +134,7 @@ function VisualizarOS() {
   const observacoes = String(o["observacoes"] ?? "").trim();
   const mapaImagem = typeof o["mapa_imagem"] === "string" && o["mapa_imagem"].startsWith("data:image")
     ? o["mapa_imagem"]
-    : null;
+    : imagemAutomatica;
 
   return (
     <div className="os-view space-y-6">
@@ -209,7 +221,7 @@ function VisualizarOS() {
                 <div className="os-doc-ident">
                   <div><strong>Nº:</strong><span>{String(o["numero"] ?? "—")}</span></div>
                   <div><strong>Data:</strong><span>{formatarDataBr(o["data_emissao"] as string)}</span></div>
-                  <div><strong>IPM:</strong><span>{String(o["ipm"] ?? "") || "—"}</span></div>
+                  {Boolean(o["ipm"]) && <div><strong>IPM:</strong><span>{String(o["ipm"])}</span></div>}
                 </div>
               </div>
               <div className="os-doc-title">ORDEM DE SERVIÇO</div>
@@ -224,28 +236,28 @@ function VisualizarOS() {
               <LinhaDocumento rotulo="Local" valor={String(o["local"] ?? "")} inteira />
               <div className="os-doc-date-row">
                 <div><span className="os-doc-label">Data do Serviço:</span><div className="os-doc-line">{formatarDataBr(o["data_servico"] as string)}</div></div>
-                <div><span className="os-doc-label">Horário:</span><div className="os-doc-line">{formatarHora(o["hora_inicio"] as string)}</div></div>
-                <div><span className="os-doc-label">Encerramento:</span><div className="os-doc-line">{formatarHora(o["hora_fim"] as string)}</div></div>
+                {Boolean(o["hora_inicio"]) && <div><span className="os-doc-label">Horário:</span><div className="os-doc-line">{formatarHora(o["hora_inicio"] as string)}</div></div>}
+                {Boolean(o["hora_fim"]) && <div><span className="os-doc-label">Encerramento:</span><div className="os-doc-line">{formatarHora(o["hora_fim"] as string)}</div></div>}
               </div>
-              <div className="os-doc-full"><span className="os-doc-label">Evento:</span><div className="os-doc-line">{o.eventos?.titulo ?? "—"}</div></div>
+              <LinhaDocumento rotulo="Evento" valor={o.eventos?.titulo ?? ""} inteira />
             </section>
 
             <section className="os-doc-box"><span className="os-doc-label">1 - Serviço</span><div className="os-doc-line os-doc-pre">{servicos || "—"}</div></section>
             {percursoTexto && <section className="os-doc-box"><span className="os-doc-label">2 - Percurso</span><div className="os-doc-line os-doc-pre">{percursoTexto}</div></section>}
 
-            <section className="os-agents-panel">
-              <table><thead><tr><th>Agentes de Trânsito</th><th>Horário no Local</th></tr></thead>
+            {(dados.agentes.length > 0 || dados.orientadores.length > 0) && <section className="os-agents-panel">
+              <table><thead><tr><th>{dados.agentes.length ? "Agentes de Trânsito" : "Orientadores de Trânsito"}</th><th>Horário no Local</th></tr></thead>
                 <tbody>
-                  {dados.agentes.length === 0 && <tr><td>—</td><td>—</td></tr>}
+                  
                   {dados.agentes.map((a, i) => <tr key={`a-${i}`}><td>{a.agentes?.nome ?? "Agente"}{a.agentes?.matricula ? ` — Matrícula ${a.agentes.matricula}` : ""}</td><td>{[a.hora_chegada && formatarHora(a.hora_chegada), a.funcao, a.observacao].filter(Boolean).join(" — ") || "—"}</td></tr>)}
                   {dados.orientadores.map((r, i) => <tr key={`o-${i}`}><td>{r.orientadores?.nome ?? "Orientador"}{r.orientadores?.matricula ? ` — Matrícula ${r.orientadores.matricula}` : ""} <strong>(Orientador)</strong></td><td>{r.observacao || "—"}</td></tr>)}
                 </tbody>
               </table>
-            </section>
+            </section>}
             {observacoes && <section className="os-doc-box"><span className="os-doc-label">Observações</span><div className="os-doc-line os-doc-pre">{observacoes}</div></section>}
             {mapaImagem && <figure className="os-photo-box"><img src={mapaImagem} alt="Mapa e percurso da ordem de serviço" /></figure>}
           </td></tr></tbody>
-          <tfoot><tr><td><div className="os-signature"><div className="os-signature-line" /><div>Carlos Hideki de Souza Fujimori</div><strong>Diretor de Trânsito</strong></div></td></tr></tfoot>
+          <tfoot><tr><td><div className="os-signature"><div className="os-signature-line" /><div>{configuracoesQ.data?.autoridade ?? "Carlos Hideki de Souza Fujimori"}</div><strong>{configuracoesQ.data?.cargo_autoridade ?? "Diretor de Trânsito"}</strong></div></td></tr></tfoot>
         </table>
       </article>
 

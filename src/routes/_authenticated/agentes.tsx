@@ -4,6 +4,8 @@ import { EmBreve } from "@/components/EmBreve";
 export const Route = createFileRoute("/_authenticated/agentes")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Agentes de Trânsito | SESTRAN Paranavaí" },
       { name: "description", content: "Cadastro dos agentes de trânsito e controle de situação." },
       { property: "og:title", content: "Agentes de Trânsito | SESTRAN Paranavaí" },

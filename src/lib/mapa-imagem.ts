@@ -219,7 +219,7 @@ export async function gerarImagemMapa(
   const trajeto = percurso?.pontos ?? [];
   if (trajeto.length > 1) {
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 8;
+    ctx.lineWidth = (percurso?.estilo?.espessura ?? 5) + 3;
     ctx.beginPath();
     trajeto.forEach((p, i) => {
       const [x, y] = paraTela(p);
@@ -227,8 +227,8 @@ export async function gerarImagemMapa(
       else ctx.lineTo(x, y);
     });
     ctx.stroke();
-    ctx.strokeStyle = "#1d4ed8";
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = percurso?.estilo?.corLinha ?? "#1d4ed8";
+    ctx.lineWidth = percurso?.estilo?.espessura ?? 5;
     ctx.stroke();
   }
 
@@ -240,7 +240,7 @@ export async function gerarImagemMapa(
 
   (percurso?.marcadores ?? []).forEach((p) => {
     const [x, y] = paraTela(p);
-    desenharMarcador(ctx, x, y, "#b45309", "•");
+    desenharMarcador(ctx, x, y, percurso?.estilo?.corMarcador ?? "#b45309", "•");
   });
 
   desenharEscala(ctx, latCentro, zoom);
