@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { Ban, Check, Crop, Eye, Loader2, MapPin, Plus, RotateCcw, Route as RotaIcone, Search, Trash2, Undo2, Redo2, Hand, LocateFixed } from "lucide-react";
+import { Ban, Check, Crop, Eye, Loader2, MapPin, Plus, Minus, Layers, Scan, RotateCcw, Route as RotaIcone, Search, Trash2, Undo2, Redo2, Hand, LocateFixed } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import {
   CENTRO_PARANAVAI,
   ZOOM_PADRAO,
@@ -54,7 +55,9 @@ export default function MapaPercurso({
 }: MapaPercursoProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapaRef = useRef<L.Map | null>(null);
-  const camadaRef = useRef<L.LayerGroup | null>(null);
+  const camadasRef = useRef<{ base: L.TileLayer; percurso: L.LayerGroup; pontos: L.LayerGroup; interdicoes: L.LayerGroup } | null>(null);
+  const [camadasVisiveis, setCamadasVisiveis] = useState({ base: true, percurso: true, pontos: true, interdicoes: true });
+  const [zoomAtual, setZoomAtual] = useState(percurso.zoom ?? ZOOM_PADRAO);
   const modoRef = useRef<Modo>("navegar");
   const [modo, setModo] = useState<Modo>("navegar");
   const [busca, setBusca] = useState("");
@@ -140,15 +143,17 @@ export default function MapaPercurso({
   useEffect(() => {
     if (!containerRef.current || mapaRef.current) return;
     const inicial = estadoRef.current.percurso;
-    const mapa = L.map(containerRef.current, { zoomControl: true }).setView(
+    const mapa = L.map(containerRef.current, { zoomControl: false, minZoom: 2, maxZoom: 19 }).setView(
       inicial.centro ?? CENTRO_PARANAVAI,
       inicial.zoom ?? ZOOM_PADRAO,
     );
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const base = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: "&copy; OpenStreetMap",
     }).addTo(mapa);
-    camadaRef.current = L.layerGroup().addTo(mapa);
+    camadasRef.current = { base, percurso: L.layerGroup().addTo(mapa), pontos: L.layerGroup().addTo(mapa), interdicoes: L.layerGroup().addTo(mapa) };
+    mapa.on("zoomend", () => setZoomAtual(mapa.getZoom()));
+    setZoomAtual(mapa.getZoom());
     mapa.on("click", (e: L.LeafletMouseEvent) => {
       if (modoRef.current !== "recorte") clicarRef.current(e.latlng.lat, e.latlng.lng);
     });
@@ -195,10 +200,29 @@ export default function MapaPercurso({
       clearTimeout(tempo);
       mapa.remove();
       mapaRef.current = null;
-      camadaRef.current = null;
+      camadasRef.current = null;
       setPronto(false);
     };
   }, []);
+
+  useEffect(() => {
+    const mapa = mapaRef.current;
+    const camadas = camadasRef.current;
+    if (!mapa || !camadas) return;
+    for (const chave of Object.keys(camadasVisiveis) as (keyof typeof camadasVisiveis)[]) {
+      if (camadasVisiveis[chave]) camadas[chave].addTo(mapa);
+      else camadas[chave].remove();
+    }
+  }, [camadasVisiveis, pronto]);
+
+  function centralizar() {
+    const mapa = mapaRef.current;
+    if (!mapa) return;
+    const todos = [...percurso.pontos, ...percurso.marcadores, ...interdicoes.flatMap((item) => item.geometria ?? [])];
+    if (todos.length) {
+      mapa.fitBounds(L.latLngBounds(todos.map((p) => [p.lat, p.lng] as [number, number])), { padding: [30, 30], maxZoom: 17 });
+    } else mapa.setView(CENTRO_PARANAVAI, ZOOM_PADRAO);
+  }
 
   useEffect(() => {
     if (solicitarRecorte > 0 && !somenteLeitura) trocarModo("recorte");
@@ -207,9 +231,11 @@ export default function MapaPercurso({
 
   // redesenha marcadores, trajeto e interdições
   useEffect(() => {
-    const camada = camadaRef.current;
-    if (!camada) return;
-    camada.clearLayers();
+    const camadas = camadasRef.current;
+    if (!camadas) return;
+    camadas.percurso.clearLayers();
+    camadas.pontos.clearLayers();
+    camadas.interdicoes.clearLayers();
 
     percurso.pontos.forEach((p, i) => {
       const total = percurso.pontos.length;
@@ -219,7 +245,7 @@ export default function MapaPercurso({
         draggable: !somenteLeitura,
       })
         .bindTooltip(rotuloEtapa(i, total, p.rotulo))
-        .addTo(camada);
+        .addTo(camadas.percurso);
       marcador.on("dragend", () => {
         const ll = marcador.getLatLng();
         const pontos = estadoRef.current.percurso.pontos.map((atual, indice) =>
@@ -233,7 +259,7 @@ export default function MapaPercurso({
       L.polyline(
         percurso.pontos.map((p) => [p.lat, p.lng] as [number, number]),
         { color: percurso.estilo?.corLinha ?? "#1d4ed8", weight: percurso.estilo?.espessura ?? 5, opacity: 0.85 },
-      ).addTo(camada);
+      ).addTo(camadas.percurso);
     }
 
     percurso.marcadores.forEach((p, i) => {
@@ -242,7 +268,7 @@ export default function MapaPercurso({
         draggable: !somenteLeitura,
       })
         .bindTooltip(p.rotulo?.trim() || `Ponto ${i + 1}`)
-        .addTo(camada);
+        .addTo(camadas.pontos);
       marcador.on("dragend", () => {
         const ll = marcador.getLatLng();
         const marcadores = estadoRef.current.percurso.marcadores.map((atual, indice) =>
@@ -259,7 +285,7 @@ export default function MapaPercurso({
         { color: "#dc2626", weight: 6, dashArray: "8 6" },
       )
         .bindTooltip(item.rua.trim() || "Rua interditada")
-        .addTo(camada);
+        .addTo(camadas.interdicoes);
     });
   }, [percurso, interdicoes, somenteLeitura, atualizar, pronto]);
 
@@ -423,7 +449,6 @@ export default function MapaPercurso({
             Desfazer
           </Button>
           <Button type="button" size="sm" variant="ghost" disabled={indiceHistorico >= historicoRef.current.length - 1} onClick={() => restaurarHistorico(indiceHistorico + 1)}><Redo2 className="mr-2 h-4 w-4" />Refazer</Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => mapaRef.current?.setView(CENTRO_PARANAVAI, ZOOM_PADRAO)}><LocateFixed className="mr-2 h-4 w-4" />Paranavaí</Button>
           <Button
             type="button"
             size="sm"
@@ -468,6 +493,21 @@ export default function MapaPercurso({
       )}
       {resultados.length > 0 && <div className="grid gap-1" aria-label="Resultados da pesquisa de endereço">{resultados.map((item, i) => <Button key={i} type="button" variant="outline" className="h-auto justify-start whitespace-normal text-left" onClick={() => { mapaRef.current?.setView([Number(item.lat), Number(item.lon)], 17); setBusca(item.display_name); setResultados([]); }}>{item.display_name}</Button>)}</div>}
 
+
+      <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Controles de visualização do mapa">
+        <Button type="button" size="icon" variant="outline" title="Ampliar mapa" aria-label="Ampliar mapa" disabled={!pronto || zoomAtual >= 19} onClick={() => mapaRef.current?.zoomIn()}><Plus className="h-4 w-4" /></Button>
+        <Button type="button" size="icon" variant="outline" title="Reduzir mapa" aria-label="Reduzir mapa" disabled={!pronto || zoomAtual <= 2} onClick={() => mapaRef.current?.zoomOut()}><Minus className="h-4 w-4" /></Button>
+        <Button type="button" size="icon" variant="outline" title="Centralizar visualização" aria-label="Centralizar visualização" disabled={!pronto} onClick={centralizar}><Scan className="h-4 w-4" /></Button>
+        <Button type="button" size="icon" variant="outline" title="Centralizar em Paranavaí" aria-label="Centralizar em Paranavaí" disabled={!pronto} onClick={() => mapaRef.current?.setView(CENTRO_PARANAVAI, ZOOM_PADRAO)}><LocateFixed className="h-4 w-4" /></Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button type="button" size="icon" variant="outline" title="Camadas do mapa" aria-label="Camadas do mapa" disabled={!pronto}><Layers className="h-4 w-4" /></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuLabel>Camadas do mapa</DropdownMenuLabel>
+            {([{ id: "base", nome: "OpenStreetMap" }, { id: "percurso", nome: "Percurso e etapas" }, { id: "pontos", nome: "Pontos e locais" }, { id: "interdicoes", nome: "Interdições" }] as const).map(({ id, nome }) => <DropdownMenuCheckboxItem key={id} checked={camadasVisiveis[id]} onSelect={(e) => e.preventDefault()} onCheckedChange={(checked) => setCamadasVisiveis((atual) => ({ ...atual, [id]: checked === true }))}>{nome}</DropdownMenuCheckboxItem>)}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <span className="text-xs tabular-nums text-muted-foreground" aria-live="polite">Zoom {zoomAtual}</span>
+      </div>
 
       <div
         ref={containerRef}
