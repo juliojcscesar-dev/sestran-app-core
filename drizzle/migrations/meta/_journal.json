@@ -50,6 +50,13 @@
       "when": 1791403409081,
       "tag": "0006_cadastros_rapidos_os_operadores",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791468342743,
+      "tag": "0007_situacao_veiculos_e_correcao_salvamento",
+      "breakpoints": true
     }
   ]
 }

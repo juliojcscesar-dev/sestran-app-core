@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { TipoDenuncia } from "@/lib/veiculos";
+import type { TipoDenuncia, SituacaoVeiculo } from "@/lib/veiculos";
 
 export type DadosVeiculo = {
+  situacao?: SituacaoVeiculo | null;
   placa: string | null;
   chassi: string | null;
   marca: string | null;
@@ -24,14 +25,18 @@ export type DadosVeiculo = {
 };
 
 function checar<T>(res: { data: T; error: unknown }): T {
-  if (res.error) throw res.error;
+  if (res.error) {
+    const mensagem = typeof res.error === "object" && "message" in res.error ? String(res.error.message) : "Não foi possível salvar ou carregar o registro.";
+    throw new Error(mensagem);
+  }
   return res.data;
 }
 
 const SELECAO =
-  "id, placa, chassi, marca, modelo, cor, endereco, bairro, tipo_denuncia, numero_denuncia, data_constatacao, data_verificacao, data_notificacao, prazo_recolhimento, data_recolhimento, data_retirada, status, observacoes, arquivado, arquivado_em, created_at, latitude, longitude, bairro_id, rua_id";
+  "id, placa, chassi, marca, modelo, cor, endereco, bairro, tipo_denuncia, numero_denuncia, data_constatacao, data_verificacao, data_notificacao, prazo_recolhimento, data_recolhimento, data_retirada, status, situacao, observacoes, arquivado, arquivado_em, created_at, latitude, longitude, bairro_id, rua_id";
 
 export type VeiculoLista = {
+  situacao: SituacaoVeiculo | null;
   id: string;
   placa: string | null;
   chassi: string | null;

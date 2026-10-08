@@ -4,6 +4,9 @@ export const STATUS_VEICULO = [
   "RECOLHER",
   "RECOLHIDO",
   "RETIRADO",
+  "NAO_ABANDONADO",
+  "TERRENO",
+  "OUTROS",
 ] as const;
 
 export type StatusVeiculo = (typeof STATUS_VEICULO)[number];
@@ -13,7 +16,10 @@ export const STATUS_VEICULO_LABEL: Record<StatusVeiculo, string> = {
   NOTIFICADO: "Notificado",
   RECOLHER: "A recolher",
   RECOLHIDO: "Recolhido",
-  RETIRADO: "Retirado pelo proprietário",
+  RETIRADO: "Retirado",
+  NAO_ABANDONADO: "Não está abandonado",
+  TERRENO: "Dentro de terreno",
+  OUTROS: "Outros",
 };
 
 export const STATUS_VEICULO_CLASSE: Record<StatusVeiculo, string> = {
@@ -22,7 +28,13 @@ export const STATUS_VEICULO_CLASSE: Record<StatusVeiculo, string> = {
   RECOLHER: "bg-destructive/10 text-destructive border-destructive/20",
   RECOLHIDO: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-400",
   RETIRADO: "bg-muted text-muted-foreground border-border",
+  NAO_ABANDONADO: "bg-muted text-muted-foreground border-border",
+  TERRENO: "bg-muted text-muted-foreground border-border",
+  OUTROS: "bg-muted text-muted-foreground border-border",
 };
+
+export const SITUACOES_VEICULO = ["RETIRADO", "NOTIFICADO", "RECOLHIDO", "NAO_ABANDONADO", "TERRENO", "OUTROS"] as const;
+export type SituacaoVeiculo = (typeof SITUACOES_VEICULO)[number];
 
 export const TIPOS_DENUNCIA = ["OUVIDORIA", "INFORMAL"] as const;
 export type TipoDenuncia = (typeof TIPOS_DENUNCIA)[number];
@@ -61,6 +73,7 @@ export const CAMPO_VEICULO_LABEL: Record<string, string> = {
   data_retirada: "Data da retirada",
   observacoes: "Observações",
   status: "Situação",
+  situacao: "Situação informada",
   arquivado: "Arquivado",
   arquivado_em: "Arquivado em",
 };
@@ -70,7 +83,8 @@ export type EtapaCronograma =
   | "VERIFICADOS"
   | "A_RECOLHER"
   | "RECOLHIDOS"
-  | "RETIRADOS";
+  | "RETIRADOS"
+  | "OUTRAS_SITUACOES";
 
 export const ETAPAS_CRONOGRAMA: EtapaCronograma[] = [
   "AGUARDANDO_VERIFICACAO",
@@ -78,6 +92,7 @@ export const ETAPAS_CRONOGRAMA: EtapaCronograma[] = [
   "A_RECOLHER",
   "RECOLHIDOS",
   "RETIRADOS",
+  "OUTRAS_SITUACOES",
 ];
 
 export const ETAPA_LABEL: Record<EtapaCronograma, string> = {
@@ -86,10 +101,12 @@ export const ETAPA_LABEL: Record<EtapaCronograma, string> = {
   A_RECOLHER: "A recolher",
   RECOLHIDOS: "Recolhidos",
   RETIRADOS: "Retirados",
+  OUTRAS_SITUACOES: "Outras situações",
 };
 
 export type VeiculoBase = {
   status: string;
+  situacao?: SituacaoVeiculo | null;
   data_verificacao: string | null;
   data_notificacao: string | null;
   data_recolhimento: string | null;
@@ -109,6 +126,11 @@ export function hojeIso() {
  * ainda não tenha sido salvo depois do vencimento.
  */
 export function statusEfetivo(v: VeiculoBase): StatusVeiculo {
+  if (v.situacao && v.situacao !== "NOTIFICADO") return v.situacao;
+  if (v.situacao === "NOTIFICADO") {
+    const prazo = v.prazo_recolhimento ?? (v.data_notificacao ? somarDias(v.data_notificacao, PRAZO_RECOLHIMENTO_DIAS) : null);
+    return prazo && prazo <= hojeIso() ? "RECOLHER" : "NOTIFICADO";
+  }
   if (v.data_retirada) return "RETIRADO";
   if (v.data_recolhimento) return "RECOLHIDO";
   if (v.data_notificacao) {
@@ -119,9 +141,12 @@ export function statusEfetivo(v: VeiculoBase): StatusVeiculo {
 }
 
 export function etapaDe(v: VeiculoBase): EtapaCronograma {
-  if (v.data_retirada) return "RETIRADOS";
-  if (v.data_recolhimento) return "RECOLHIDOS";
-  if (statusEfetivo(v) === "RECOLHER") return "A_RECOLHER";
+  const status = statusEfetivo(v);
+  if (status === "RETIRADO") return "RETIRADOS";
+  if (status === "RECOLHIDO") return "RECOLHIDOS";
+  if (["NAO_ABANDONADO", "TERRENO", "OUTROS"].includes(status)) return "OUTRAS_SITUACOES";
+  if (status === "RECOLHER") return "A_RECOLHER";
+  if (status === "NOTIFICADO") return "VERIFICADOS";
   if (v.data_verificacao) return "VERIFICADOS";
   return "AGUARDANDO_VERIFICACAO";
 }

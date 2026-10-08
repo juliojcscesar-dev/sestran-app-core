@@ -13,3 +13,4 @@
 - Store map visual styles in the existing percurso JSON; store raster annotations in mapa_imagem to preserve compatibility without new tables.
 - Keep map image editing in a separate canvas component with an annotation layer so the eraser cannot damage the base map.
 - Map layer visibility is local presentation state in separate Leaflet groups; it must never delete saved geometry or change document captures.
+- Vehicle manual situation overrides legacy date-derived status; notifications retain the fifteen-day deadline, and hidden legacy fields are preserved on edit.

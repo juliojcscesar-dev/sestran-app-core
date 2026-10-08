@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Cadastro de veículos (solicitado 08/10)
+- [x] Retirar Cor e Data da constatação do formulário e substituir Retirada pelo proprietário por Situação
+- [x] Persistir as seis situações preservando histórico e prazo de notificação
+- [x] Testar cadastro, edição e recarregamento
+
 ## Controles do mapa da O.S. (solicitado 08/10)
 - [x] Adicionar ampliar, reduzir, centralizar e alternar as camadas do dashboard
 - [x] Validar os controles sem alterar percurso, interdições e recorte
