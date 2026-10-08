@@ -1058,6 +1058,7 @@ export type Database = {
           prazo_recolhimento: string | null
           registrado_por: string | null
           rua_id: string | null
+          situacao: string | null
           status: string
           tipo_denuncia: string
           updated_at: string
@@ -1088,6 +1089,7 @@ export type Database = {
           prazo_recolhimento?: string | null
           registrado_por?: string | null
           rua_id?: string | null
+          situacao?: string | null
           status?: string
           tipo_denuncia?: string
           updated_at?: string
@@ -1118,6 +1120,7 @@ export type Database = {
           prazo_recolhimento?: string | null
           registrado_por?: string | null
           rua_id?: string | null
+          situacao?: string | null
           status?: string
           tipo_denuncia?: string
           updated_at?: string
