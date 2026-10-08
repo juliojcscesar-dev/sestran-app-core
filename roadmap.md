@@ -1,8 +1,8 @@
 # Roadmap — SESTRAN
 
 ## Controles do mapa da O.S. (solicitado 08/10)
-- [ ] Adicionar ampliar, reduzir, centralizar e alternar as camadas do dashboard
-- [ ] Validar os controles sem alterar percurso, interdições e recorte
+- [x] Adicionar ampliar, reduzir, centralizar e alternar as camadas do dashboard
+- [x] Validar os controles sem alterar percurso, interdições e recorte
 
 ## Etapa 2 — Ordem de Serviço
 - [x] Número manual com sugestão anual, normalização e bloqueio de duplicidade
