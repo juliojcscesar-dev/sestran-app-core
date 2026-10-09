@@ -1,0 +1,2 @@
+ALTER TABLE public.acoes_educativas ADD COLUMN IF NOT EXISTS tipo_atividade text, ADD COLUMN IF NOT EXISTS endereco text, ADD COLUMN IF NOT EXISTS numero_endereco text, ADD COLUMN IF NOT EXISTS bairro text, ADD COLUMN IF NOT EXISTS equipe text, ADD COLUMN IF NOT EXISTS relatorio_texto text, ADD COLUMN IF NOT EXISTS relatorio_imagens jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.acoes_educativas ADD CONSTRAINT acao_relatorio_imagens_array CHECK (jsonb_typeof(relatorio_imagens) = 'array' AND jsonb_array_length(relatorio_imagens) <= 6);

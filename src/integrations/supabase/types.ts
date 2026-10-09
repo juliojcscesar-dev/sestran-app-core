@@ -54,22 +54,29 @@ export type Database = {
           arquivada: boolean
           arquivada_em: string | null
           arquivada_por: string | null
+          bairro: string | null
           categoria: string
           created_at: string
           criado_por: string | null
           data_acao: string
           descricao: string | null
+          endereco: string | null
+          equipe: string | null
           escola_id: string | null
           horario_fim: string | null
           horario_inicio: string | null
           id: string
           local: string | null
+          numero_endereco: string | null
           observacoes: string | null
           orientador_id: string | null
           participantes: number | null
           publico_alvo: string | null
+          relatorio_imagens: Json
+          relatorio_texto: string | null
           status: string
           tema_id: string | null
+          tipo_atividade: string | null
           titulo: string
           updated_at: string
         }
@@ -77,22 +84,29 @@ export type Database = {
           arquivada?: boolean
           arquivada_em?: string | null
           arquivada_por?: string | null
+          bairro?: string | null
           categoria?: string
           created_at?: string
           criado_por?: string | null
           data_acao: string
           descricao?: string | null
+          endereco?: string | null
+          equipe?: string | null
           escola_id?: string | null
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
           local?: string | null
+          numero_endereco?: string | null
           observacoes?: string | null
           orientador_id?: string | null
           participantes?: number | null
           publico_alvo?: string | null
+          relatorio_imagens?: Json
+          relatorio_texto?: string | null
           status?: string
           tema_id?: string | null
+          tipo_atividade?: string | null
           titulo: string
           updated_at?: string
         }
@@ -100,22 +114,29 @@ export type Database = {
           arquivada?: boolean
           arquivada_em?: string | null
           arquivada_por?: string | null
+          bairro?: string | null
           categoria?: string
           created_at?: string
           criado_por?: string | null
           data_acao?: string
           descricao?: string | null
+          endereco?: string | null
+          equipe?: string | null
           escola_id?: string | null
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
           local?: string | null
+          numero_endereco?: string | null
           observacoes?: string | null
           orientador_id?: string | null
           participantes?: number | null
           publico_alvo?: string | null
+          relatorio_imagens?: Json
+          relatorio_texto?: string | null
           status?: string
           tema_id?: string | null
+          tipo_atividade?: string | null
           titulo?: string
           updated_at?: string
         }

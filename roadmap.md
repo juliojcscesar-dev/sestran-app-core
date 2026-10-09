@@ -1,5 +1,11 @@
 # Roadmap — SESTRAN
 
+## Agenda educativa e visualização final (solicitado 09/10)
+- [ ] Adaptar campos da Educação no Trânsito ao modelo anexado
+- [ ] Relatório com texto e imagens, rotação e tamanho persistidos
+- [ ] Disponibilizar documento final em Visualizar nos três módulos
+- [ ] Verificar salvamento, recarregamento e visualização
+
 ## Cadastro de veículos (solicitado 08/10)
 - [x] Retirar Cor e Data da constatação do formulário e substituir Retirada pelo proprietário por Situação
 - [x] Persistir as seis situações preservando histórico e prazo de notificação
