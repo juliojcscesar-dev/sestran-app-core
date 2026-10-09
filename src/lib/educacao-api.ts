@@ -1,7 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CategoriaAcao, StatusAcao } from "@/lib/educacao";
+import type { ImagemRelatorio } from "@/lib/educacao-imagens";
+import type { Json } from "@/integrations/supabase/types";
 
 export type AcaoEducativa = {
+  tipo_atividade: string | null;
+  endereco: string | null;
+  numero_endereco: string | null;
+  bairro: string | null;
+  equipe: string | null;
+  relatorio_texto: string | null;
+  relatorio_imagens: ImagemRelatorio[];
   id: string;
   titulo: string;
   descricao: string | null;
@@ -39,7 +48,7 @@ export type FiltrosAcao = {
 };
 
 const selecao =
-  "id,titulo,descricao,data_acao,horario_inicio,horario_fim,categoria,status,local,publico_alvo,participantes,observacoes,escola_id,orientador_id,tema_id,arquivada,escolas(nome),orientadores(nome),temas_educativos(nome)";
+  "id,titulo,descricao,data_acao,horario_inicio,horario_fim,categoria,status,local,publico_alvo,participantes,observacoes,escola_id,orientador_id,tema_id,arquivada,tipo_atividade,endereco,numero_endereco,bairro,equipe,relatorio_texto,relatorio_imagens,escolas(nome),orientadores(nome),temas_educativos(nome)";
 
 export async function listarAcoes(filtros: FiltrosAcao = {}) {
   let query = supabase
@@ -77,7 +86,7 @@ export async function criarAcao(dados: DadosAcao) {
   const { data: usuario } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("acoes_educativas")
-    .insert({ ...dados, criado_por: usuario.user?.id ?? null })
+    .insert({ ...dados, relatorio_imagens: dados.relatorio_imagens as unknown as Json, criado_por: usuario.user?.id ?? null })
     .select("id")
     .single();
   if (error) throw error;
@@ -85,7 +94,7 @@ export async function criarAcao(dados: DadosAcao) {
 }
 
 export async function atualizarAcao(id: string, dados: DadosAcao) {
-  const { error } = await supabase.from("acoes_educativas").update(dados).eq("id", id);
+  const { error } = await supabase.from("acoes_educativas").update({ ...dados, relatorio_imagens: dados.relatorio_imagens as unknown as Json }).eq("id", id).select("id").single();
   if (error) throw error;
 }
 
