@@ -57,6 +57,20 @@
       "when": 1791468342743,
       "tag": "0007_situacao_veiculos_e_correcao_salvamento",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791555591398,
+      "tag": "0008_agenda_educativa_documento_relatorio",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791555891471,
+      "tag": "0009_corrigir_situacoes_agenda_educativa",
+      "breakpoints": true
     }
   ]
 }

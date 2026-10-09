@@ -14,3 +14,5 @@
 - Keep map image editing in a separate canvas component with an annotation layer so the eraser cannot damage the base map.
 - Map layer visibility is local presentation state in separate Leaflet groups; it must never delete saved geometry or change document captures.
 - Vehicle manual situation overrides legacy date-derived status; notifications retain the fifteen-day deadline, and hidden legacy fields are preserved on edit.
+- Educational reports store bounded, browser-compressed image data and image presentation settings on the existing action record; this keeps report content and history saved atomically under existing RLS.
+- Final vehicle and educational documents use dedicated authenticated sibling routes and printable components; this preserves calendar/list parent routes and enables direct document navigation without changing existing order documents.
