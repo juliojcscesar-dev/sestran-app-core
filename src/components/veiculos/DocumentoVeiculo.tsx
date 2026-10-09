@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { urlAssinada, type VeiculoCompleto } from '@/lib/veiculos-api';
 import { STATUS_VEICULO_LABEL, statusEfetivo } from '@/lib/veiculos';
 
-function Campo({ nome, valor }: { nome: string; valor?: string | number | null }) {
+function Campo({ nome, valor }: { nome: string; valor?: string | number | null | undefined }) {
   return valor !== null && valor !== undefined && valor !== '' ? <p className="whitespace-pre-wrap"><strong>{nome}: </strong>{valor}</p> : null;
 }
 function Foto({ caminho, legenda }: { caminho: string; legenda: string }) {

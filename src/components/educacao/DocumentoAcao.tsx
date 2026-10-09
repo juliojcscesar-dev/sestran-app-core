@@ -2,7 +2,7 @@ import type { AcaoEducativa } from '@/lib/educacao-api';
 import { CATEGORIA_ACAO_LABEL, STATUS_ACAO_LABEL, criarDataLocal } from '@/lib/educacao';
 import { larguraImagem } from '@/lib/educacao-imagens';
 
-function Campo({ nome, valor }: { nome: string; valor?: string | number | null }) {
+function Campo({ nome, valor }: { nome: string; valor?: string | number | null | undefined }) {
   return valor !== null && valor !== undefined && valor !== '' ? <p className="whitespace-pre-wrap"><strong>{nome}: </strong>{valor}</p> : null;
 }
 
