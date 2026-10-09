@@ -15,12 +15,12 @@ export function EditorRelatorio({ texto, onTexto, imagens, onImagens }: { texto:
   return <section className="space-y-3 md:col-span-2">
     <Label htmlFor="acao-relatorio">Relatório</Label><Textarea id="acao-relatorio" rows={5} value={texto} onChange={e => onTexto(e.target.value)} />
     <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" aria-label="Imagens do relatório" onChange={async e => {
-      const arquivos = Array.from(e.target.files ?? []); e.target.value = '';
+      const arquivos = Array.from(e.target.files ?? []);
       if (imagens.length + arquivos.length > 6) { toast.error('Adicione no máximo 6 imagens.'); return; }
       setOcupado(true);
       try { onImagens([...imagens, ...await Promise.all(arquivos.map(prepararImagem))]); } catch (err) { toast.error(err instanceof Error ? err.message : 'Não foi possível adicionar imagens.'); } finally { setOcupado(false); }
     }} />
-    <Button type="button" variant="outline" disabled={ocupado || imagens.length >= 6} onClick={() => input.current?.click()}><ImagePlus className="mr-2 h-4 w-4" />{ocupado ? 'Processando…' : 'Adicionar imagens'}</Button>
+    <Button type="button" variant="outline" disabled={ocupado || imagens.length >= 6} onClick={() => { if (input.current) { input.current.value = ''; input.current.click(); } }}><ImagePlus className="mr-2 h-4 w-4" />{ocupado ? 'Processando…' : 'Adicionar imagens'}</Button>
     {imagens.map((imagem, indice) => <div key={imagem.id} className="space-y-2 border-b pb-4">
       <figure className={`${larguraImagem[imagem.largura] ?? 'w-full'} mx-auto`}><img src={imagem.src} alt={imagem.legenda || `Imagem ${indice + 1} do relatório`} className="h-auto max-h-96 w-full object-contain" /></figure>
       <div className="flex flex-wrap items-center gap-2"><Button type="button" variant="outline" size="icon" disabled={ocupado} title="Girar 90°" aria-label={`Girar imagem ${indice + 1}`} onClick={async () => { setOcupado(true); try { atualizar(imagem.id, await girarImagem(imagem)); } catch { toast.error('Não foi possível girar a imagem.'); } finally { setOcupado(false); } }}><RotateCw className="h-4 w-4" /></Button><span className="text-xs text-muted-foreground">{imagem.angulo}°</span>
