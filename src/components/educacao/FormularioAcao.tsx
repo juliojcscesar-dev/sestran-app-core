@@ -75,7 +75,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
       toast.success(acao ? "Ação educativa atualizada." : "Ação educativa cadastrada.");
       onAbertoChange(false);
     },
-    onError: (erro) => toast.error(erro instanceof Error ? erro.message : "Não foi possível salvar a ação."),
+    onError: (erro) => toast.error(erro instanceof Error ? erro.message : typeof erro === "object" && erro !== null && "message" in erro ? String(erro.message) : "Não foi possível salvar a ação."),
   });
 
   const adicionarTema = useMutation({
