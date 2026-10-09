@@ -23,6 +23,8 @@ import { Route as AuthenticatedSolicitantesRouteImport } from './routes/_authent
 import { Route as AuthenticatedTerritorioRouteImport } from './routes/_authenticated/territorio'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedVeiculosAbandonadosRouteImport } from './routes/_authenticated/veiculos-abandonados'
+import { Route as AuthenticatedAgendaEducativaIdRouteImport } from './routes/_authenticated/agenda-educativa.$id'
+import { Route as AuthenticatedDocumentoVeiculoIdRouteImport } from './routes/_authenticated/documento-veiculo.$id'
 import { Route as AuthenticatedOrdensServicoIndexRouteImport } from './routes/_authenticated/ordens-servico/index'
 import { Route as AuthenticatedOrdensServicoNovaRouteImport } from './routes/_authenticated/ordens-servico/nova'
 import { Route as AuthenticatedOrdensServicoDuplicarIdRouteImport } from './routes/_authenticated/ordens-servico/duplicar.$id'
@@ -102,6 +104,18 @@ const AuthenticatedVeiculosAbandonadosRoute =
     path: '/veiculos-abandonados',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAgendaEducativaIdRoute =
+  AuthenticatedAgendaEducativaIdRouteImport.update({
+    id: '/agenda-educativa/$id',
+    path: '/agenda-educativa/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDocumentoVeiculoIdRoute =
+  AuthenticatedDocumentoVeiculoIdRouteImport.update({
+    id: '/documento-veiculo/$id',
+    path: '/documento-veiculo/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdensServicoIndexRoute =
   AuthenticatedOrdensServicoIndexRouteImport.update({
     id: '/ordens-servico/',
@@ -147,6 +161,8 @@ export interface FileRoutesByFullPath {
   '/territorio': typeof AuthenticatedTerritorioRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
+  '/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
+  '/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
   '/ordens-servico/': typeof AuthenticatedOrdensServicoIndexRoute
   '/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
@@ -167,6 +183,8 @@ export interface FileRoutesByTo {
   '/territorio': typeof AuthenticatedTerritorioRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
+  '/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
+  '/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
   '/ordens-servico': typeof AuthenticatedOrdensServicoIndexRoute
   '/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
@@ -189,6 +207,8 @@ export interface FileRoutesById {
   '/_authenticated/territorio': typeof AuthenticatedTerritorioRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
+  '/_authenticated/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
+  '/_authenticated/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/_authenticated/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
   '/_authenticated/ordens-servico/': typeof AuthenticatedOrdensServicoIndexRoute
   '/_authenticated/ordens-servico/duplicar/$id': typeof AuthenticatedOrdensServicoDuplicarIdRoute
@@ -211,6 +231,8 @@ export interface FileRouteTypes {
     | '/territorio'
     | '/usuarios'
     | '/veiculos-abandonados'
+    | '/agenda-educativa/$id'
+    | '/documento-veiculo/$id'
     | '/ordens-servico/nova'
     | '/ordens-servico/'
     | '/ordens-servico/duplicar/$id'
@@ -231,6 +253,8 @@ export interface FileRouteTypes {
     | '/territorio'
     | '/usuarios'
     | '/veiculos-abandonados'
+    | '/agenda-educativa/$id'
+    | '/documento-veiculo/$id'
     | '/ordens-servico/nova'
     | '/ordens-servico'
     | '/ordens-servico/duplicar/$id'
@@ -252,6 +276,8 @@ export interface FileRouteTypes {
     | '/_authenticated/territorio'
     | '/_authenticated/usuarios'
     | '/_authenticated/veiculos-abandonados'
+    | '/_authenticated/agenda-educativa/$id'
+    | '/_authenticated/documento-veiculo/$id'
     | '/_authenticated/ordens-servico/nova'
     | '/_authenticated/ordens-servico/'
     | '/_authenticated/ordens-servico/duplicar/$id'
@@ -365,6 +391,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVeiculosAbandonadosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/agenda-educativa/$id': {
+      id: '/_authenticated/agenda-educativa/$id'
+      path: '/agenda-educativa/$id'
+      fullPath: '/agenda-educativa/$id'
+      preLoaderRoute: typeof AuthenticatedAgendaEducativaIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documento-veiculo/$id': {
+      id: '/_authenticated/documento-veiculo/$id'
+      path: '/documento-veiculo/$id'
+      fullPath: '/documento-veiculo/$id'
+      preLoaderRoute: typeof AuthenticatedDocumentoVeiculoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ordens-servico/': {
       id: '/_authenticated/ordens-servico/'
       path: '/ordens-servico'
@@ -415,6 +455,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTerritorioRoute: typeof AuthenticatedTerritorioRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVeiculosAbandonadosRoute: typeof AuthenticatedVeiculosAbandonadosRoute
+  AuthenticatedAgendaEducativaIdRoute: typeof AuthenticatedAgendaEducativaIdRoute
+  AuthenticatedDocumentoVeiculoIdRoute: typeof AuthenticatedDocumentoVeiculoIdRoute
   AuthenticatedOrdensServicoNovaRoute: typeof AuthenticatedOrdensServicoNovaRoute
   AuthenticatedOrdensServicoIndexRoute: typeof AuthenticatedOrdensServicoIndexRoute
   AuthenticatedOrdensServicoDuplicarIdRoute: typeof AuthenticatedOrdensServicoDuplicarIdRoute
@@ -434,6 +476,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTerritorioRoute: AuthenticatedTerritorioRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVeiculosAbandonadosRoute: AuthenticatedVeiculosAbandonadosRoute,
+  AuthenticatedAgendaEducativaIdRoute: AuthenticatedAgendaEducativaIdRoute,
+  AuthenticatedDocumentoVeiculoIdRoute: AuthenticatedDocumentoVeiculoIdRoute,
   AuthenticatedOrdensServicoNovaRoute: AuthenticatedOrdensServicoNovaRoute,
   AuthenticatedOrdensServicoIndexRoute: AuthenticatedOrdensServicoIndexRoute,
   AuthenticatedOrdensServicoDuplicarIdRoute:
