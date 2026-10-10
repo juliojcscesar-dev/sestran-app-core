@@ -1,22 +1,39 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { EmBreve } from "@/components/EmBreve";
-
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Mail, Search, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useSessao } from "@/hooks/useSessao";
+import { administrador, MODULOS_ACESSO, type ModuloAcesso, type NivelAcesso } from "@/lib/permissoes";
+import { convidarUsuario } from "@/lib/usuarios.functions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 export const Route = createFileRoute("/_authenticated/usuarios")({
-  head: () => ({
-    meta: [
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { title: "Usuários e Acessos | SESTRAN Paranavaí" },
-      { name: "description", content: "Gestão dos usuários do sistema e dos níveis de acesso." },
-      { property: "og:title", content: "Usuários e Acessos | SESTRAN Paranavaí" },
-      { property: "og:description", content: "Gestão dos usuários do sistema e dos níveis de acesso." },
-    ],
-  }),
-  component: () => (
-    <EmBreve
-      titulo="Usuários e Acessos"
-      descricao="Gestão dos usuários do sistema e dos níveis de acesso."
-      itens={["Lista de servidores com perfil e situação", "Concessão dos níveis Administrador, Gestor, Operador e Consulta", "Ativação e inativação de contas"]}
-    />
-  ),
+ head: () => ({ meta: [{ title: "Usuários e Acesso | SESTRAN Paranavaí" }, { name: "description", content: "Liberação individual de visualização, preenchimento e exclusão nos módulos da SESTRAN." }, { property: "og:title", content: "Usuários e Acesso | SESTRAN Paranavaí" }, { property: "og:description", content: "Administração dos acessos por módulo." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: Usuarios,
 });
+function Usuarios() {
+ const { data: sessao } = useSessao(); const qc = useQueryClient(); const [busca,setBusca] = useState(""); const [email,setEmail] = useState(""); const conviteFn = useServerFn(convidarUsuario);
+ const usuarios = useQuery({ queryKey: ["usuarios-acesso"], enabled: administrador(sessao), queryFn: async () => {
+  const [p,r,a] = await Promise.all([supabase.from("profiles").select("user_id,nome_completo,email,ativo").order("nome_completo"), supabase.from("user_roles").select("user_id,role"),supabase.from("user_module_permissions").select("user_id,modulo,nivel,pode_excluir")]);
+  if(p.error || r.error || a.error) throw p.error ?? r.error ?? a.error;
+  return (p.data ?? []).map(u=>({...u,admin:(r.data??[]).some(x=>x.user_id===u.user_id&&x.role==="ADMINISTRADOR"),acessos:(a.data??[]).filter(x=>x.user_id===u.user_id)}));
+ }});
+ const salvar = useMutation({mutationFn: async (p:{ userId:string; modulo:ModuloAcesso; nivel:NivelAcesso; excluir:boolean }) => {
+  const {error} = await supabase.rpc("definir_acesso_modulo",{_user_id:p.userId,_modulo:p.modulo,_nivel:p.nivel,_pode_excluir:p.excluir}); if(error) throw error;
+ },onSuccess:async()=>{await qc.invalidateQueries({queryKey:["usuarios-acesso"]});await qc.invalidateQueries({queryKey:["sessao"]});toast.success("Acesso atualizado.");},onError:()=>toast.error("Não foi possível atualizar o acesso.")});
+ const convite=useMutation({mutationFn:()=>conviteFn({data:{email,origem:window.location.origin}}),onSuccess:()=>{setEmail("");qc.invalidateQueries({queryKey:["usuarios-acesso"]});toast.success("Convite enviado por e-mail.");},onError:(e)=>toast.error(e.message)});
+ if(!administrador(sessao)) return null;
+ return <div className="space-y-6"><div><h1 className="font-display text-2xl font-semibold">Gestão de Usuários</h1><p className="mt-1 text-sm text-muted-foreground">Usuários e Acesso</p></div>
+ <form className="flex flex-wrap items-end gap-3 border-b pb-6" onSubmit={e=>{e.preventDefault();convite.mutate();}}><div className="w-full max-w-sm"><label htmlFor="convite-email" className="text-sm font-medium">Convidar usuário</label><Input id="convite-email" type="email" required placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)}/></div><Button type="submit" disabled={convite.isPending}><Mail className="mr-2 h-4 w-4"/>Enviar convite</Button></form>
+ <div className="relative max-w-sm"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground"/><Input className="pl-9" aria-label="Buscar usuário" placeholder="Buscar nome ou e-mail" value={busca} onChange={e=>setBusca(e.target.value)}/></div>
+ <div className="overflow-x-auto border rounded-md"><Table><TableHeader><TableRow><TableHead className="min-w-60">Usuário</TableHead>{MODULOS_ACESSO.map(m=><TableHead key={m.id} className="min-w-56"><span className="block text-xs text-muted-foreground">Módulo {m.numero}</span>{m.titulo}</TableHead>)}</TableRow></TableHeader><TableBody>
+ {usuarios.isPending&&<TableRow><TableCell colSpan={4}>Carregando usuários...</TableCell></TableRow>}{usuarios.isError&&<TableRow><TableCell colSpan={4} className="text-destructive">Não foi possível carregar os usuários.</TableCell></TableRow>}
+ {usuarios.data?.filter(u=>`${u.nome_completo} ${u.email}`.toLowerCase().includes(busca.toLowerCase())).map(u=><TableRow key={u.user_id}><TableCell><strong className="block">{u.nome_completo}</strong><span className="text-xs text-muted-foreground">{u.email}</span>{!u.ativo&&<span className="block text-xs text-destructive">Inativo</span>}</TableCell>{MODULOS_ACESSO.map(m=>{const a=u.acessos.find(x=>x.modulo===m.id);const nivel=(a?.nivel??"SEM_ACESSO") as NivelAcesso;return <TableCell key={m.id}>{u.admin?<span className="flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/>Acesso total</span>:<div className="space-y-3"><Select value={nivel} disabled={salvar.isPending} onValueChange={v=>salvar.mutate({userId:u.user_id,modulo:m.id,nivel:v as NivelAcesso,excluir:v==="OPERADOR"&&Boolean(a?.pode_excluir)})}><SelectTrigger aria-label={`Acesso ${u.nome_completo} ${m.titulo}`}><SelectValue/></SelectTrigger><SelectContent><SelectItem value="SEM_ACESSO">Sem acesso</SelectItem><SelectItem value="CONSULTA">Consulta</SelectItem><SelectItem value="OPERADOR">Operador</SelectItem></SelectContent></Select><label className="flex items-center gap-2 text-xs"><Checkbox aria-label={`Permitir excluir ${u.nome_completo} ${m.titulo}`} checked={Boolean(a?.pode_excluir)} disabled={nivel!=="OPERADOR"||salvar.isPending} onCheckedChange={v=>salvar.mutate({userId:u.user_id,modulo:m.id,nivel,excluir:v===true})}/>Permitir excluir</label></div>}</TableCell>})}</TableRow>)}
+ </TableBody></Table></div>
+ <section className="border-t pt-5"><h2 className="font-display text-base font-semibold">Matriz de permissões</h2><Table><TableHeader><TableRow><TableHead>Nível</TableHead><TableHead>Visualizar</TableHead><TableHead>Preencher e editar</TableHead><TableHead>Excluir</TableHead></TableRow></TableHeader><TableBody>{[["Sem acesso","Não","Não","Não"],["Consulta","Sim","Não","Não"],["Operador","Sim","Sim","Somente com liberação"],["Administrador","Sim","Sim","Sim"]].map(l=><TableRow key={l[0]}>{l.map((c,i)=><TableCell key={i}>{c}</TableCell>)}</TableRow>)}</TableBody></Table></section></div>;
+}
