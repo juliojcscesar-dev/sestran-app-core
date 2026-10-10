@@ -94,8 +94,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{acao ? "Editar ação educativa" : "Nova ação educativa"}</DialogTitle><DialogDescription>Registre a programação e a situação da atividade.</DialogDescription></DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2"><Label htmlFor="acao-titulo">Evento *</Label><Input id="acao-titulo" value={estado.titulo} onChange={(e) => campo("titulo", e.target.value)} /></div>
-          <div className="md:col-span-2"><Label htmlFor="acao-tipo">Tipo</Label><Input id="acao-tipo" value={estado.tipo_atividade} onChange={e => campo("tipo_atividade", e.target.value)} /></div>
+          <div className="md:col-span-2"><Label htmlFor="acao-titulo">Título da Ação *</Label><Input id="acao-titulo" value={estado.titulo} onChange={(e) => campo("titulo", e.target.value)} /></div>
           <div><Label htmlFor="acao-categoria">Categoria *</Label><Select value={estado.categoria} onValueChange={(v) => campo("categoria", v)}><SelectTrigger id="acao-categoria"><SelectValue /></SelectTrigger><SelectContent>{CATEGORIAS_ACAO.map((c) => <SelectItem key={c} value={c}>{CATEGORIA_ACAO_LABEL[c]}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="acao-status">Situação *</Label><Select value={estado.status} onValueChange={(v) => campo("status", v)}><SelectTrigger id="acao-status"><SelectValue /></SelectTrigger><SelectContent>{STATUS_ACAO.map((s) => <SelectItem key={s} value={s}>{STATUS_ACAO_LABEL[s]}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="acao-data">Data do evento *</Label><Input id="acao-data" type="date" value={estado.data_acao} onChange={(e) => campo("data_acao", e.target.value)} /></div>
