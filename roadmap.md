@@ -1,9 +1,9 @@
 # Roadmap — SESTRAN
 
 ## Acessos por módulo (10/10)
-- [ ] Tela Usuários e Acesso exclusiva do administrador, com Consulta/Operador por módulo e autorização de exclusão
-- [ ] Restringir novos usuários ao início e aplicar liberações no menu, páginas e banco
-- [ ] Verificar isolamento de leitura, escrita e exclusão e gestão administrativa
+- [x] Tela Usuários e Acesso exclusiva do administrador, com matriz 01 O.S., 02 Veículos, 03 Educação; Consulta/Operador e autorização de exclusão
+- [x] Restringir novos usuários ao início e aplicar liberações no menu, páginas e banco
+- [x] Verificar matriz com 78 testes de permissões, 18 verificações no banco e tela administrativa sem erros
 
 ## Recuperação do carregamento do painel (10/10)
 - [x] Tratar falhas de arquivos atualizados sem criar repetição de recarregamento
