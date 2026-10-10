@@ -24,7 +24,7 @@ export const MODULOS: ModuloNav[] = [
     titulo: "Usuários e Acessos",
     href: "/usuarios",
     icone: "UserCog",
-    disponivel: false,
+    disponivel: true,
     papeis: ["ADMINISTRADOR"],
   },
 ];

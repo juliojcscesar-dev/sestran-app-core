@@ -17,3 +17,4 @@
 - Educational reports store bounded, browser-compressed image data and image presentation settings on the existing action record; this keeps report content and history saved atomically under existing RLS.
 - Final vehicle and educational documents use dedicated authenticated sibling routes and printable components; this preserves calendar/list parent routes and enables direct document navigation without changing existing order documents.
 - Handle stale lazy-loaded assets centrally with a session-guarded document reload and a manual retry fallback; retrying a cached rejected import cannot fetch the current deployment.
+- Authorize module reads and writes through user_module_permissions and acesso_modulo RLS, not legacy global operator roles; keep destructive permission separate and administration server-validated to prevent cross-module escalation.
