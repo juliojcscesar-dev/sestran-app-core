@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/select";
 import { MapaOS } from "@/components/os/MapaOS";
 import { ExcluirOSButton } from "@/components/os/ExcluirOSButton";
-import { useSessao, temPapel } from "@/hooks/useSessao";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 import {
   ACAO_HISTORICO_LABEL,
   CAMPO_LABEL,
@@ -65,7 +66,7 @@ function VisualizarOS() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
   const { data: sessao } = useSessao();
-  const podeOperar = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR", "OPERADOR"]);
+  const podeOperar = temAcesso(sessao, "OS", "OPERADOR");
   const [gerando, setGerando] = useState<string | null>(null);
 
   const configuracoesQ = useQuery({ queryKey: ["configuracoes-os"], queryFn: obterConfiguracoes });

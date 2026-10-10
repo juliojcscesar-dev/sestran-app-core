@@ -20,7 +20,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { SeletorRegistro } from "@/components/os/SeletorRegistro";
 import { MapaOS } from "@/components/os/MapaOS";
 import { EditorMapaImagem } from "@/components/os/EditorMapaImagem";
-import { useSessao, temPapel } from "@/hooks/useSessao";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import {
@@ -79,7 +80,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: sessao } = useSessao();
-  const gestor = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR"]);
+  const gestor = temAcesso(sessao, "OS", "OPERADOR");
   const o = inicial?.ordem as (Record<string, unknown> & { status?: string }) | undefined;
   const duplicando = modo === "duplicar";
 

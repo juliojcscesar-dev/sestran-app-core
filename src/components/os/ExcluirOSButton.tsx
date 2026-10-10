@@ -14,7 +14,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useSessao, temPapel } from "@/hooks/useSessao";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 import { excluirOrdem } from "@/lib/os-api";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,7 @@ export function ExcluirOSButton({ id, numero, somenteIcone = false }: ExcluirOSB
   const { data: sessao } = useSessao();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const podeExcluir = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR"]);
+  const podeExcluir = temAcesso(sessao, "OS", "EXCLUIR");
 
   const exclusao = useMutation({
     mutationFn: () => excluirOrdem(id),

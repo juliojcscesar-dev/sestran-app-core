@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSessao, temPapel } from "@/hooks/useSessao";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 import { CATEGORIAS_ACAO, CATEGORIA_ACAO_LABEL, dataLocalIso, intervaloDaVisao, STATUS_ACAO, STATUS_ACAO_CLASSE, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao, type VisaoCalendario } from "@/lib/educacao";
 import { arquivarAcao, listarAcoes, listarReferenciasEducacao, type AcaoEducativa } from "@/lib/educacao-api";
 import { formatarData } from "@/lib/sestran";
@@ -34,8 +35,8 @@ const TODOS = "__todos__";
 function EducacaoTransito() {
   const queryClient = useQueryClient();
   const { data: sessao } = useSessao();
-  const podeOperar = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR", "OPERADOR"]);
-  const podeArquivar = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR"]);
+  const podeOperar = temAcesso(sessao, "EDUCACAO", "OPERADOR");
+  const podeArquivar = temAcesso(sessao, "EDUCACAO", "EXCLUIR");
   const [visao, setVisao] = useState<VisaoCalendario>("mes");
   const [referencia, setReferencia] = useState(new Date());
   const [status, setStatus] = useState(TODOS); const [categoria, setCategoria] = useState(TODOS);
