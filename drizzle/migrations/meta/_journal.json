@@ -71,6 +71,13 @@
       "when": 1791555891471,
       "tag": "0009_corrigir_situacoes_agenda_educativa",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791601530515,
+      "tag": "0010_permissoes_individuais_modulos",
+      "breakpoints": true
     }
   ]
 }
