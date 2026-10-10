@@ -961,6 +961,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_module_permissions: {
+        Row: {
+          atualizado_por: string | null
+          modulo: string
+          nivel: string
+          pode_excluir: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          atualizado_por?: string | null
+          modulo: string
+          nivel?: string
+          pode_excluir?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          atualizado_por?: string | null
+          modulo?: string
+          nivel?: string
+          pode_excluir?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1168,6 +1195,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acesso_modulo: {
+        Args: { _acao?: string; _modulo: string; _user_id: string }
+        Returns: boolean
+      }
+      definir_acesso_modulo: {
+        Args: {
+          _modulo: string
+          _nivel: string
+          _pode_excluir: boolean
+          _user_id: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

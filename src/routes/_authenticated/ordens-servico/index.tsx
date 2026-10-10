@@ -44,7 +44,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useSessao, temPapel } from "@/hooks/useSessao";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 import { ExcluirOSButton } from "@/components/os/ExcluirOSButton";
 import {
   STATUS_OS,
@@ -90,8 +91,8 @@ function ListaOS() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: sessao } = useSessao();
-  const podeOperar = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR", "OPERADOR"]);
-  const ehGestor = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR"]);
+  const podeOperar = temAcesso(sessao, "OS", "OPERADOR");
+  const ehGestor = temAcesso(sessao, "OS", "EXCLUIR");
 
   const [filtros, setFiltros] = useState<FiltrosOS>({ arquivadas: false });
   const [numero, setNumero] = useState("");
@@ -122,7 +123,7 @@ function ListaOS() {
       );
     },
     onError: () =>
-      toast.error("Somente gestores e administradores podem arquivar ou restaurar ordens."),
+      toast.error("O administrador precisa autorizar o arquivamento ou restauração."),
   });
 
   function aplicar() {

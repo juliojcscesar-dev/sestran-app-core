@@ -188,8 +188,8 @@ function PaginaAcesso() {
                   <Campo id="email" rotulo="E-mail" tipo="email" erro={erros["email"]} />
                   <Campo id="senha" rotulo="Senha" tipo="password" erro={erros["senha"]} />
                   <p className="text-xs text-muted-foreground">
-                    Novas contas entram com perfil <strong>Consulta</strong>. Um administrador
-                    define o nível de acesso definitivo.
+                    Novas contas acessam somente a página inicial. O administrador libera
+                    Consulta ou Operador em cada módulo.
                   </p>
                   <Button type="submit" className="w-full" disabled={carregando}>
                     {carregando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

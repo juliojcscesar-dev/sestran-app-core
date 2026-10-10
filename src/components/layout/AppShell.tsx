@@ -9,6 +9,7 @@ import { MODULOS, PAPEL_LABEL, type Papel } from "@/lib/sestran";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { administrador, moduloDoCaminho, temAcesso } from "@/lib/permissoes";
 
 function Icone({ nome, className }: { nome: string; className: string }) {
   const Componente = (
@@ -19,7 +20,7 @@ function Icone({ nome, className }: { nome: string; className: string }) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { data: sessao } = useSessao();
+  const { data: sessao, isPending, isError } = useSessao();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuAberto, setMenuAberto] = useState(false);
@@ -27,8 +28,18 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const papeis: Papel[] = sessao?.papeis ?? [];
   const modulosVisiveis = MODULOS.filter(
-    (m) => !m.papeis || m.papeis.some((p) => papeis.includes(p)),
+    (m) => {
+      if (m.href === "/painel") return true;
+      if (m.href === "/usuarios") return administrador(sessao);
+      const modulo = moduloDoCaminho(m.href);
+      return modulo ? temAcesso(sessao, modulo) : administrador(sessao);
+    },
   );
+  const moduloAtual = moduloDoCaminho(pathname);
+  const escrita = /\/ordens-servico\/(nova|editar|duplicar)(\/|$)/.test(pathname);
+  const permitido = Boolean(sessao?.ativo) && (pathname === "/painel" || (moduloAtual
+    ? temAcesso(sessao, moduloAtual, escrita ? "OPERADOR" : "CONSULTA")
+    : administrador(sessao)));
 
   async function sair() {
     await queryClient.cancelQueries();
@@ -137,7 +148,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Button>
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">{children}</main>
+        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
+          {isPending ? <p className="text-sm text-muted-foreground">Carregando acessos...</p> :
+            isError ? <p className="text-sm text-destructive">Não foi possível verificar seus acessos. Atualize a página.</p> :
+            permitido ? children : <div className="space-y-4"><h1 className="font-display text-2xl font-semibold">Acesso não autorizado</h1><p className="text-muted-foreground">Solicite a liberação deste acesso ao administrador.</p><Button asChild variant="outline"><Link to="/painel">Voltar ao início</Link></Button></div>}
+        </main>
       </div>
     </div>
   );

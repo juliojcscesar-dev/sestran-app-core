@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { temAcesso, MODULOS_ACESSO } from "@/lib/permissoes";
 import { useSessao } from "@/hooks/useSessao";
 import { PAPEL_LABEL, formatarData, formatarDataHora } from "@/lib/sestran";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,8 +50,12 @@ type Indicadores = {
 function Painel() {
   const { data: sessao } = useSessao();
 
+  const acessos = MODULOS_ACESSO.filter(m => temAcesso(sessao, m.id));
+  const assinaturaAcessos = acessos.map(m=>m.id).join(",");
+
   const indicadores = useQuery({
-    queryKey: ["painel", "indicadores"],
+    queryKey: ["painel", "indicadores", sessao?.userId, assinaturaAcessos],
+    enabled: Boolean(sessao),
     queryFn: async (): Promise<Indicadores> => {
       const agora = new Date().toISOString();
       const total = (resultado: { count: number | null; error: unknown }) => {
@@ -99,7 +104,8 @@ function Painel() {
   });
 
   const atividades = useQuery({
-    queryKey: ["painel", "proximas-atividades"],
+    queryKey: ["painel", "proximas-atividades", sessao?.userId, assinaturaAcessos],
+    enabled: Boolean(sessao),
     queryFn: async () => {
       const hoje = new Date();
       const dataHoje = hoje.toISOString().slice(0, 10);
@@ -216,7 +222,7 @@ function Painel() {
       )}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
+        {cards.filter((_,i)=>i<3?temAcesso(sessao,"OS"):i===3?(temAcesso(sessao,"OS")||temAcesso(sessao,"EDUCACAO")):i===4?temAcesso(sessao,"VEICULOS"):temAcesso(sessao,"EDUCACAO")).map((card) => (
           <Card key={card.titulo}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -285,17 +291,7 @@ function Painel() {
             <CardTitle className="text-base">Módulos disponíveis</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>
-              Estão disponíveis o painel, as Ordens de Serviço com mapa e documentos, e o calendário
-              de Educação no Trânsito.
-            </p>
-            <p>
-              Acesse o módulo de{" "}
-              <Link to="/ordens-servico" className="font-medium text-primary underline">
-                Ordem de Serviço
-              </Link>{" "}
-              para cadastro, equipe, percurso e acompanhamento.
-            </p>
+            {acessos.length === 0 ? <p>Aguardando liberação de acesso pelo administrador.</p> : acessos.map(m=><Link key={m.id} to={m.href} className="block text-primary underline underline-offset-4">Módulo {m.numero} — {m.titulo}</Link>)}
           </CardContent>
         </Card>
       </section>
