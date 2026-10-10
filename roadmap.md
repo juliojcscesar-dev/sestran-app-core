@@ -1,5 +1,9 @@
 # Roadmap — SESTRAN
 
+## Recuperação do carregamento do painel (10/10)
+- [x] Tratar falhas de arquivos atualizados sem criar repetição de recarregamento
+- [x] Verificar painel e recuperação automática
+
 ## Agenda educativa e visualização final (solicitado 09/10)
 - [x] Adaptar campos da Educação no Trânsito ao modelo anexado
 - [x] Relatório com texto e imagens, rotação e tamanho persistidos
