@@ -127,8 +127,8 @@ function lerGeometria(valor: unknown): PontoMapaLido[] | null {
   if (!Array.isArray(valor)) return null;
   const pontos = valor
     .map((p) => (p && typeof p === "object" ? (p as Record<string, unknown>) : null))
-    .filter(Boolean)
-    .map((p) => ({ lat: Number(p!["lat"]), lng: Number(p!["lng"]) }))
+    .filter((p): p is Record<string, unknown> => p !== null)
+    .map((p) => ({ lat: Number(p["lat"]), lng: Number(p["lng"]) }))
     .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
   return pontos.length ? pontos : null;
 }
@@ -138,12 +138,13 @@ type PontoMapaLido = { lat: number; lng: number };
 export type OrdemCompleta = Awaited<ReturnType<typeof obterOrdem>>;
 
 async function sincronizarFilhos(id: string, dados: DadosOS) {
-  await Promise.all([
+  const removidos = await Promise.all([
     supabase.from("ordem_servico_servicos").delete().eq("ordem_servico_id", id),
     supabase.from("ordem_servico_agentes").delete().eq("ordem_servico_id", id),
     supabase.from("ordem_servico_orientadores").delete().eq("ordem_servico_id", id),
     supabase.from("ordem_servico_interdicoes").delete().eq("ordem_servico_id", id),
   ]);
+  removidos.forEach(checar);
 
   if (dados.servicos.length) {
     checar(

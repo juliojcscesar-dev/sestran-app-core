@@ -107,7 +107,12 @@ export async function arquivarAcao(id: string, valor: boolean) {
       arquivada_em: valor ? new Date().toISOString() : null,
       arquivada_por: valor ? usuario.user?.id ?? null : null,
     })
-    .eq("id", id);
+    .eq("id", id).select("id").single();
+  if (error) throw error;
+}
+
+export async function excluirAcao(id: string) {
+  const { error } = await supabase.from("acoes_educativas").delete().eq("id", id).select("id").single();
   if (error) throw error;
 }
 
