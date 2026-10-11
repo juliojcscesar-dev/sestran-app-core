@@ -78,6 +78,16 @@ export async function listarOrdens(filtros: FiltrosOS) {
   return checar(res);
 }
 
+export async function contarSituacoesOrdens() {
+  const contar = async (status: StatusOS) => {
+    const res = await supabase.from("ordens_servico").select("id", { count: "exact", head: true }).eq("status", status);
+    checar(res);
+    return res.count ?? 0;
+  };
+  const [agendadas, executadas] = await Promise.all([contar("AGENDADA"), contar("EXECUTADA")]);
+  return { agendadas, executadas };
+}
+
 export async function obterOrdem(id: string) {
   const [ordem, servicos, agentes, orientadores, interdicoes] = await Promise.all([
     supabase

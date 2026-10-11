@@ -73,11 +73,11 @@ function Painel() {
         veiculosPendentes,
         acoesPlanejadas,
       ] = await Promise.all([
-        supabase.from("ordens_servico").select("id", cabecalho).eq("status", "ABERTA").then(total),
+        supabase.from("ordens_servico").select("id", cabecalho).eq("status", "AGENDADA").then(total),
         supabase
           .from("ordens_servico")
           .select("id", cabecalho)
-          .eq("status", "EM_EXECUCAO")
+          .eq("status", "EM_ANDAMENTO")
           .then(total),
         supabase.from("eventos").select("id", cabecalho).gte("data_inicio", agora).then(total),
         supabase.from("agentes").select("id", cabecalho).eq("ativo", true).then(total),
@@ -87,7 +87,7 @@ function Painel() {
           .select("id", cabecalho)
           .in("status", ["REGISTRADO", "NOTIFICADO"])
           .then(total),
-        supabase.from("acoes_educativas").select("id", cabecalho).eq("status", "PLANEJADA").then(total),
+        supabase.from("acoes_educativas").select("id", cabecalho).in("status", ["AGENDADA", "PLANEJADA"]).then(total),
       ]);
 
 
@@ -166,7 +166,7 @@ function Painel() {
 
   const cards = [
     {
-      titulo: "Ordens de serviço abertas",
+      titulo: "Ordens de serviço agendadas",
       valor: indicadores.data?.osAbertas,
       icone: ClipboardList,
       nota: `${indicadores.data?.osEmExecucao ?? 0} em execução`,
@@ -199,7 +199,7 @@ function Painel() {
       titulo: "Ações educativas",
       valor: indicadores.data?.acoesPlanejadas,
       icone: GraduationCap,
-      nota: "Planejadas",
+      nota: "Agendadas",
     },
   ];
 
