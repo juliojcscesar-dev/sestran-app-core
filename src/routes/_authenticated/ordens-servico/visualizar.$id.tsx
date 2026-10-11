@@ -136,6 +136,7 @@ function VisualizarOS() {
   const mapaImagem = typeof o["mapa_imagem"] === "string" && o["mapa_imagem"].startsWith("data:image")
     ? o["mapa_imagem"]
     : imagemAutomatica;
+  const podeAlterar = podeOperar && (!o["arquivada"] || temAcesso(sessao, "OS", "EXCLUIR"));
 
   return (
     <div className="os-view space-y-6">
@@ -180,19 +181,19 @@ function VisualizarOS() {
                   Duplicar
                 </Link>
               </Button>
-              <Button asChild>
+              {podeAlterar && <Button asChild>
                 <Link to="/ordens-servico/editar/$id" params={{ id }}>
                   <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
                   Editar
                 </Link>
-              </Button>
+              </Button>}
             </>
           )}
           <ExcluirOSButton id={id} numero={String(o["numero"] ?? "")} />
         </div>
       </div>
 
-      {podeOperar && (
+      {podeAlterar && (
         <Card className="print:hidden">
           <CardContent className="flex flex-wrap items-center gap-3 pt-6">
             <span className="text-sm font-medium">Alterar situação:</span>

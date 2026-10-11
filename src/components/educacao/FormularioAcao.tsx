@@ -12,6 +12,8 @@ import { EditorRelatorio } from "@/components/educacao/EditorRelatorio";
 import type { ImagemRelatorio } from "@/lib/educacao-imagens";
 import { CATEGORIAS_ACAO, CATEGORIA_ACAO_LABEL, STATUS_ACAO, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao } from "@/lib/educacao";
 import { atualizarAcao, criarAcao, criarTema, listarReferenciasEducacao, type AcaoEducativa, type DadosAcao } from "@/lib/educacao-api";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 
 const NENHUM = "__nenhum__";
 
@@ -43,6 +45,8 @@ function estadoDe(acao?: AcaoEducativa | null): Estado {
 
 export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boolean; onAbertoChange: (aberto: boolean) => void; acao?: AcaoEducativa | null }) {
   const queryClient = useQueryClient();
+  const { data: sessao } = useSessao();
+  const podePreencher = temAcesso(sessao, "EDUCACAO", "OPERADOR") && (!acao?.arquivada || temAcesso(sessao, "EDUCACAO", "EXCLUIR"));
   const [estado, setEstado] = useState<Estado>(() => estadoDe(acao));
   const [novoTema, setNovoTema] = useState("");
   const [imagens, setImagens] = useState<ImagemRelatorio[]>([]);
@@ -52,6 +56,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
 
   const salvar = useMutation({
     mutationFn: async () => {
+      if (!podePreencher) throw new Error("Solicite ao administrador a liberação para preencher este módulo.");
       if (estado.titulo.trim().length < 3) throw new Error("Informe um título com pelo menos 3 caracteres.");
       if (!estado.data_acao) throw new Error("Informe a data da ação.");
       if (estado.horario_inicio && estado.horario_fim && estado.horario_fim <= estado.horario_inicio) throw new Error("O horário final deve ser posterior ao inicial.");
@@ -88,6 +93,8 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
   });
 
   const campo = (chave: keyof Estado, valor: string) => setEstado((e) => ({ ...e, [chave]: valor }));
+
+  if (!podePreencher) return null;
 
   return (
     <Dialog open={aberto} onOpenChange={onAbertoChange}>
