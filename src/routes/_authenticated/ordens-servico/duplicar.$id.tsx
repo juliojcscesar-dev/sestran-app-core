@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { FormularioOS } from "@/components/os/FormularioOS";
-import { useSessao, temPapel } from "@/hooks/useSessao";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 import { obterOrdem } from "@/lib/os-api";
 
 export const Route = createFileRoute("/_authenticated/ordens-servico/duplicar/$id")({
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/ordens-servico/duplicar/$i
 function DuplicarOS() {
   const { id } = Route.useParams();
   const { data: sessao } = useSessao();
-  const podeOperar = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR", "OPERADOR"]);
+  const podeOperar = temAcesso(sessao, "OS", "OPERADOR");
   const ordemQ = useQuery({ queryKey: ["ordem-servico", id], queryFn: () => obterOrdem(id) });
 
   if (ordemQ.isLoading) {
@@ -37,7 +38,7 @@ function DuplicarOS() {
   if (ordemQ.isError || !ordemQ.data) {
     return <p className="text-sm text-destructive">Ordem de serviço não encontrada.</p>;
   }
-  if (sessao && !podeOperar) {
+  if (!podeOperar) {
     return (
       <p className="text-sm text-muted-foreground">
         Seu perfil permite apenas consulta. Não é possível duplicar ordens de serviço.

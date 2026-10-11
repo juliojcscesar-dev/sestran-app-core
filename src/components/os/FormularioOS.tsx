@@ -82,6 +82,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const { data: sessao } = useSessao();
   const gestor = temAcesso(sessao, "OS", "OPERADOR");
   const o = inicial?.ordem as (Record<string, unknown> & { status?: string }) | undefined;
+  const podePreencher = gestor && (modo !== "editar" || !o?.["arquivada"] || temAcesso(sessao, "OS", "EXCLUIR"));
   const duplicando = modo === "duplicar";
 
   const [dataEmissao, setDataEmissao] = useState(
@@ -202,6 +203,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
 
   const salvar = useMutation({
     mutationFn: async () => {
+      if (!podePreencher) throw new Error("Solicite ao administrador a liberação para preencher este módulo.");
       const dados: DadosOS = {
         ...(modo === "editar" ? {} : { numero }),
         data_emissao: dataEmissao,
@@ -326,6 +328,8 @@ export function FormularioOS({ modo, inicial, id }: Props) {
 
   const erroTexto = (campo: string) =>
     erros[campo] ? <p className="mt-1 text-xs text-destructive">{erros[campo]}</p> : null;
+
+  if (!podePreencher) return <p className="text-sm text-muted-foreground">Você não tem autorização para preencher esta Ordem de Serviço.</p>;
 
   return (
     <form onSubmit={enviar} className="space-y-6">
@@ -559,7 +563,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                     setServicos((a) => [...a, criado.id]);
                     toast.success("Tipo de serviço cadastrado.");
                   } catch {
-                    toast.error("Somente gestores podem cadastrar novos tipos de serviço.");
+                    toast.error("Solicite ao administrador a liberação para cadastrar serviços neste módulo.");
                   }
                 }}
               >

@@ -78,6 +78,16 @@ export async function listarOrdens(filtros: FiltrosOS) {
   return checar(res);
 }
 
+export async function contarSituacoesOrdens() {
+  const contar = async (status: StatusOS) => {
+    const res = await supabase.from("ordens_servico").select("id", { count: "exact", head: true }).eq("status", status);
+    checar(res);
+    return res.count ?? 0;
+  };
+  const [agendadas, executadas] = await Promise.all([contar("AGENDADA"), contar("EXECUTADA")]);
+  return { agendadas, executadas };
+}
+
 export async function obterOrdem(id: string) {
   const [ordem, servicos, agentes, orientadores, interdicoes] = await Promise.all([
     supabase
@@ -127,8 +137,8 @@ function lerGeometria(valor: unknown): PontoMapaLido[] | null {
   if (!Array.isArray(valor)) return null;
   const pontos = valor
     .map((p) => (p && typeof p === "object" ? (p as Record<string, unknown>) : null))
-    .filter(Boolean)
-    .map((p) => ({ lat: Number(p!["lat"]), lng: Number(p!["lng"]) }))
+    .filter((p): p is Record<string, unknown> => p !== null)
+    .map((p) => ({ lat: Number(p["lat"]), lng: Number(p["lng"]) }))
     .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
   return pontos.length ? pontos : null;
 }
@@ -138,12 +148,13 @@ type PontoMapaLido = { lat: number; lng: number };
 export type OrdemCompleta = Awaited<ReturnType<typeof obterOrdem>>;
 
 async function sincronizarFilhos(id: string, dados: DadosOS) {
-  await Promise.all([
+  const removidos = await Promise.all([
     supabase.from("ordem_servico_servicos").delete().eq("ordem_servico_id", id),
     supabase.from("ordem_servico_agentes").delete().eq("ordem_servico_id", id),
     supabase.from("ordem_servico_orientadores").delete().eq("ordem_servico_id", id),
     supabase.from("ordem_servico_interdicoes").delete().eq("ordem_servico_id", id),
   ]);
+  removidos.forEach(checar);
 
   if (dados.servicos.length) {
     checar(

@@ -57,6 +57,7 @@ import {
 } from "@/lib/os";
 import {
   arquivarOrdem,
+  contarSituacoesOrdens,
   listarEventos,
   listarOrdens,
   listarSolicitantes,
@@ -93,6 +94,7 @@ function ListaOS() {
   const { data: sessao } = useSessao();
   const podeOperar = temAcesso(sessao, "OS", "OPERADOR");
   const ehGestor = temAcesso(sessao, "OS", "EXCLUIR");
+  const situacoesQ = useQuery({ queryKey: ["ordens-servico", "contagens"], queryFn: contarSituacoesOrdens });
 
   const [filtros, setFiltros] = useState<FiltrosOS>({ arquivadas: false });
   const [numero, setNumero] = useState("");
@@ -191,6 +193,11 @@ function ListaOS() {
           )}
         </div>
       </div>
+
+      <section className="grid gap-3 sm:grid-cols-2" aria-label="Resumo das Ordens de Serviço">
+        <div className="border-b py-3"><p className="text-sm text-muted-foreground">Agendadas</p><p className="font-display text-2xl font-semibold">{situacoesQ.data?.agendadas ?? "—"}</p></div>
+        <div className="border-b py-3"><p className="text-sm text-muted-foreground">Executadas</p><p className="font-display text-2xl font-semibold">{situacoesQ.data?.executadas ?? "—"}</p></div>
+      </section>
 
       <Card>
         <CardHeader>
