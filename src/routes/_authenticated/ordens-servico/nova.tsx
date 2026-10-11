@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FormularioOS } from "@/components/os/FormularioOS";
-import { useSessao, temPapel } from "@/hooks/useSessao";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 
 export const Route = createFileRoute("/_authenticated/ordens-servico/nova")({
   head: () => ({
@@ -24,9 +25,9 @@ export const Route = createFileRoute("/_authenticated/ordens-servico/nova")({
 
 function NovaOS() {
   const { data: sessao } = useSessao();
-  const podeOperar = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR", "OPERADOR"]);
+  const podeOperar = temAcesso(sessao, "OS", "OPERADOR");
 
-  if (sessao && !podeOperar) {
+  if (!podeOperar) {
     return (
       <p className="text-sm text-muted-foreground">
         Seu perfil de acesso permite apenas consulta. Solicite permissão de operador para criar

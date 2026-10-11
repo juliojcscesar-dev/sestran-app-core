@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { FormularioOS } from "@/components/os/FormularioOS";
 import { ExcluirOSButton } from "@/components/os/ExcluirOSButton";
-import { useSessao, temPapel } from "@/hooks/useSessao";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso } from "@/lib/permissoes";
 import { obterOrdem } from "@/lib/os-api";
 
 export const Route = createFileRoute("/_authenticated/ordens-servico/editar/$id")({
@@ -29,8 +30,8 @@ export const Route = createFileRoute("/_authenticated/ordens-servico/editar/$id"
 function EditarOS() {
   const { id } = Route.useParams();
   const { data: sessao } = useSessao();
-  const podeOperar = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR", "OPERADOR"]);
-  const ehGestor = temPapel(sessao?.papeis, ["ADMINISTRADOR", "GESTOR"]);
+  const podeOperar = temAcesso(sessao, "OS", "OPERADOR");
+  const podeAlterarArquivada = temAcesso(sessao, "OS", "EXCLUIR");
   const ordemQ = useQuery({ queryKey: ["ordem-servico", id], queryFn: () => obterOrdem(id) });
 
   if (ordemQ.isLoading) {
@@ -39,7 +40,7 @@ function EditarOS() {
   if (ordemQ.isError || !ordemQ.data) {
     return <p className="text-sm text-destructive">Ordem de serviço não encontrada.</p>;
   }
-  if (sessao && !podeOperar) {
+  if (!podeOperar) {
     return (
       <p className="text-sm text-muted-foreground">
         Seu perfil permite apenas consulta. Não é possível editar ordens de serviço.
@@ -47,10 +48,10 @@ function EditarOS() {
     );
   }
   const arquivada = Boolean((ordemQ.data.ordem as Record<string, unknown>)["arquivada"]);
-  if (arquivada && !ehGestor) {
+  if (arquivada && !podeAlterarArquivada) {
     return (
       <p className="text-sm text-muted-foreground">
-        Esta ordem está arquivada. Somente gestores podem alterá-la.
+        Esta ordem está arquivada. Solicite ao administrador a liberação para alterá-la.
       </p>
     );
   }
