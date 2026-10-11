@@ -563,7 +563,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                     setServicos((a) => [...a, criado.id]);
                     toast.success("Tipo de serviço cadastrado.");
                   } catch {
-                    toast.error("Somente gestores podem cadastrar novos tipos de serviço.");
+                    toast.error("Solicite ao administrador a liberação para cadastrar serviços neste módulo.");
                   }
                 }}
               >

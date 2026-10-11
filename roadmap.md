@@ -1,9 +1,9 @@
 # Roadmap — SESTRAN
 
 ## Regras completas de Consulta e Operador (11/10)
-- [ ] Revisar todas as telas e operações dos módulos 01, 02 e 03, inclusive acessos diretos
-- [ ] Garantir Consulta somente leitura, Operador por módulo e exclusão individual autorizada
-- [ ] Validar permissões no banco e fluxos das telas sem alterar registros oficiais
+- [x] Revisar todas as telas e operações dos módulos 01, 02 e 03, inclusive acessos diretos
+- [x] Garantir Consulta somente leitura, Operador por módulo e exclusão individual autorizada
+- [x] Validar 162 combinações, políticas do banco e telas com permissões simuladas sem alterar registros oficiais
 
 ## Acessos por módulo (10/10)
 - [x] Tela Usuários e Acesso exclusiva do administrador, com matriz 01 O.S., 02 Veículos, 03 Educação; Consulta/Operador e autorização de exclusão
