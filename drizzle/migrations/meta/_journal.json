@@ -78,6 +78,13 @@
       "when": 1791601530515,
       "tag": "0010_permissoes_individuais_modulos",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791691316936,
+      "tag": "0011_proteger_detalhes_modulos_arquivados",
+      "breakpoints": true
     }
   ]
 }
