@@ -1,4 +1,4 @@
-import { lerTextoFormatado, textoSimples, juntarTextosFormatados, salvarTextoFormatado, type TrechoTexto } from "@/lib/texto-formatado";
+import { lerTextoFormatado, juntarTextosFormatados, salvarTextoFormatado, type TrechoTexto } from "@/lib/texto-formatado";
 import { formatarDataBr, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import type { OrdemCompleta } from "@/lib/os-api";
 import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
@@ -277,7 +277,7 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
   const c = montarConteudo(dados); const textos = textosDocumento(dados);
   const logo = await carregarLogo(LOGO_INSTITUCIONAL); const mapa = await obterImagemMapa(c);
   const width = 10545; const borda = { style: BorderStyle.SINGLE, size: 5, color: "9BC9E8" }; const borders = { top: borda, bottom: borda, left: borda, right: borda };
-  const p = (text: string, bold = false, color = "083F69", center = false) => new Paragraph({ alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT, spacing: { after: 70 }, children: lerTextoFormatado(text).flatMap(t => t.texto.split("\n").map((linha, i) => new TextRun({ text: linha, break: i ? 1 : undefined, bold: bold || t.negrito, italics: t.italico, underline: t.sublinhado ? {} : undefined, color, size: 19 }))) });
+  const p = (text: string, bold = false, color = "083F69", center = false) => new Paragraph({ alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT, spacing: { after: 70 }, children: lerTextoFormatado(text).flatMap(t => t.texto.split("\n").map((linha, i) => new TextRun({ text: linha, ...(i ? { break: 1 } : {}), bold: Boolean(bold || t.negrito), italics: Boolean(t.italico), ...(t.sublinhado ? { underline: {} } : {}), color, size: 19 }))) });
   const cell = (children: InstanceType<typeof Paragraph>[], w: number, fill = "FFFFFF") => new TableCell({ width: { size: w, type: WidthType.DXA }, borders, shading: { fill }, margins: { top: 90, bottom: 90, left: 100, right: 100 }, children });
   function tabela(linhas: { valores: string[]; titulo?: boolean }[]) {
     const colunas = linhas[0]?.valores.length ?? 1;
