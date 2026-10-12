@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EditorTexto } from "@/components/EditorTexto";
 import { Textarea } from "@/components/ui/textarea";
 import { SeletorRegistro } from "@/components/os/SeletorRegistro";
 import { MapaOS } from "@/components/os/MapaOS";
@@ -540,7 +541,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
             {erroTexto("servicos")}
             {servicos.map((id) => <div key={id} className="mt-3 flex items-start gap-2">
               <div className="flex-1"><Label htmlFor={`detalhe-${id}`}>{tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"}</Label>
-                <Textarea id={`detalhe-${id}`} rows={2} placeholder="Detalhamento do serviço" value={detalhesServicos[id] ?? ""} onChange={(e) => setDetalhesServicos((atuais) => ({ ...atuais, [id]: e.target.value }))} />
+                <EditorTexto id={`detalhe-${id}`} rotulo="Detalhamento do serviço" value={detalhesServicos[id] ?? ""} onChange={(valor) => setDetalhesServicos((atuais) => ({ ...atuais, [id]: valor }))} />
               </div>
               <Button type="button" size="icon" variant="ghost" title="Remover desta O.S." aria-label={`Remover serviço da O.S. ${tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"}`} onClick={() => setServicos((atuais) => atuais.filter((s) => s !== id))}><Trash2 className="h-4 w-4" /></Button>
             </div>)}
@@ -574,12 +575,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
           </div>
           <div className="md:col-span-2">
             <Label htmlFor="trajeto">Trajeto / Percurso</Label>
-            <Textarea
-              id="trajeto"
-              rows={3}
-              value={trajeto}
-              onChange={(e) => setTrajeto(e.target.value)}
-            />
+            <EditorTexto id="trajeto" rotulo="Trajeto / Percurso" value={trajeto} onChange={setTrajeto} />
           </div>
         </CardContent>
       </Card>
@@ -788,12 +784,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
           <CardTitle className="text-base">Observações</CardTitle>
         </CardHeader>
         <CardContent>
-          <Textarea
-            rows={4}
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-            placeholder="Informações complementares da ordem de serviço"
-          />
+          <EditorTexto rotulo="Observações da O.S." value={observacoes} onChange={setObservacoes} />
         </CardContent>
       </Card>
 

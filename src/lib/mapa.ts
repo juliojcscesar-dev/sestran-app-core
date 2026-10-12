@@ -1,3 +1,4 @@
+import { juntarTextosFormatados } from "@/lib/texto-formatado";
 export type PontoMapa = { lat: number; lng: number; rotulo?: string };
 
 export type PercursoMapa = {
@@ -95,9 +96,7 @@ export function rotuloEtapa(indice: number, total: number, rotulo?: string) {
 /** Descrição textual do percurso, usada nos documentos PDF/DOCX. */
 export function descreverPercurso(percurso: PercursoMapa | null | undefined) {
   if (!percurso || !percurso.pontos.length) return "";
-  return percurso.pontos
-    .map((p, i) => `${rotuloEtapa(i, percurso.pontos.length, p.rotulo)} (${coordenadaTexto(p)})`)
-    .join(" → ");
+  return juntarTextosFormatados(percurso.pontos.map((p, i) => rotuloEtapa(i, percurso.pontos.length, p.rotulo)), " → ");
 }
 
 export function descreverInterdicoes(interdicoes: InterdicaoMapa[]) {

@@ -1,3 +1,6 @@
+import { EditorTexto } from "@/components/EditorTexto";
+import { TextoFormatado } from "@/components/TextoFormatado";
+import { textoSimples } from "@/lib/texto-formatado";
 import { useCallback, useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { Ban, Check, Crop, Eye, Loader2, MapPin, Plus, Minus, Layers, Scan, RotateCcw, Route as RotaIcone, Search, Trash2, Undo2, Redo2, Hand, LocateFixed } from "lucide-react";
@@ -244,7 +247,7 @@ export default function MapaPercurso({
         icon: icone(String(i + 1), cor),
         draggable: !somenteLeitura,
       })
-        .bindTooltip(rotuloEtapa(i, total, p.rotulo))
+        .bindTooltip(Object.assign(document.createElement("span"), { textContent: textoSimples(rotuloEtapa(i, total, p.rotulo)) }))
         .addTo(camadas.percurso);
       marcador.on("dragend", () => {
         const ll = marcador.getLatLng();
@@ -548,20 +551,9 @@ export default function MapaPercurso({
                 <li key={`${p.lat}-${p.lng}-${i}`} className="flex items-center gap-2">
                   <span className="w-6 text-xs text-muted-foreground">{i + 1}.</span>
                   {editavel ? (
-                    <Input
-                      value={p.rotulo ?? ""}
-                      placeholder={rotuloEtapa(i, percurso.pontos.length)}
-                      aria-label={`Nome da etapa ${i + 1}`}
-                      onChange={(e) =>
-                        atualizar({
-                          pontos: percurso.pontos.map((atual, indice) =>
-                            indice === i ? { ...atual, rotulo: e.target.value } : atual,
-                          ),
-                        })
-                      }
-                    />
+                    <div className="min-w-0 flex-1"><EditorTexto compacto value={p.rotulo ?? ""} rotulo={`Nome da etapa ${i + 1}`} onChange={(valor) => atualizar({ pontos: percurso.pontos.map((atual, indice) => indice === i ? { ...atual, rotulo: valor } : atual) })} /></div>
                   ) : (
-                    <span className="text-sm">{rotuloEtapa(i, percurso.pontos.length, p.rotulo)}</span>
+                    <span className="text-sm"><TextoFormatado valor={rotuloEtapa(i, percurso.pontos.length, p.rotulo)} /></span>
                   )}
                   <span className="hidden text-xs text-muted-foreground xl:inline">
                     {coordenadaTexto(p)}

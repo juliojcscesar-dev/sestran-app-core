@@ -1,3 +1,4 @@
+import { TextoFormatado } from "@/components/TextoFormatado";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -264,7 +265,7 @@ function Painel() {
                 {atividades.data?.map((item) => (
                   <li key={item.id} className="flex items-start gap-4 py-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{item.titulo}</p>
+                      <p className="truncate text-sm font-medium"><TextoFormatado valor={item.titulo} /></p>
                       <p className="text-xs text-muted-foreground">
                         {item.tipo} · {item.detalhe}
                       </p>

@@ -1,3 +1,4 @@
+import { lerTextoFormatado, juntarTextosFormatados, salvarTextoFormatado, type TrechoTexto } from "@/lib/texto-formatado";
 import { formatarDataBr, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import type { OrdemCompleta } from "@/lib/os-api";
 import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
@@ -166,8 +167,8 @@ function camposDocumento(dados: OrdemCompleta) {
 }
 function textosDocumento(dados: OrdemCompleta) {
   return {
-    servico: dados.servicos.map((s) => [s.tipos_servico?.nome, s.detalhe].filter(Boolean).join(" — ")).join("\n"),
-    percurso: [dados.ordem.trajeto, descreverPercurso(lerPercurso(dados.ordem.percurso)).replaceAll("→", " até "), ...descreverInterdicoes(dados.interdicoes)].filter(Boolean).join("\n"),
+    servico: juntarTextosFormatados(dados.servicos.map((s) => juntarTextosFormatados([s.tipos_servico?.nome ?? "", s.detalhe ?? ""].filter(Boolean), " — ")), "\n"),
+    percurso: juntarTextosFormatados([dados.ordem.trajeto ?? "", salvarTextoFormatado(lerTextoFormatado(descreverPercurso(lerPercurso(dados.ordem.percurso))).map(t => ({ ...t, texto: t.texto.replaceAll("→", " até ") }))), ...descreverInterdicoes(dados.interdicoes)].filter(Boolean), "\n"),
   };
 }
 export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) {
@@ -195,14 +196,39 @@ export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) 
   function garantir(h: number) { if (y + h > 269) { doc.addPage(); cabecalho(); } }
   function caixa(txt: string, titulo?: string) {
     doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    const linhas = doc.splitTextToSize(txt, largura - 10) as string[];
+    const linhas: TrechoTexto[][] = [[]]; let usado = 0;
+    for (const trecho of lerTextoFormatado(txt)) {
+      for (const palavra of trecho.texto.split(/(\n|[^\S\n]+)/).filter(Boolean)) {
+        if (palavra === "\n") { linhas.push([]); usado = 0; continue; }
+        doc.setFont("helvetica", trecho.negrito ? (trecho.italico ? "bolditalic" : "bold") : trecho.italico ? "italic" : "normal");
+        // Character fallback also wraps long unbroken words within the document.
+        for (const letra of palavra) {
+          const w = doc.getTextWidth(letra);
+          if (usado + w > largura - 10) { linhas.push([]); usado = 0; }
+          const linha = linhas.at(-1); if (!linha) continue;
+          const anterior = linha.at(-1);
+          if (anterior && anterior.negrito === trecho.negrito && anterior.italico === trecho.italico && anterior.sublinhado === trecho.sublinhado) anterior.texto += letra;
+          else linha.push({ ...trecho, texto: letra });
+          usado += w;
+        }
+      }
+    }
     while (linhas.length) {
       garantir(20); const capacidade = Math.max(1, Math.floor((269 - y - (titulo ? 12 : 7)) / 4.2));
       const parte = linhas.splice(0, capacidade); const h = parte.length * 4.2 + (titulo ? 12 : 7);
       doc.setDrawColor(PALETA.borda); doc.setFillColor(PALETA.painel); doc.roundedRect(x, y, largura, h, 2, 2, "FD");
       if (titulo) { doc.setFont("helvetica", "bold"); doc.setTextColor(PALETA.tinta); doc.text(titulo, x + 3, y + 5); }
       const yy = y + (titulo ? 8 : 2); doc.setFillColor(PALETA.branco); doc.roundedRect(x + 2, yy, largura - 4, h - (titulo ? 10 : 4), 1, 1, "FD");
-      doc.setFont("helvetica", "normal"); doc.setTextColor(PALETA.tinta); doc.text(parte, x + 5, yy + 4); y += h + 2;
+      doc.setTextColor(PALETA.tinta);
+      parte.forEach((linha, i) => {
+        let xx = x + 5; const baseline = yy + 4 + i * 4.2;
+        linha.forEach(t => {
+          doc.setFont("helvetica", t.negrito ? (t.italico ? "bolditalic" : "bold") : t.italico ? "italic" : "normal");
+          doc.setFontSize(9); doc.text(t.texto, xx, baseline); const w = doc.getTextWidth(t.texto);
+          if (t.sublinhado) { doc.setDrawColor(PALETA.tinta); doc.setLineWidth(.15); doc.line(xx, baseline + .6, xx + w, baseline + .6); }
+          xx += w;
+        });
+      }); y += h + 2;
     }
   }
   cabecalho();
@@ -251,11 +277,11 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
   const c = montarConteudo(dados); const textos = textosDocumento(dados);
   const logo = await carregarLogo(LOGO_INSTITUCIONAL); const mapa = await obterImagemMapa(c);
   const width = 10545; const borda = { style: BorderStyle.SINGLE, size: 5, color: "9BC9E8" }; const borders = { top: borda, bottom: borda, left: borda, right: borda };
-  const p = (text: string, bold = false, color = "083F69", center = false) => new Paragraph({ alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT, spacing: { after: 70 }, children: [new TextRun({ text, bold, color, size: 19 })] });
+  const p = (text: string, bold = false, color = "083F69", center = false) => new Paragraph({ alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT, spacing: { after: 70 }, children: lerTextoFormatado(text).flatMap(t => t.texto.split("\n").map((linha, i) => new TextRun({ text: linha, ...(i ? { break: 1 } : {}), bold: Boolean(bold || t.negrito), italics: Boolean(t.italico), ...(t.sublinhado ? { underline: {} } : {}), color, size: 19 }))) });
   const cell = (children: InstanceType<typeof Paragraph>[], w: number, fill = "FFFFFF") => new TableCell({ width: { size: w, type: WidthType.DXA }, borders, shading: { fill }, margins: { top: 90, bottom: 90, left: 100, right: 100 }, children });
   function tabela(linhas: { valores: string[]; titulo?: boolean }[]) {
     const colunas = linhas[0]?.valores.length ?? 1;
-    return new Table({ width: { size: width, type: WidthType.DXA }, layout: TableLayoutType.FIXED, columnWidths: Array(colunas).fill(Math.floor(width / colunas)), rows: linhas.map((l) => new TableRow({ tableHeader: Boolean(l.titulo), cantSplit: true, children: l.valores.map((v) => cell(v.split("\n").map((t) => p(t, l.titulo)), Math.floor(width / colunas), l.titulo ? "E5F2FB" : "F5FBFF")) })) });
+    return new Table({ width: { size: width, type: WidthType.DXA }, layout: TableLayoutType.FIXED, columnWidths: Array(colunas).fill(Math.floor(width / colunas)), rows: linhas.map((l) => new TableRow({ tableHeader: Boolean(l.titulo), cantSplit: true, children: l.valores.map((v) => cell([p(v, l.titulo)], Math.floor(width / colunas), l.titulo ? "E5F2FB" : "F5FBFF")) })) });
   }
   const espaco = () => new Paragraph({ spacing: { after: 70 }, children: [] });
   const headLogo = new Paragraph({ children: logo ? [new ImageRun({ type: "png", data: logo.arrayBuffer, transformation: { width: 435, height: 66 } })] : [new TextRun(ident.orgao)] });

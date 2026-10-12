@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Formatação dos textos e etapas do percurso (12/10)
+- [x] Ocultar coordenadas no documento final sem alterar a geometria salva
+- [x] Negrito, sublinhado e itálico nos campos solicitados da O.S. e Educação
+- [x] Preservar formatação na visualização, PDF e DOCX; testar os oito campos, reabertura e exportações locais sem criar registros oficiais
+
 ## Regras completas de Consulta e Operador (11/10)
 - [x] Revisar todas as telas e operações dos módulos 01, 02 e 03, inclusive acessos diretos
 - [x] Garantir Consulta somente leitura, Operador por módulo e exclusão individual autorizada
