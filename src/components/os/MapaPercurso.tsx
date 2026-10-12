@@ -247,7 +247,7 @@ export default function MapaPercurso({
         icon: icone(String(i + 1), cor),
         draggable: !somenteLeitura,
       })
-        .bindTooltip(document.createTextNode(textoSimples(rotuloEtapa(i, total, p.rotulo))).textContent ?? "")
+        .bindTooltip(Object.assign(document.createElement("span"), { textContent: textoSimples(rotuloEtapa(i, total, p.rotulo)) }))
         .addTo(camadas.percurso);
       marcador.on("dragend", () => {
         const ll = marcador.getLatLng();
