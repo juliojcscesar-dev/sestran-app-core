@@ -1,3 +1,5 @@
+import { TextoFormatado } from "@/components/TextoFormatado";
+import { juntarTextosFormatados } from "@/lib/texto-formatado";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -120,10 +122,8 @@ function VisualizarOS() {
   };
   const status = (o["status"] as StatusOS) ?? "AGENDADA";
   const percurso = lerPercurso(o["percurso"]);
-  const servicos = dados.servicos
-    .map((s) => `${s.tipos_servico?.nome ?? "Serviço"}${s.detalhe ? ` — ${s.detalhe}` : ""}`)
-    .join("\n");
-  const percursoTexto = [
+  const servicos = juntarTextosFormatados(dados.servicos.map((s) => juntarTextosFormatados([s.tipos_servico?.nome ?? "Serviço", ...(s.detalhe ? [s.detalhe] : [])], " — ")), "\n");
+  const percursoTexto = juntarTextosFormatados([
     String(o["trajeto"] ?? "").trim(),
     descreverPercurso(percurso),
     ...(dados.interdicoes ?? []).map((item) =>
@@ -131,7 +131,7 @@ function VisualizarOS() {
         .filter(Boolean)
         .join(" — "),
     ),
-  ].filter(Boolean).join("\n");
+  ].filter(Boolean), "\n");
   const observacoes = String(o["observacoes"] ?? "").trim();
   const mapaImagem = typeof o["mapa_imagem"] === "string" && o["mapa_imagem"].startsWith("data:image")
     ? o["mapa_imagem"]
@@ -244,8 +244,8 @@ function VisualizarOS() {
               <LinhaDocumento rotulo="Evento" valor={o.eventos?.titulo ?? ""} inteira />
             </section>
 
-            <section className="os-doc-box"><span className="os-doc-label">1 - Serviço</span><div className="os-doc-line os-doc-pre">{servicos || "—"}</div></section>
-            {percursoTexto && <section className="os-doc-box"><span className="os-doc-label">2 - Percurso</span><div className="os-doc-line os-doc-pre">{percursoTexto}</div></section>}
+            <section className="os-doc-box"><span className="os-doc-label">1 - Serviço</span><div className="os-doc-line os-doc-pre"><TextoFormatado valor={servicos || "—"} /></div></section>
+            {percursoTexto && <section className="os-doc-box"><span className="os-doc-label">2 - Percurso</span><div className="os-doc-line os-doc-pre"><TextoFormatado valor={percursoTexto} /></div></section>}
 
             {(dados.agentes.length > 0 || dados.orientadores.length > 0) && <section className="os-agents-panel">
               <table><thead><tr><th>{dados.agentes.length ? "Agentes de Trânsito" : "Orientadores de Trânsito"}</th><th>Horário no Local</th></tr></thead>
@@ -256,7 +256,7 @@ function VisualizarOS() {
                 </tbody>
               </table>
             </section>}
-            {observacoes && <section className="os-doc-box"><span className="os-doc-label">Observações</span><div className="os-doc-line os-doc-pre">{observacoes}</div></section>}
+            {observacoes && <section className="os-doc-box"><span className="os-doc-label">Observações</span><div className="os-doc-line os-doc-pre"><TextoFormatado valor={observacoes} /></div></section>}
             {mapaImagem && <figure className="os-photo-box"><img src={mapaImagem} alt="Mapa e percurso da ordem de serviço" /></figure>}
           </td></tr></tbody>
           <tfoot><tr><td><div className="os-signature"><div className="os-signature-line" /><div>{configuracoesQ.data?.autoridade ?? "Carlos Hideki de Souza Fujimori"}</div><strong>{configuracoesQ.data?.cargo_autoridade ?? "Diretor de Trânsito"}</strong></div></td></tr></tfoot>

@@ -1,3 +1,5 @@
+import { TextoFormatado } from "@/components/TextoFormatado";
+import { textoSimples } from "@/lib/texto-formatado";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +23,7 @@ function tituloPeriodo(data: Date, visao: VisaoCalendario) {
 }
 
 function Evento({ acao, onAbrir, compacto = false }: { acao: AcaoEducativa; onAbrir: (acao: AcaoEducativa) => void; compacto?: boolean }) {
-  return <Button type="button" variant="ghost" onClick={() => onAbrir(acao)} className={cn("h-auto w-full justify-start border px-2 py-1 text-left", STATUS_ACAO_CLASSE[acao.status as StatusAcao])} title={`${acao.titulo} — ${STATUS_ACAO_LABEL[acao.status]}`}><span className="min-w-0"><span className="block truncate text-xs font-semibold">{formatarHoraCurta(acao.horario_inicio)} · {acao.titulo}</span>{!compacto && <span className="block truncate text-[11px] font-normal opacity-80">{acao.escolas?.nome ?? acao.local ?? STATUS_ACAO_LABEL[acao.status]}</span>}</span></Button>;
+  return <Button type="button" variant="ghost" onClick={() => onAbrir(acao)} className={cn("h-auto w-full justify-start border px-2 py-1 text-left", STATUS_ACAO_CLASSE[acao.status as StatusAcao])} title={`${textoSimples(acao.titulo)} — ${STATUS_ACAO_LABEL[acao.status]}`}><span className="min-w-0"><span className="block truncate text-xs font-semibold">{formatarHoraCurta(acao.horario_inicio)} · <TextoFormatado valor={acao.titulo} /></span>{!compacto && <span className="block truncate text-[11px] font-normal opacity-80">{acao.escolas?.nome ?? acao.local ?? STATUS_ACAO_LABEL[acao.status]}</span>}</span></Button>;
 }
 
 export function CalendarioAcoes({ acoes, referencia, visao, onReferenciaChange, onAbrir }: { acoes: AcaoEducativa[]; referencia: Date; visao: VisaoCalendario; onReferenciaChange: (data: Date) => void; onAbrir: (acao: AcaoEducativa) => void }) {
@@ -45,6 +47,6 @@ export function CalendarioAcoes({ acoes, referencia, visao, onReferenciaChange, 
 
     {visao === "dia" && <div className="min-h-[420px] border"><div className="grid grid-cols-[80px_1fr]">{Array.from({ length: 14 }, (_, i) => i + 7).map((hora) => { const itens = porData(referencia).filter((a) => Number(a.horario_inicio?.slice(0, 2) ?? 7) === hora); return <div key={hora} className="contents"><div className="border-b border-r p-3 text-right text-xs text-muted-foreground">{String(hora).padStart(2, "0")}:00</div><div className="min-h-16 space-y-1 border-b p-2">{itens.map((a) => <Evento key={a.id} acao={a} onAbrir={onAbrir} />)}</div></div>; })}</div>{porData(referencia).length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma ação neste dia.</p>}</div>}
 
-    {visao === "lista" && <div className="divide-y border">{acoes.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma ação encontrada.</p> : acoes.map((a) => <Button key={a.id} type="button" variant="ghost" className="h-auto w-full justify-between rounded-none px-4 py-3 text-left" onClick={() => onAbrir(a)}><span><span className="block font-medium">{a.titulo}</span><span className="block text-xs text-muted-foreground">{criarDataLocal(a.data_acao).toLocaleDateString("pt-BR")} · {formatarHoraCurta(a.horario_inicio)} · {a.escolas?.nome ?? a.local ?? "Local não informado"}</span></span><Badge variant="outline" className={STATUS_ACAO_CLASSE[a.status]}>{STATUS_ACAO_LABEL[a.status]}</Badge></Button>)}</div>}
+    {visao === "lista" && <div className="divide-y border">{acoes.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma ação encontrada.</p> : acoes.map((a) => <Button key={a.id} type="button" variant="ghost" className="h-auto w-full justify-between rounded-none px-4 py-3 text-left" onClick={() => onAbrir(a)}><span><span className="block font-medium"><TextoFormatado valor={a.titulo} /></span><span className="block text-xs text-muted-foreground">{criarDataLocal(a.data_acao).toLocaleDateString("pt-BR")} · {formatarHoraCurta(a.horario_inicio)} · {a.escolas?.nome ?? a.local ?? "Local não informado"}</span></span><Badge variant="outline" className={STATUS_ACAO_CLASSE[a.status]}>{STATUS_ACAO_LABEL[a.status]}</Badge></Button>)}</div>}
   </div>;
 }

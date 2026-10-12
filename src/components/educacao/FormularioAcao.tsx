@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { EditorTexto } from "@/components/EditorTexto";
+import { textoSimples } from "@/lib/texto-formatado";
 import { EditorRelatorio } from "@/components/educacao/EditorRelatorio";
 import type { ImagemRelatorio } from "@/lib/educacao-imagens";
 import { CATEGORIAS_ACAO, CATEGORIA_ACAO_LABEL, STATUS_ACAO, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao } from "@/lib/educacao";
@@ -57,7 +59,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
   const salvar = useMutation({
     mutationFn: async () => {
       if (!podePreencher) throw new Error("Solicite ao administrador a liberação para preencher este módulo.");
-      if (estado.titulo.trim().length < 3) throw new Error("Informe um título com pelo menos 3 caracteres.");
+      if (textoSimples(estado.titulo).trim().length < 3) throw new Error("Informe um título com pelo menos 3 caracteres.");
       if (!estado.data_acao) throw new Error("Informe a data da ação.");
       if (estado.horario_inicio && estado.horario_fim && estado.horario_fim <= estado.horario_inicio) throw new Error("O horário final deve ser posterior ao inicial.");
       const dados: DadosAcao = {
@@ -101,7 +103,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{acao ? "Editar ação educativa" : "Nova ação educativa"}</DialogTitle><DialogDescription>Registre a programação e a situação da atividade.</DialogDescription></DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2"><Label htmlFor="acao-titulo">Título da Ação *</Label><Input id="acao-titulo" value={estado.titulo} onChange={(e) => campo("titulo", e.target.value)} /></div>
+          <div className="md:col-span-2"><Label htmlFor="acao-titulo">Título da Ação *</Label><EditorTexto id="acao-titulo" rotulo="Título da Ação" compacto value={estado.titulo} onChange={(valor) => campo("titulo", valor)} /></div>
           <div><Label htmlFor="acao-categoria">Categoria *</Label><Select value={estado.categoria} onValueChange={(v) => campo("categoria", v)}><SelectTrigger id="acao-categoria"><SelectValue /></SelectTrigger><SelectContent>{CATEGORIAS_ACAO.map((c) => <SelectItem key={c} value={c}>{CATEGORIA_ACAO_LABEL[c]}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="acao-status">Situação *</Label><Select value={estado.status} onValueChange={(v) => campo("status", v)}><SelectTrigger id="acao-status"><SelectValue /></SelectTrigger><SelectContent>{STATUS_ACAO.map((s) => <SelectItem key={s} value={s}>{STATUS_ACAO_LABEL[s]}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="acao-data">Data do evento *</Label><Input id="acao-data" type="date" value={estado.data_acao} onChange={(e) => campo("data_acao", e.target.value)} /></div>
@@ -117,9 +119,9 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
           <div className="md:col-span-2"><Label htmlFor="acao-equipe">Equipe</Label><Textarea id="acao-equipe" value={estado.equipe} onChange={e => campo("equipe", e.target.value)} /></div>
           <div><Label htmlFor="acao-publico">Público-alvo</Label><Input id="acao-publico" value={estado.publico_alvo} onChange={(e) => campo("publico_alvo", e.target.value)} /></div>
           <div><Label htmlFor="acao-participantes">Participantes</Label><Input id="acao-participantes" type="number" min="0" value={estado.participantes} onChange={(e) => campo("participantes", e.target.value)} /></div>
-          <div className="md:col-span-2"><Label htmlFor="acao-descricao">Atividade</Label><Textarea id="acao-descricao" value={estado.descricao} onChange={(e) => campo("descricao", e.target.value)} /></div>
+          <div className="md:col-span-2"><Label htmlFor="acao-descricao">Atividade</Label><EditorTexto id="acao-descricao" rotulo="Atividade" value={estado.descricao} onChange={(valor) => campo("descricao", valor)} /></div>
           <EditorRelatorio texto={estado.relatorio_texto} onTexto={v => campo("relatorio_texto", v)} imagens={imagens} onImagens={setImagens} />
-          <div className="md:col-span-2"><Label htmlFor="acao-observacoes">Observações</Label><Textarea id="acao-observacoes" value={estado.observacoes} onChange={(e) => campo("observacoes", e.target.value)} /></div>
+          <div className="md:col-span-2"><Label htmlFor="acao-observacoes">Observações</Label><EditorTexto id="acao-observacoes" rotulo="Observações" value={estado.observacoes} onChange={(valor) => campo("observacoes", valor)} /></div>
         </div>
         <DialogFooter><Button type="button" variant="outline" onClick={() => onAbertoChange(false)}>Cancelar</Button><Button type="button" disabled={salvar.isPending} onClick={() => salvar.mutate()}>{salvar.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar</Button></DialogFooter>
       </DialogContent>
