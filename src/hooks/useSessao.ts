@@ -21,6 +21,7 @@ export function useSessao() {
       const user = userData.user;
       if (!user) return null;
 
+      void supabase.rpc("atualizar_situacoes_automaticas");
       const [perfilQ, papeisQ, permissoesQ] = await Promise.all([
         supabase
           .from("profiles")

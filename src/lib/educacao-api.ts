@@ -19,6 +19,7 @@ export type AcaoEducativa = {
   horario_fim: string | null;
   categoria: CategoriaAcao;
   status: StatusAcao;
+  status_manual?: boolean;
   local: string | null;
   publico_alvo: string | null;
   participantes: number | null;
@@ -48,7 +49,7 @@ export type FiltrosAcao = {
 };
 
 const selecao =
-  "id,titulo,descricao,data_acao,horario_inicio,horario_fim,categoria,status,local,publico_alvo,participantes,observacoes,escola_id,orientador_id,tema_id,arquivada,tipo_atividade,endereco,numero_endereco,bairro,equipe,relatorio_texto,relatorio_imagens,escolas(nome),orientadores(nome),temas_educativos(nome)";
+  "id,titulo,descricao,data_acao,horario_inicio,horario_fim,categoria,status,status_manual,local,publico_alvo,participantes,observacoes,escola_id,orientador_id,tema_id,arquivada,tipo_atividade,endereco,numero_endereco,bairro,equipe,relatorio_texto,relatorio_imagens,escolas(nome),orientadores(nome),temas_educativos(nome)";
 
 export async function listarAcoes(filtros: FiltrosAcao = {}) {
   let query = supabase

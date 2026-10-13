@@ -22,14 +22,14 @@ const NENHUM = "__nenhum__";
 type Estado = {
   tipo_atividade: string; endereco: string; numero_endereco: string; bairro: string; equipe: string; relatorio_texto: string;
   titulo: string; descricao: string; data_acao: string; horario_inicio: string; horario_fim: string;
-  categoria: CategoriaAcao; status: StatusAcao; local: string; publico_alvo: string;
+  categoria: CategoriaAcao; status: StatusAcao; status_manual: boolean; local: string; publico_alvo: string;
   participantes: string; observacoes: string; escola_id: string; orientador_id: string; tema_id: string;
 };
 
 const vazio: Estado = {
   tipo_atividade: "", endereco: "", numero_endereco: "", bairro: "", equipe: "", relatorio_texto: "",
   titulo: "", descricao: "", data_acao: "", horario_inicio: "", horario_fim: "", categoria: "EVENTO_ESCOLA",
-  status: "AGENDADA", local: "", publico_alvo: "", participantes: "", observacoes: "", escola_id: NENHUM,
+  status: "AGENDADA", status_manual: false, local: "", publico_alvo: "", participantes: "", observacoes: "", escola_id: NENHUM,
   orientador_id: NENHUM, tema_id: NENHUM,
 };
 
@@ -39,7 +39,7 @@ function estadoDe(acao?: AcaoEducativa | null): Estado {
     tipo_atividade: acao.tipo_atividade ?? "", endereco: acao.endereco ?? "", numero_endereco: acao.numero_endereco ?? "", bairro: acao.bairro ?? "", equipe: acao.equipe ?? "", relatorio_texto: acao.relatorio_texto ?? "",
     titulo: acao.titulo, descricao: acao.descricao ?? "", data_acao: acao.data_acao,
     horario_inicio: acao.horario_inicio?.slice(0, 5) ?? "", horario_fim: acao.horario_fim?.slice(0, 5) ?? "",
-    categoria: acao.categoria, status: acao.status, local: acao.local ?? "", publico_alvo: acao.publico_alvo ?? "",
+    categoria: acao.categoria, status: acao.status, status_manual: Boolean(acao.status_manual), local: acao.local ?? "", publico_alvo: acao.publico_alvo ?? "",
     participantes: acao.participantes == null ? "" : String(acao.participantes), observacoes: acao.observacoes ?? "",
     escola_id: acao.escola_id ?? NENHUM, orientador_id: acao.orientador_id ?? NENHUM, tema_id: acao.tema_id ?? NENHUM,
   };
@@ -66,7 +66,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
         tipo_atividade: estado.tipo_atividade.trim() || null, endereco: estado.endereco.trim() || null, numero_endereco: estado.numero_endereco.trim() || null, bairro: estado.bairro.trim() || null, equipe: estado.equipe.trim() || null, relatorio_texto: estado.relatorio_texto.trim() || null, relatorio_imagens: imagens,
         titulo: estado.titulo.trim(), descricao: estado.descricao.trim() || null, data_acao: estado.data_acao,
         horario_inicio: estado.horario_inicio || null, horario_fim: estado.horario_fim || null,
-        categoria: estado.categoria, status: estado.status, local: estado.local.trim() || null,
+        categoria: estado.categoria, status: estado.status, status_manual: estado.status_manual, local: estado.local.trim() || null,
         publico_alvo: estado.publico_alvo.trim() || null,
         participantes: estado.participantes ? Number(estado.participantes) : null,
         observacoes: estado.observacoes.trim() || null,
@@ -105,7 +105,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2"><Label htmlFor="acao-titulo">Título da Ação *</Label><EditorTexto id="acao-titulo" rotulo="Título da Ação" compacto value={estado.titulo} onChange={(valor) => campo("titulo", valor)} /></div>
           <div><Label htmlFor="acao-categoria">Categoria *</Label><Select value={estado.categoria} onValueChange={(v) => campo("categoria", v)}><SelectTrigger id="acao-categoria"><SelectValue /></SelectTrigger><SelectContent>{CATEGORIAS_ACAO.map((c) => <SelectItem key={c} value={c}>{CATEGORIA_ACAO_LABEL[c]}</SelectItem>)}</SelectContent></Select></div>
-          <div><Label htmlFor="acao-status">Situação *</Label><Select value={estado.status} onValueChange={(v) => campo("status", v)}><SelectTrigger id="acao-status"><SelectValue /></SelectTrigger><SelectContent>{STATUS_ACAO.map((s) => <SelectItem key={s} value={s}>{STATUS_ACAO_LABEL[s]}</SelectItem>)}</SelectContent></Select></div>
+          <div><Label htmlFor="acao-status">Situação *</Label><Select value={estado.status_manual ? estado.status : "__auto"} onValueChange={(v) => { if (v === "__auto") campo("status_manual", false); else { campo("status_manual", true); campo("status", v); } }}><SelectTrigger id="acao-status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="__auto">Automática pelo calendário ({STATUS_ACAO_LABEL[estado.status]})</SelectItem>{STATUS_ACAO.map((s) => <SelectItem key={s} value={s}>{STATUS_ACAO_LABEL[s]}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="acao-data">Data do evento *</Label><Input id="acao-data" type="date" value={estado.data_acao} onChange={(e) => campo("data_acao", e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-2"><div><Label htmlFor="acao-inicio">Início</Label><Input id="acao-inicio" type="time" value={estado.horario_inicio} onChange={(e) => campo("horario_inicio", e.target.value)} /></div><div><Label htmlFor="acao-fim">Término</Label><Input id="acao-fim" type="time" value={estado.horario_fim} onChange={(e) => campo("horario_fim", e.target.value)} /></div></div>
           <div><Label htmlFor="acao-escola">Escola</Label><Select value={estado.escola_id} onValueChange={(v) => campo("escola_id", v)}><SelectTrigger id="acao-escola"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NENHUM}>Nenhuma</SelectItem>{(referencias.data?.escolas ?? []).map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}</SelectContent></Select></div>

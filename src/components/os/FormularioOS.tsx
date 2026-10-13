@@ -105,6 +105,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const [eventoId, setEventoId] = useState<string | null>((o?.["evento_id"] as string) ?? null);
   const [trajeto, setTrajeto] = useState((o?.["trajeto"] as string) ?? "");
   const [observacoes, setObservacoes] = useState((o?.["observacoes"] as string) ?? "");
+  const [statusManual, setStatusManual] = useState<boolean>(!duplicando && Boolean(o?.["status_manual"]));
   const [status, setStatus] = useState<StatusOS>(
     duplicando ? "AGENDADA" : ((o?.["status"] as StatusOS) ?? "AGENDADA"),
   );
@@ -221,6 +222,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         trajeto: trajeto.trim() || null,
         observacoes: observacoes.trim() || null,
         status,
+        status_manual: statusManual,
         percurso,
         mapa_imagem: mapaImagem,
         interdicoes,
@@ -390,11 +392,12 @@ export function FormularioOS({ modo, inicial, id }: Props) {
           </div>
           <div>
             <Label htmlFor="status">Situação</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as StatusOS)}>
+            <Select value={statusManual ? status : "__auto"} onValueChange={(v) => { if (v === "__auto") { setStatusManual(false); } else { setStatusManual(true); setStatus(v as StatusOS); } }}>
               <SelectTrigger id="status">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__auto">Automática pelo calendário ({STATUS_OS_LABEL[status]})</SelectItem>
                 {STATUS_OS.map((s) => (
                   <SelectItem key={s} value={s}>
                     {STATUS_OS_LABEL[s]}

@@ -4,15 +4,15 @@ export type StatusOS = (typeof STATUS_OS)[number];
 export const STATUS_OS_LABEL: Record<StatusOS, string> = {
   AGENDADA: "Agendada",
   EM_ANDAMENTO: "Em andamento",
-  EXECUTADA: "Executada",
+  EXECUTADA: "Concluída",
   CANCELADA: "Cancelada",
 };
 
 export const STATUS_OS_CLASSE: Record<StatusOS, string> = {
-  AGENDADA: "bg-primary/10 text-primary border-primary/20",
-  EM_ANDAMENTO: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400",
-  EXECUTADA: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-400",
-  CANCELADA: "bg-destructive/10 text-destructive border-destructive/20",
+  AGENDADA: "border-success/40 bg-success/15 text-success",
+  EM_ANDAMENTO: "border-warning/50 bg-warning/25 text-warning-foreground",
+  EXECUTADA: "border-destructive/40 bg-destructive/15 text-destructive",
+  CANCELADA: "border-muted-foreground/30 bg-muted text-muted-foreground",
 };
 
 export const ACAO_HISTORICO_LABEL: Record<string, string> = {
