@@ -75,6 +75,7 @@ export type Database = {
           relatorio_imagens: Json
           relatorio_texto: string | null
           status: string
+          status_manual: boolean
           tema_id: string | null
           tipo_atividade: string | null
           titulo: string
@@ -105,6 +106,7 @@ export type Database = {
           relatorio_imagens?: Json
           relatorio_texto?: string | null
           status?: string
+          status_manual?: boolean
           tema_id?: string | null
           tipo_atividade?: string | null
           titulo: string
@@ -135,6 +137,7 @@ export type Database = {
           relatorio_imagens?: Json
           relatorio_texto?: string | null
           status?: string
+          status_manual?: boolean
           tema_id?: string | null
           tipo_atividade?: string | null
           titulo?: string
@@ -642,6 +645,7 @@ export type Database = {
           sequencial: number | null
           solicitante_id: string | null
           status: string
+          status_manual: boolean
           tipo: string
           titulo: string | null
           trajeto: string | null
@@ -674,6 +678,7 @@ export type Database = {
           sequencial?: number | null
           solicitante_id?: string | null
           status?: string
+          status_manual?: boolean
           tipo?: string
           titulo?: string | null
           trajeto?: string | null
@@ -706,6 +711,7 @@ export type Database = {
           sequencial?: number | null
           solicitante_id?: string | null
           status?: string
+          status_manual?: boolean
           tipo?: string
           titulo?: string | null
           trajeto?: string | null
@@ -1199,6 +1205,7 @@ export type Database = {
         Args: { _acao?: string; _modulo: string; _user_id: string }
         Returns: boolean
       }
+      atualizar_situacoes_automaticas: { Args: never; Returns: undefined }
       definir_acesso_modulo: {
         Args: {
           _modulo: string
@@ -1217,6 +1224,10 @@ export type Database = {
       }
       is_gestor: { Args: { _user_id: string }; Returns: boolean }
       pode_operar: { Args: { _user_id: string }; Returns: boolean }
+      situacao_por_horario: {
+        Args: { _concluida: string; _data: string; _fim: string; _ini: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "ADMINISTRADOR" | "GESTOR" | "OPERADOR" | "CONSULTA"

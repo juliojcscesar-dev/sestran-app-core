@@ -85,6 +85,13 @@
       "when": 1791691316936,
       "tag": "0011_proteger_detalhes_modulos_arquivados",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791935256496,
+      "tag": "0012_situacao_automatica",
+      "breakpoints": true
     }
   ]
 }

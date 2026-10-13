@@ -4,15 +4,15 @@ export type StatusAcao = (typeof STATUS_ACAO)[number];
 export const STATUS_ACAO_LABEL: Record<StatusAcao, string> = {
   AGENDADA: "Agendada",
   EM_ANDAMENTO: "Em andamento",
-  REALIZADA: "Realizada",
+  REALIZADA: "Concluída",
   CANCELADA: "Cancelada",
 };
 
 export const STATUS_ACAO_CLASSE: Record<StatusAcao, string> = {
-  AGENDADA: "border-primary/30 bg-primary/10 text-primary",
-  EM_ANDAMENTO: "border-warning/40 bg-warning/15 text-warning-foreground",
-  REALIZADA: "border-success/35 bg-success/15 text-success",
-  CANCELADA: "border-destructive/35 bg-destructive/10 text-destructive",
+  AGENDADA: "border-success/40 bg-success/15 text-success",
+  EM_ANDAMENTO: "border-warning/50 bg-warning/25 text-warning-foreground",
+  REALIZADA: "border-destructive/40 bg-destructive/15 text-destructive",
+  CANCELADA: "border-muted-foreground/30 bg-muted text-muted-foreground",
 };
 
 export const CATEGORIAS_ACAO = ["EVENTO_ESCOLA", "BLITZ_EDUCATIVA", "PALESTRA", "OUTRA"] as const;
