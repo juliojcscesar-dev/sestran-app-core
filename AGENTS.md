@@ -20,3 +20,4 @@
 - Authorize module reads and writes through user_module_permissions and acesso_modulo RLS, not legacy global operator roles; keep destructive permission separate and administration server-validated to prevent cross-module escalation.
 - Gate every module form and direct create/edit/duplicate page with the same module permission as RLS; use explicit confirmation and single-row deletion checks so denied operations never appear successful.
 - Store optional text formatting as prefixed, validated text runs in existing string fields; share parsing across editors, safe React rendering and document exports to preserve legacy plain text without HTML injection.
+- Keep dashboard calendars in a shared presentation component, with independent month/day selection and permission-scoped live reads; link records to existing document routes rather than duplicating mutation flows.
