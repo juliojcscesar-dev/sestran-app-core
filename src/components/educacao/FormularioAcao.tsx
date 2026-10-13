@@ -94,7 +94,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
     onError: () => toast.error("Não foi possível cadastrar o tema."),
   });
 
-  const campo = (chave: keyof Estado, valor: string) => setEstado((e) => ({ ...e, [chave]: valor }));
+  const campo = (chave: keyof Estado, valor: string | boolean) => setEstado((e) => ({ ...e, [chave]: valor }));
 
   if (!podePreencher) return null;
 
