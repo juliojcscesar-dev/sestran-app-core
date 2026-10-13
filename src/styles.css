@@ -157,6 +157,18 @@
   --font-display: var(--font-titulo);
 }
 
+.painel-calendario { min-height: 326px; }
+.painel-calendario [data-slot="calendar"] { width: 100%; }
+.painel-calendario .rdp-week { margin-top: 4px; }
+.painel-calendario .rdp-day { height: 34px; aspect-ratio: auto; }
+.painel-calendario .rdp-day button { min-width: 0; height: 34px; position: relative; }
+.painel-calendario .painel-dia-atividade button { font-weight: 700; }
+.painel-calendario .painel-dia-atividade button::after {
+  content: ""; position: absolute; bottom: 2px; width: 4px; height: 4px;
+  border-radius: 50%; background: var(--warning);
+}
+.painel-calendario-educacao .painel-dia-atividade button::after { background: var(--primary); }
+
 @layer base {
   * {
     border-color: var(--color-border);

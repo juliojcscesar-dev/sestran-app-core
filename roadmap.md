@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Painel integrado com calendários (13/10)
+- [x] Aplicar o modelo em três colunas com calendários de O.S. e Educação e resumo de veículos
+- [x] Ligar datas e registros aos documentos reais, respeitando os acessos por módulo
+- [x] Verificar seleção de datas e documento real de O.S., navegação independente dos meses, ausência de erros e largura de 695px; Educação e veículos sem registros ativos na sessão verificada
+
 ## Formatação dos textos e etapas do percurso (12/10)
 - [x] Ocultar coordenadas no documento final sem alterar a geometria salva
 - [x] Negrito, sublinhado e itálico nos campos solicitados da O.S. e Educação
