@@ -5,7 +5,7 @@ import { criarDataLocal, dataLocalIso } from "@/lib/educacao";
 import { cn } from "@/lib/utils";
 
 export function CalendarioPainel({ nome, mes, selecionada, datas, onMes, onSelecionar, educativo = false }: {
-  nome: string; mes: Date; selecionada?: Date; datas: string[];
+  nome: string; mes: Date; selecionada: Date | undefined; datas: string[];
   onMes: (data: Date) => void; onSelecionar: (data: Date | undefined) => void; educativo?: boolean;
 }) {
   return <div aria-label={`Calendário de ${nome}`} className={cn("painel-calendario bg-muted/60 p-3", educativo && "painel-calendario-educacao")}>

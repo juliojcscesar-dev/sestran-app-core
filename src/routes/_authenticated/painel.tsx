@@ -7,7 +7,7 @@ import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { dataLocalIso, STATUS_ACAO_LABEL } from "@/lib/educacao";
 import { STATUS_OS_LABEL, periodoHorario } from "@/lib/os";
-import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase } from "@/lib/veiculos";
+import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase, type SituacaoVeiculo } from "@/lib/veiculos";
 import { formatarData } from "@/lib/sestran";
 import { cn } from "@/lib/utils";
 import { TextoFormatado } from "@/components/TextoFormatado";
@@ -82,7 +82,7 @@ function Painel() {
       for (let inicio = 0; ; inicio += 1000) {
         const res = await supabase.from("veiculos_abandonados").select("id,marca,modelo,placa,endereco,bairro,status,situacao,data_verificacao,data_notificacao,data_recolhimento,data_retirada,prazo_recolhimento").eq("arquivado", false).order("created_at", { ascending: false }).order("id").range(inicio, inicio + 999);
         const dados = checar(res) ?? [];
-        linhas.push(...dados.map(v => ({ ...v, situacao: v.situacao as VeiculoBase["situacao"] })));
+        linhas.push(...dados.map(v => ({ ...v, situacao: v.situacao as SituacaoVeiculo | null })));
         if (dados.length < 1000) break;
       }
       return linhas;
