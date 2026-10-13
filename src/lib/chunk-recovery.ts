@@ -4,7 +4,14 @@ let installed = false;
 
 export function isChunkLoadError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk .+ failed/i.test(message);
+  const staleImport = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk .+ failed/i.test(message);
+  // A calendar discovered by Vite after startup can retain a different React
+  // optimizer generation in an already-open document. Only recover this known
+  // dev asset mismatch, not arbitrary application hook errors.
+  const stack = error instanceof Error ? error.stack ?? "" : "";
+  const staleCalendarReact = /Cannot read properties of null \(reading 'useMemo'\)/.test(message)
+    && /DayPicker/.test(stack) && /\/node_modules\/\.vite\/deps\/react(?:\.js|[-_])/.test(stack);
+  return staleImport || staleCalendarReact;
 }
 
 // A fresh document resolves current asset hashes; retrying the rejected import does not.
