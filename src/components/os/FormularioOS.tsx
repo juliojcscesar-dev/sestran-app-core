@@ -290,9 +290,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         novosErros[campo] = item.message;
       }
     }
-    if (horaInicio && horaFim && horaFim < horaInicio) {
-      novosErros["hora_fim"] = "O término deve ser depois do início.";
-    }
+    // Término é livre: serviços podem passar da meia-noite (ex.: 17:00 às 00:30).
     if (!servicos.length) novosErros["servicos"] = "Selecione ao menos um serviço.";
     if (modo !== "editar") {
       try {
