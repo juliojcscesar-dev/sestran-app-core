@@ -6,7 +6,7 @@ export type LinhaImportacao = {
   numero: string;
   dados: DadosVeiculo;
   resumo: string;
-  aviso?: string;
+  aviso?: string | undefined;
 };
 
 /** Converte data do Excel (número serial, Date ou texto dd/mm/aaaa) para ISO. */
