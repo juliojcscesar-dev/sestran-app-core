@@ -22,3 +22,4 @@
 - Store optional text formatting as prefixed, validated text runs in existing string fields; share parsing across editors, safe React rendering and document exports to preserve legacy plain text without HTML injection.
 - Keep dashboard calendars in a shared presentation component, with independent month/day selection and permission-scoped live reads; link records to existing document routes rather than duplicating mutation flows.
 - Prebundle calendar dependencies with React at preview startup and session-guard recovery of known stale calendar optimizer errors; this prevents mixed React generations in already-open previews without masking ordinary hook bugs.
+- Fill module reports through one shared editor component and one shared image helper, with photos optional so a report may hold text alone; this keeps the order and educational documents identical without duplicating validation.
