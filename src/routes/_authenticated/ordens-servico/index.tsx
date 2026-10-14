@@ -47,6 +47,7 @@ import {
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { ExcluirOSButton } from "@/components/os/ExcluirOSButton";
+import { RelatorioModulo } from "@/components/relatorio/RelatorioModulo";
 import {
   STATUS_OS,
   STATUS_OS_CLASSE,
@@ -178,6 +179,20 @@ function ListaOS() {
           </p>
         </div>
         <div className="flex gap-2">
+          <RelatorioModulo
+            titulo="Ordens de Serviço"
+            arquivo="relatorio-ordens-servico"
+            colunas={["Número", "Data", "Evento", "Local", "Situação"]}
+            buscar={async (de, ate) =>
+              (await listarOrdens({ ...(de ? { de } : {}), ...(ate ? { ate } : {}) })).map((os) => [
+                os.numero,
+                formatarDataBr(os.data_servico),
+                os.eventos?.titulo ?? "—",
+                os.local ?? "—",
+                STATUS_OS_LABEL[os.status as StatusOS] ?? os.status,
+              ])
+            }
+          />
           <Button
             variant="outline"
             onClick={() => setFiltros((f) => ({ ...f, arquivadas: !f.arquivadas }))}

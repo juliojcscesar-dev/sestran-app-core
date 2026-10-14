@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, Download, Eye, MapPinned, Pencil, Plus, Search } from "lucide-react";
+import { Archive, Eye, MapPinned, Pencil, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { FormularioVeiculo } from "@/components/veiculos/FormularioVeiculo"; import { MapaOS } from "@/components/os/MapaOS";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"; import { Badge } from "@/components/ui/badge"; import { Button } from "@/components/ui/button"; import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"; import { Input } from "@/components/ui/input"; import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
