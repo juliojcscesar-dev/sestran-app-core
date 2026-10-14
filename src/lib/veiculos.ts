@@ -11,7 +11,7 @@ export const STATUS_VEICULO = [
 
 export type StatusVeiculo = (typeof STATUS_VEICULO)[number];
 
-export const STATUS_VEICULO_LABEL: Record<StatusVeiculo, string> = {
+export const STATUS_VEICULO_LABEL: Record<string, string> = {
   DENUNCIADO: "Denunciado",
   NOTIFICADO: "Notificado",
   RECOLHER: "A recolher",
@@ -22,7 +22,7 @@ export const STATUS_VEICULO_LABEL: Record<StatusVeiculo, string> = {
   OUTROS: "Outros",
 };
 
-export const STATUS_VEICULO_CLASSE: Record<StatusVeiculo, string> = {
+export const STATUS_VEICULO_CLASSE: Record<string, string> = {
   DENUNCIADO: "bg-primary/10 text-primary border-primary/20",
   NOTIFICADO: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400",
   RECOLHER: "bg-destructive/10 text-destructive border-destructive/20",
@@ -34,7 +34,17 @@ export const STATUS_VEICULO_CLASSE: Record<StatusVeiculo, string> = {
 };
 
 export const SITUACOES_VEICULO = ["RETIRADO", "NOTIFICADO", "RECOLHIDO", "NAO_ABANDONADO", "TERRENO", "OUTROS"] as const;
-export type SituacaoVeiculo = (typeof SITUACOES_VEICULO)[number];
+/** Código de situação: padrão ou cadastrado pelo usuário no catálogo editável. */
+export type SituacaoVeiculo = string;
+export type OpcaoSituacao = { id: string; nome: string; ativo: boolean; ordem: number };
+
+/** Atualiza os nomes exibidos com os do catálogo editável (inclui situações novas). */
+export function registrarSituacoes(opcoes: OpcaoSituacao[]) {
+  for (const o of opcoes) {
+    STATUS_VEICULO_LABEL[o.id] = o.nome;
+    if (!STATUS_VEICULO_CLASSE[o.id]) STATUS_VEICULO_CLASSE[o.id] = "bg-muted text-muted-foreground border-border";
+  }
+}
 
 export const TIPOS_DENUNCIA = ["OUVIDORIA", "INFORMAL"] as const;
 export type TipoDenuncia = (typeof TIPOS_DENUNCIA)[number];
@@ -80,7 +90,6 @@ export const CAMPO_VEICULO_LABEL: Record<string, string> = {
 
 export type EtapaCronograma =
   | "AGUARDANDO_VERIFICACAO"
-  | "VERIFICADOS"
   | "A_RECOLHER"
   | "RECOLHIDOS"
   | "RETIRADOS"
@@ -88,7 +97,6 @@ export type EtapaCronograma =
 
 export const ETAPAS_CRONOGRAMA: EtapaCronograma[] = [
   "AGUARDANDO_VERIFICACAO",
-  "VERIFICADOS",
   "A_RECOLHER",
   "RECOLHIDOS",
   "RETIRADOS",
@@ -96,9 +104,8 @@ export const ETAPAS_CRONOGRAMA: EtapaCronograma[] = [
 ];
 
 export const ETAPA_LABEL: Record<EtapaCronograma, string> = {
-  AGUARDANDO_VERIFICACAO: "Aguardando verificação",
-  VERIFICADOS: "Verificados",
-  A_RECOLHER: "A recolher",
+  AGUARDANDO_VERIFICACAO: "Retorno",
+  A_RECOLHER: "Notificados",
   RECOLHIDOS: "Recolhidos",
   RETIRADOS: "Retirados",
   OUTRAS_SITUACOES: "Outras situações",
@@ -125,7 +132,7 @@ export function hojeIso() {
  * Situação considerando o prazo de 15 dias já vencido, mesmo que o registro
  * ainda não tenha sido salvo depois do vencimento.
  */
-export function statusEfetivo(v: VeiculoBase): StatusVeiculo {
+export function statusEfetivo(v: VeiculoBase): string {
   if (v.situacao && v.situacao !== "NOTIFICADO") return v.situacao;
   if (v.situacao === "NOTIFICADO") {
     const prazo = v.prazo_recolhimento ?? (v.data_notificacao ? somarDias(v.data_notificacao, PRAZO_RECOLHIMENTO_DIAS) : null);
@@ -144,11 +151,9 @@ export function etapaDe(v: VeiculoBase): EtapaCronograma {
   const status = statusEfetivo(v);
   if (status === "RETIRADO") return "RETIRADOS";
   if (status === "RECOLHIDO") return "RECOLHIDOS";
-  if (["NAO_ABANDONADO", "TERRENO", "OUTROS"].includes(status)) return "OUTRAS_SITUACOES";
-  if (status === "RECOLHER") return "A_RECOLHER";
-  if (status === "NOTIFICADO") return "VERIFICADOS";
-  if (v.data_verificacao) return "VERIFICADOS";
-  return "AGUARDANDO_VERIFICACAO";
+  if (status === "RECOLHER" || status === "NOTIFICADO") return "A_RECOLHER";
+  if (status === "DENUNCIADO") return "AGUARDANDO_VERIFICACAO";
+  return "OUTRAS_SITUACOES";
 }
 
 export function somarDias(dataIso: string, dias: number) {
