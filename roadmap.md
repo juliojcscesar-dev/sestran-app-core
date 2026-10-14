@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Relatório por período nos três módulos (solicitado 13/10)
+- [x] Botão "Relatório" na página inicial de O.S., Veículos Abandonados e Educação
+- [x] Escolha de período Dia, Mês, Ano ou Geral com contagem de registros
+- [x] Gerar PDF e DOC com cabeçalho institucional; conferir os três módulos no navegador
+
 ## Relatório na Ordem de Serviço (solicitado 13/10)
 - [x] Guardar texto e até 6 fotos do relatório junto à O.S.
 - [x] Preencher no formulário com negrito, itálico e sublinhado; fotos opcionais (salvar só com texto, só com fotos ou vazio)
