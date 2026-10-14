@@ -16,7 +16,7 @@ export const STATUS_ACAO_CLASSE: Record<StatusAcao, string> = {
 };
 
 export const CATEGORIAS_ACAO = ["EVENTO_ESCOLA", "BLITZ_EDUCATIVA", "PALESTRA", "OUTRA"] as const;
-export type CategoriaAcao = (typeof CATEGORIAS_ACAO)[number];
+export type CategoriaAcao = string;
 
 export const CATEGORIA_ACAO_LABEL: Record<CategoriaAcao, string> = {
   EVENTO_ESCOLA: "Evento em escola",
