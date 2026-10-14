@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Icons from "lucide-react";
-import { LogOut, Menu, TrafficCone, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/useSessao";
 import { MODULOS, PAPEL_LABEL, type Papel } from "@/lib/sestran";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { administrador, moduloDoCaminho, temAcesso } from "@/lib/permissoes";
+import { LogosInstitucionais } from "@/components/layout/LogosInstitucionais";
 
 function Icone({ nome, className }: { nome: string; className: string }) {
   const Componente = (
@@ -56,22 +57,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           menuAberto ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-            <TrafficCone className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div className="leading-tight">
-            <p className="font-display text-lg font-semibold">SESTRAN</p>
-            <p className="text-xs text-sidebar-foreground/70">Paranavaí — PR</p>
-          </div>
-          <button
-            type="button"
+        <div className="border-b border-sidebar-border px-4 py-4">
+          <div className="mb-3 flex items-center gap-2">
+            <p className="font-display text-sm font-semibold">Central de Sistema</p>
+          <Button
+            variant="ghost" size="icon"
             onClick={() => setMenuAberto(false)}
-            className="ml-auto rounded p-1 lg:hidden"
+            className="ml-auto h-7 w-7 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
             aria-label="Fechar menu"
           >
             <X className="h-5 w-5" aria-hidden="true" />
-          </button>
+          </Button>
+          </div>
+          <LogosInstitucionais compacto />
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
@@ -104,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="border-t border-sidebar-border px-5 py-4 text-xs text-sidebar-foreground/70">
           Prefeitura Municipal de Paranavaí
           <br />
-          Secretaria Municipal de Trânsito
+          Secretaria Municipal de Segurança e Trânsito
         </div>
       </aside>
 
@@ -129,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
           <div className="min-w-0">
             <p className="truncate font-display text-sm font-semibold">
-              Gestão de Trânsito e Eventos
+              Central de Sistema
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {sessao?.nome ?? "Carregando..."}

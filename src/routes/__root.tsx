@@ -87,17 +87,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SESTRAN Paranavaí — Gestão de Trânsito e Eventos" },
+      { title: "Central de Sistema — SESTRAN Paranavaí" },
       {
         name: "description",
         content:
-          "Sistema administrativo da Secretaria de Trânsito da Prefeitura Municipal de Paranavaí/PR.",
+           "Plataforma administrativa da Secretaria Municipal de Segurança e Trânsito de Paranavaí/PR.",
       },
       { name: "author", content: "Prefeitura Municipal de Paranavaí" },
-      { property: "og:title", content: "SESTRAN Paranavaí — Gestão de Trânsito e Eventos" },
+      { property: "og:title", content: "Central de Sistema — SESTRAN Paranavaí" },
       {
         property: "og:description",
-        content: "Gestão de ordens de serviço, eventos, equipes e educação no trânsito.",
+        content: "Ordens de Serviço, Veículos Abandonados e Educação no Trânsito.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
