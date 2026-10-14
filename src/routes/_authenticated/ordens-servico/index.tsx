@@ -184,7 +184,7 @@ function ListaOS() {
             arquivo="relatorio-ordens-servico"
             colunas={["Número", "Data", "Evento", "Local", "Situação"]}
             buscar={async (de, ate) =>
-              (await listarOrdens({ ...(de ? { de } : {}), ...(ate ? { ate } : {}) })).map((os) => [
+              ((await listarOrdens({ ...(de ? { de } : {}), ...(ate ? { ate } : {}) })) ?? []).map((os) => [
                 os.numero ?? "—",
                 formatarDataBr(os.data_servico),
                 os.eventos?.titulo ?? "—",
