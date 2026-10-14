@@ -130,3 +130,8 @@
 - [x] Adicionar equipes na O.S. e ocultar opções vazias nos documentos finais
 - [x] Adaptar ferramentas de mapa conforme o dashboard enviado, preservando recorte e dados
 - [x] Validar os fluxos e exportações
+
+## Data com dia da semana na O.S. (solicitado 14/10)
+- [x] Mostrar o dia da semana na Data do Serviço da O.S. final (tela, PDF e DOCX)
+- [x] Exibir o dia por extenso abaixo do campo Data no formulário
+- [x] Conferir os três documentos exportados sem regressões
