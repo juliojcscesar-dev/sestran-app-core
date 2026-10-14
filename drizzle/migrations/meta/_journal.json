@@ -99,6 +99,13 @@
       "when": 1791938907762,
       "tag": "0013_relatorio_ordem_servico",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791942177602,
+      "tag": "0014_resumo_historico_valores_extensos",
+      "breakpoints": true
     }
   ]
 }
