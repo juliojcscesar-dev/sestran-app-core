@@ -1,9 +1,12 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, FileDown, Loader2, Printer } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DocumentoAcao } from '@/components/educacao/DocumentoAcao';
 import { obterAcao } from '@/lib/educacao-api';
+import { gerarPdfAcao } from '@/lib/educacao-documento';
 import { ExcluirAcaoButton } from '@/components/educacao/ExcluirAcaoButton';
 
 export const Route = createFileRoute('/_authenticated/agenda-educativa/$id')({
