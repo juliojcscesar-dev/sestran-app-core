@@ -9,7 +9,7 @@ import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { excluirAcao } from "@/lib/educacao-api";
 
-export function ExcluirAcaoButton({ id, titulo, onExcluida }: { id: string; titulo: string; onExcluida: () => void }) {
+export function ExcluirAcaoButton({ id, titulo, onExcluida, compacto = false }: { id: string; titulo: string; onExcluida: () => void; compacto?: boolean }) {
   const [aberto, setAberto] = useState(false);
   const { data: sessao } = useSessao();
   const qc = useQueryClient();
@@ -29,7 +29,7 @@ export function ExcluirAcaoButton({ id, titulo, onExcluida }: { id: string; titu
   });
   if (!podeExcluir) return null;
   return <AlertDialog open={aberto} onOpenChange={v => { if (!exclusao.isPending) setAberto(v); }}>
-    <Button type="button" variant="destructive" onClick={() => setAberto(true)}><Trash2 className="mr-2 h-4 w-4" />Excluir ação</Button>
+    <Button type="button" variant={compacto ? "ghost" : "destructive"} size={compacto ? "icon" : "default"} aria-label="Excluir ação" title="Excluir ação" onClick={() => setAberto(true)}><Trash2 className={compacto ? "h-4 w-4" : "mr-2 h-4 w-4"} />{!compacto && "Excluir ação"}</Button>
     <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir ação educativa</AlertDialogTitle><AlertDialogDescription>Tem certeza que deseja excluir “<TextoFormatado valor={titulo} />”? Esta ação é irreversível.</AlertDialogDescription></AlertDialogHeader>
       <AlertDialogFooter><AlertDialogCancel disabled={exclusao.isPending}>Cancelar</AlertDialogCancel><AlertDialogAction className={buttonVariants({ variant: "destructive" })} disabled={exclusao.isPending || !podeExcluir} onClick={e => { e.preventDefault(); exclusao.mutate(); }}>{exclusao.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirmar exclusão</AlertDialogAction></AlertDialogFooter>
     </AlertDialogContent>

@@ -27,3 +27,4 @@
 - Share institutional logo presentation between the public home and application sidebar using CDN asset pointers; keep document branding unchanged and a real square favicon in public so uploaded identities stay consistent without altering issued documents.
 
 - Educational category catalogs use stable text IDs and joined names; category, school and theme removal deactivates options with module deletion permission, preserving historical action links. The all-activities list reads paginated summaries independently of calendar filters.
+- Educational list actions load full records only on demand and reuse the existing form for edits and unsaved duplication; status totals share the unfiltered summary query to include older activities without fetching report images.
