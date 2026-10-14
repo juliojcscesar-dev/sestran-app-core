@@ -1,3 +1,4 @@
+import { lerPaginasExtras, paginasPreenchidas } from "@/lib/paginas-extras";
 import { TextoFormatado } from "@/components/TextoFormatado";
 import { juntarTextosFormatados } from "@/lib/texto-formatado";
 import { resumoHistorico } from "@/lib/historico";
@@ -143,6 +144,7 @@ function VisualizarOS() {
   const relatorioImagens = Array.isArray(o["relatorio_imagens"])
     ? (o["relatorio_imagens"] as ImagemRelatorio[])
     : [];
+  const paginasExtras = paginasPreenchidas(lerPaginasExtras(o["paginas_extras"]));
   const temRelatorio = Boolean(relatorioTexto) || relatorioImagens.length > 0;
   const podeAlterar = podeOperar && (!o["arquivada"] || temAcesso(sessao, "OS", "EXCLUIR"));
 
@@ -278,6 +280,29 @@ function VisualizarOS() {
           <tfoot><tr><td><div className="os-signature"><div className="os-signature-line" /><div>{configuracoesQ.data?.autoridade ?? "Carlos Hideki de Souza Fujimori"}</div><strong>{configuracoesQ.data?.cargo_autoridade ?? "Diretor de Trânsito"}</strong></div></td></tr></tfoot>
         </table>
       </article>
+
+      {paginasExtras.map((pagina, n) => (
+        <article key={pagina.id} className="os-paper os-paper-extra" aria-label={`Página adicional ${n + 2}`}>
+          <table className="os-a4-table">
+            <thead><tr><td>
+              <div className="os-doc-header">
+                <div className="os-doc-logo"><img src="/assets/logo-header.png" alt="Prefeitura de Paranavaí — Secretaria Municipal de Segurança e Trânsito" /></div>
+                <div className="os-doc-ident">
+                  <div><strong>Nº:</strong><span>{String(o["numero"] ?? "—")}</span></div>
+                  <div><strong>Data:</strong><span>{formatarDataBr(o["data_emissao"] as string)}</span></div>
+                  {Boolean(o["ipm"]) && <div><strong>IPM:</strong><span>{String(o["ipm"])}</span></div>}
+                </div>
+              </div>
+              <div className="os-doc-title">ORDEM DE SERVIÇO</div>
+            </td></tr></thead>
+            <tbody><tr><td>
+              {pagina.observacao.trim() && <section className="os-doc-box"><span className="os-doc-label">Observação</span><div className="os-doc-line os-doc-pre"><TextoFormatado valor={pagina.observacao} /></div></section>}
+              {pagina.imagem && <figure className="mx-auto my-2" style={{ width: `${pagina.imagem.largura}%` }}><img src={pagina.imagem.src} alt={`Imagem da página ${n + 2}`} className="h-auto w-full object-contain" /></figure>}
+            </td></tr></tbody>
+            <tfoot><tr><td><div className="os-signature"><div className="os-signature-line" /><div>{configuracoesQ.data?.autoridade ?? "Carlos Hideki de Souza Fujimori"}</div><strong>{configuracoesQ.data?.cargo_autoridade ?? "Diretor de Trânsito"}</strong></div></td></tr></tfoot>
+          </table>
+        </article>
+      ))}
 
       <Card className="print:hidden">
         <CardHeader><CardTitle className="text-base">Mapa interativo</CardTitle></CardHeader>

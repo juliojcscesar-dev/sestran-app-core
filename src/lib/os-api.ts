@@ -1,3 +1,4 @@
+import type { PaginaExtra } from "@/lib/paginas-extras";
 import { supabase } from "@/integrations/supabase/client";
 import type { StatusOS } from "@/lib/os";
 import type { InterdicaoMapa, PercursoMapa } from "@/lib/mapa";
@@ -36,6 +37,7 @@ export type DadosOS = {
   mapa_imagem?: string | null;
   relatorio_texto: string | null;
   relatorio_imagens: ImagemRelatorio[];
+  paginas_extras?: PaginaExtra[];
   servicos: { tipo_servico_id: string; detalhe: string | null }[];
   agentes: AgenteOS[];
   orientadores: OrientadorOS[];
@@ -227,6 +229,7 @@ function camposOrdem(dados: DadosOS) {
     mapa_imagem: dados.mapa_imagem !== undefined ? dados.mapa_imagem : null,
     relatorio_texto: dados.relatorio_texto,
     relatorio_imagens: (dados.relatorio_imagens ?? []) as unknown as never,
+    paginas_extras: (dados.paginas_extras ?? []) as unknown as never,
   };
 }
 

@@ -23,6 +23,8 @@ import { MapaOS } from "@/components/os/MapaOS";
 import { EditorMapaImagem } from "@/components/os/EditorMapaImagem";
 import { EditorRelatorio } from "@/components/EditorRelatorio";
 import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
+import { EditorPaginasExtras } from "@/components/os/EditorPaginasExtras";
+import { lerPaginasExtras, paginasPreenchidas, type PaginaExtra } from "@/lib/paginas-extras";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -153,6 +155,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const [relatorioImagens, setRelatorioImagens] = useState<ImagemRelatorio[]>(
     Array.isArray(o?.["relatorio_imagens"]) ? (o["relatorio_imagens"] as ImagemRelatorio[]) : [],
   );
+  const [paginasExtras, setPaginasExtras] = useState<PaginaExtra[]>(lerPaginasExtras(o?.["paginas_extras"]));
   const [solicitarRecorte, setSolicitarRecorte] = useState(0);
   const [editandoImagem, setEditandoImagem] = useState(false);
   const [erros, setErros] = useState<Record<string, string>>({});
@@ -233,6 +236,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         mapa_imagem: mapaImagem,
         relatorio_texto: relatorioTexto.trim() || null,
         relatorio_imagens: relatorioImagens,
+        paginas_extras: paginasPreenchidas(paginasExtras),
         interdicoes,
         servicos: servicos.map((tipo_servico_id) => ({ tipo_servico_id, detalhe: detalhesServicos[tipo_servico_id]?.trim() || null })),
 
@@ -817,6 +821,25 @@ export function FormularioOS({ modo, inicial, id }: Props) {
             Preenchimento opcional. As fotos podem ser incluídas ou não; o relatório só aparece no
             documento final quando tiver texto ou fotos.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Páginas adicionais</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EditorPaginasExtras
+            paginas={paginasExtras}
+            onChange={setPaginasExtras}
+            obterMapa={async () => {
+              if (mapaImagem?.startsWith("data:image")) return mapaImagem;
+              try {
+                const { gerarImagemMapa } = await import("@/lib/mapa-imagem");
+                return await gerarImagemMapa(percurso, interdicoes);
+              } catch { return null; }
+            }}
+          />
         </CardContent>
       </Card>
 
