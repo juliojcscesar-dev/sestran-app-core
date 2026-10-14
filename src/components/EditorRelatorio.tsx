@@ -6,14 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { EditorTexto } from '@/components/EditorTexto';
-import { girarImagem, prepararImagem, larguraImagem, type ImagemRelatorio } from '@/lib/educacao-imagens';
+import { girarImagem, prepararImagem, larguraImagem, type ImagemRelatorio } from '@/lib/relatorio-imagens';
 
-export function EditorRelatorio({ texto, onTexto, imagens, onImagens }: { texto: string; onTexto: (v: string) => void; imagens: ImagemRelatorio[]; onImagens: (v: ImagemRelatorio[]) => void }) {
+export function EditorRelatorio({ texto, onTexto, imagens, onImagens, id = 'relatorio', rotulo = 'Relatório' }: { texto: string; onTexto: (v: string) => void; imagens: ImagemRelatorio[]; onImagens: (v: ImagemRelatorio[]) => void; id?: string; rotulo?: string }) {
   const input = useRef<HTMLInputElement>(null);
   const [ocupado, setOcupado] = useState(false);
-  const atualizar = (id: string, valor: Partial<ImagemRelatorio>) => onImagens(imagens.map(i => i.id === id ? { ...i, ...valor } : i));
+  const atualizar = (chave: string, valor: Partial<ImagemRelatorio>) => onImagens(imagens.map(i => i.id === chave ? { ...i, ...valor } : i));
   return <section className="space-y-3 md:col-span-2">
-    <Label htmlFor="acao-relatorio">Relatório</Label><EditorTexto id="acao-relatorio" rotulo="Relatório" value={texto} onChange={onTexto} />
+    <Label htmlFor={id}>{rotulo}</Label><EditorTexto id={id} rotulo={rotulo} value={texto} onChange={onTexto} />
     <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" aria-label="Imagens do relatório" onChange={async e => {
       const arquivos = Array.from(e.target.files ?? []);
       if (imagens.length + arquivos.length > 6) { toast.error('Adicione no máximo 6 imagens.'); return; }
