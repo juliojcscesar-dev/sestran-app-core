@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gerarRelatorioDocx, gerarRelatorioPdf, intervaloPeriodo, TIPO_PERIODO_LABEL, type TipoPeriodo } from "@/lib/relatorios";
 import { hojeIso } from "@/lib/veiculos";
+import { useSessao } from "@/hooks/useSessao";
+import { temAcesso, type ModuloAcesso } from "@/lib/permissoes";
 
 type Props = {
   /** Nome do módulo usado no título do documento, ex.: "Ordens de Serviço". */
@@ -20,7 +22,13 @@ type Props = {
 };
 
 /** Botão "Relatório" da página inicial do módulo: escolhe o período e gera PDF ou DOCX. */
-export function RelatorioModulo({ titulo, colunas, buscar, arquivo }: Props) {
+export function RelatorioModulo(props: Props & { modulo: ModuloAcesso }) {
+  const { data: sessao } = useSessao();
+  if (!temAcesso(sessao, props.modulo, "RELATORIO")) return null;
+  return <RelatorioModuloLiberado {...props} />;
+}
+
+function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo }: Props) {
   const [aberto, setAberto] = useState(false);
   const [tipo, setTipo] = useState<TipoPeriodo>("mes");
   const [dia, setDia] = useState(hojeIso());
