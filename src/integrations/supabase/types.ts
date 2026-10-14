@@ -982,6 +982,7 @@ export type Database = {
           modulo: string
           nivel: string
           pode_excluir: boolean
+          pode_relatorio: boolean
           updated_at: string
           user_id: string
         }
@@ -990,6 +991,7 @@ export type Database = {
           modulo: string
           nivel?: string
           pode_excluir?: boolean
+          pode_relatorio?: boolean
           updated_at?: string
           user_id: string
         }
@@ -998,6 +1000,7 @@ export type Database = {
           modulo?: string
           nivel?: string
           pode_excluir?: boolean
+          pode_relatorio?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -1215,15 +1218,26 @@ export type Database = {
         Returns: boolean
       }
       atualizar_situacoes_automaticas: { Args: never; Returns: undefined }
-      definir_acesso_modulo: {
-        Args: {
-          _modulo: string
-          _nivel: string
-          _pode_excluir: boolean
-          _user_id: string
-        }
-        Returns: undefined
-      }
+      definir_acesso_modulo:
+        | {
+            Args: {
+              _modulo: string
+              _nivel: string
+              _pode_excluir: boolean
+              _user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _modulo: string
+              _nivel: string
+              _pode_excluir: boolean
+              _pode_relatorio: boolean
+              _user_id: string
+            }
+            Returns: undefined
+          }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

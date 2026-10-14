@@ -113,6 +113,13 @@
       "when": 1791982692885,
       "tag": "0015_paginas_extras_ordem_servico",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791983621380,
+      "tag": "0016_permissao_relatorio",
+      "breakpoints": true
     }
   ]
 }
