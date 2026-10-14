@@ -28,7 +28,7 @@ export async function gerarRelatorioVeiculos(veiculos: VeiculoLista[], periodo: 
   for (const v of veiculos) {
     if (y > 275) { pdf.addPage(); desenharCabecalho(); y = 44; }
     pdf.setFont("helvetica", "bold"); pdf.text(`${v.placa || "SEM PLACA"} — ${descricaoVeiculo(v)}`, 15, y);
-    pdf.setFont("helvetica", "normal"); pdf.text(`${STATUS_VEICULO_LABEL[statusEfetivo(v)]} | ${v.endereco}${v.bairro ? ` — ${v.bairro}` : ""}`, 15, y + 5, { maxWidth: 180 });
+    pdf.setFont("helvetica", "normal"); pdf.text(`${(STATUS_VEICULO_LABEL[statusEfetivo(v)] ?? String(statusEfetivo(v)))} | ${v.endereco}${v.bairro ? ` — ${v.bairro}` : ""}`, 15, y + 5, { maxWidth: 180 });
     pdf.text(`Constatação: ${new Date(`${v.data_constatacao}T12:00:00`).toLocaleDateString("pt-BR")} | Prazo: ${v.prazo_recolhimento ? new Date(`${v.prazo_recolhimento}T12:00:00`).toLocaleDateString("pt-BR") : "—"}`, 15, y + 10);
     pdf.setDrawColor(210); pdf.line(15, y + 14, 195, y + 14); y += 19;
   }
