@@ -2,6 +2,7 @@ import { lerTextoFormatado, juntarTextosFormatados, salvarTextoFormatado, type T
 import { formatarDataBr, formatarDataBrComDia, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import type { OrdemCompleta } from "@/lib/os-api";
 import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
+import { lerPaginasExtras, paginasPreenchidas } from "@/lib/paginas-extras";
 import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
 
 
@@ -99,6 +100,7 @@ export function montarConteudo(dados: OrdemCompleta) {
       texto: typeof o["relatorio_texto"] === "string" ? o["relatorio_texto"] : "",
       imagens: Array.isArray(o["relatorio_imagens"]) ? (o["relatorio_imagens"] as ImagemRelatorio[]) : [],
     },
+    paginasExtras: paginasPreenchidas(lerPaginasExtras(o["paginas_extras"])),
   };
 }
 
@@ -290,6 +292,20 @@ export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) 
       y += 2;
     }
   }
+  for (const pagina of conteudo.paginasExtras) {
+    doc.addPage(); cabecalho();
+    if (pagina.observacao.trim()) caixa(pagina.observacao, "Observação");
+    const foto = pagina.imagem;
+    if (foto) {
+      const props = doc.getImageProperties(foto.src);
+      const disponivel = 266 - y;
+      let w = Math.max(20, (largura * (foto.largura || 100)) / 100);
+      let h = (w * props.height) / props.width;
+      if (h > disponivel) { h = disponivel; w = (h * props.width) / props.height; }
+      doc.setDrawColor(PALETA.borda); doc.rect(x + (largura - w) / 2, y, w, h);
+      doc.addImage(foto.src, foto.src.startsWith("data:image/png") ? "PNG" : "JPEG", x + (largura - w) / 2, y, w, h);
+    }
+  }
   baixar(doc.output("blob"), nomeArquivo(conteudo.numero, "pdf"));
 }
 
@@ -331,6 +347,23 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
     }
   }
   const assinatura = new Paragraph({ alignment: AlignmentType.CENTER, border: { top: { style: BorderStyle.SINGLE, size: 6, color: "0B5D8F" } }, indent: { left: 2948, right: 2948 }, children: [] });
-  const doc = new Document({ styles: { default: { document: { run: { font: "Arial", size: 19 } } } }, sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 3250, right: 680, bottom: 1500, left: 680, header: 1134, footer: 560 } } }, headers: { default: new Header({ children: [header, espaco(), titulo] }) }, footers: { default: new Footer({ children: [assinatura, p(ident.autoridade ?? "Carlos Hideki de Souza Fujimori", false, "083F69", true), p(ident.cargo_autoridade ?? "Diretor de Trânsito", true, "083F69", true)] }) }, children }] });
+  const secao = (filhos: typeof children) => ({ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 3250, right: 680, bottom: 1500, left: 680, header: 1134, footer: 560 } } }, headers: { default: new Header({ children: [header, espaco(), titulo] }) }, footers: { default: new Footer({ children: [assinatura, p(ident.autoridade ?? "Carlos Hideki de Souza Fujimori", false, "083F69", true), p(ident.cargo_autoridade ?? "Diretor de Trânsito", true, "083F69", true)] }) }, children: filhos });
+  const secoes = [secao(children)];
+  /* Páginas adicionais: nova seção repete cabeçalho e assinatura. */
+  for (const pagina of c.paginasExtras) {
+    const filhos: typeof children = [];
+    if (pagina.observacao.trim()) filhos.push(tabela([{ valores: ["Observação"], titulo: true }, { valores: [pagina.observacao] }]), espaco());
+    const foto = pagina.imagem;
+    if (foto) {
+      const el = await new Promise<HTMLImageElement>((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = reject; i.src = foto.src; });
+      let w = (690 * (foto.largura || 100)) / 100; let h = (w * el.height) / el.width;
+      const maxH = pagina.observacao.trim() ? 560 : 680;
+      if (h > maxH) { h = maxH; w = (h * el.width) / el.height; }
+      filhos.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: foto.src.startsWith("data:image/png") ? "png" : "jpg", data: dataUrlParaBytes(foto.src), transformation: { width: w, height: h } })] }));
+    }
+    if (!filhos.length) filhos.push(espaco());
+    secoes.push(secao(filhos));
+  }
+  const doc = new Document({ styles: { default: { document: { run: { font: "Arial", size: 19 } } } }, sections: secoes });
   baixar(await Packer.toBlob(doc), nomeArquivo(c.numero, "docx"));
 }

@@ -299,3 +299,7 @@
   .os-paper { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .os-doc-box, .os-agents-panel, .os-photo-box, .os-signature { break-inside: avoid; }
 }
+
+/* Páginas adicionais da O.S.: cada uma começa em nova folha na impressão. */
+.os-paper-extra { margin-top: 1.5rem; }
+@media print { .os-paper-extra { break-before: page; page-break-before: always; margin-top: 0; } }
