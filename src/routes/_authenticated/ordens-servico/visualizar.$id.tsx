@@ -30,6 +30,7 @@ import {
   type StatusOS,
 } from "@/lib/os";
 import { descreverPercurso, lerPercurso } from "@/lib/mapa";
+import { larguraImagem, type ImagemRelatorio } from "@/lib/relatorio-imagens";
 import { alterarStatusOrdem, historicoOrdem, obterOrdem, obterConfiguracoes } from "@/lib/os-api";
 import { baixarDocumentoOS } from "@/lib/os-docs";
 
@@ -136,6 +137,11 @@ function VisualizarOS() {
   const mapaImagem = typeof o["mapa_imagem"] === "string" && o["mapa_imagem"].startsWith("data:image")
     ? o["mapa_imagem"]
     : imagemAutomatica;
+  const relatorioTexto = String(o["relatorio_texto"] ?? "").trim();
+  const relatorioImagens = Array.isArray(o["relatorio_imagens"])
+    ? (o["relatorio_imagens"] as ImagemRelatorio[])
+    : [];
+  const temRelatorio = Boolean(relatorioTexto) || relatorioImagens.length > 0;
   const podeAlterar = podeOperar && (!o["arquivada"] || temAcesso(sessao, "OS", "EXCLUIR"));
 
   return (
@@ -258,6 +264,14 @@ function VisualizarOS() {
             </section>}
             {observacoes && <section className="os-doc-box"><span className="os-doc-label">Observações</span><div className="os-doc-line os-doc-pre"><TextoFormatado valor={observacoes} /></div></section>}
             {mapaImagem && <figure className="os-photo-box"><img src={mapaImagem} alt="Mapa e percurso da ordem de serviço" /></figure>}
+            {temRelatorio && <section className="os-doc-box">
+              <span className="os-doc-label">Relatório</span>
+              {relatorioTexto && <div className="os-doc-line os-doc-pre"><TextoFormatado valor={relatorioTexto} /></div>}
+              {relatorioImagens.map((imagem, indice) => <figure key={imagem.id ?? indice} className={`mx-auto my-2 ${larguraImagem[imagem.largura] ?? "w-full"}`}>
+                <img src={imagem.src} alt={imagem.legenda || `Imagem ${indice + 1} do relatório`} className="h-auto w-full object-contain" />
+                {imagem.legenda && <figcaption className="text-center text-[10px] text-muted-foreground">{imagem.legenda}</figcaption>}
+              </figure>)}
+            </section>}
           </td></tr></tbody>
           <tfoot><tr><td><div className="os-signature"><div className="os-signature-line" /><div>{configuracoesQ.data?.autoridade ?? "Carlos Hideki de Souza Fujimori"}</div><strong>{configuracoesQ.data?.cargo_autoridade ?? "Diretor de Trânsito"}</strong></div></td></tr></tfoot>
         </table>
