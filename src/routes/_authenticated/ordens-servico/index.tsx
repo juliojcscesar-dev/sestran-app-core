@@ -179,7 +179,7 @@ function ListaOS() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <RelatorioModulo
+          <RelatorioModulo modulo="OS"
             titulo="Ordens de Serviço"
             arquivo="relatorio-ordens-servico"
             colunas={["Número", "Data", "Evento", "Local", "Situação"]}

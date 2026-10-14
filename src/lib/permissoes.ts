@@ -5,16 +5,17 @@ export const MODULOS_ACESSO = [
 ] as const;
 export type ModuloAcesso = typeof MODULOS_ACESSO[number]["id"];
 export type NivelAcesso = "SEM_ACESSO" | "CONSULTA" | "OPERADOR";
-export type PermissaoModulo = { modulo: string; nivel: string; pode_excluir: boolean };
+export type PermissaoModulo = { modulo: string; nivel: string; pode_excluir: boolean; pode_relatorio?: boolean };
 type SessaoAcesso = { ativo: boolean; papeis: string[]; permissoes: PermissaoModulo[] } | null | undefined;
 export function administrador(sessao: SessaoAcesso) {
   return Boolean(sessao?.ativo && sessao.papeis.includes("ADMINISTRADOR"));
 }
-export function temAcesso(sessao: SessaoAcesso, modulo: ModuloAcesso, acao: "CONSULTA" | "OPERADOR" | "EXCLUIR" = "CONSULTA") {
+export function temAcesso(sessao: SessaoAcesso, modulo: ModuloAcesso, acao: "CONSULTA" | "OPERADOR" | "EXCLUIR" | "RELATORIO" = "CONSULTA") {
   if (!sessao?.ativo) return false;
   if (administrador(sessao)) return true;
   const p = sessao.permissoes.find(p => p.modulo === modulo);
   if (!p || p.nivel === "SEM_ACESSO") return false;
+  if (acao === "RELATORIO") return Boolean(p.pode_relatorio);
   if (acao === "CONSULTA") return p.nivel === "CONSULTA" || p.nivel === "OPERADOR";
   return p.nivel === "OPERADOR" && (acao !== "EXCLUIR" || p.pode_excluir);
 }
