@@ -471,7 +471,7 @@ export default function MapaPercurso({
         <Label htmlFor="espessura-linha">Espessura</Label><Input id="espessura-linha" type="range" className="w-32" min="1" max="14" value={percurso.estilo?.espessura ?? 5} onChange={(e) => mudarEstilo("espessura", Number(e.target.value))} /><span className="text-xs">{percurso.estilo?.espessura ?? 5} px</span>
       </div>}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
