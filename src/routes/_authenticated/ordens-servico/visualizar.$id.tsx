@@ -27,6 +27,7 @@ import {
   STATUS_OS_CLASSE,
   STATUS_OS_LABEL,
   formatarDataBr,
+  formatarDataBrComDia,
   formatarHora,
   type StatusOS,
 } from "@/lib/os";
