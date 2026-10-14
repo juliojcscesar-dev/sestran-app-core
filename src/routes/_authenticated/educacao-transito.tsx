@@ -1,4 +1,4 @@
-import { ListaTodasAtividades } from "@/components/educacao/ListaTodasAtividades";
+import { ListaTodasAtividades, type AcaoDaLista } from "@/components/educacao/ListaTodasAtividades";
 import { TextoFormatado } from "@/components/TextoFormatado";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -18,8 +18,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
-import { CATEGORIA_ACAO_LABEL, dataLocalIso, intervaloDaVisao, STATUS_ACAO, STATUS_ACAO_CLASSE, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao, type VisaoCalendario } from "@/lib/educacao";
-import { arquivarAcao, listarAcoes, listarReferenciasEducacao, type AcaoEducativa } from "@/lib/educacao-api";
+import { CATEGORIA_ACAO_LABEL, intervaloDaVisao, STATUS_ACAO, STATUS_ACAO_CLASSE, STATUS_ACAO_LABEL, type StatusAcao, type VisaoCalendario } from "@/lib/educacao";
+import { arquivarAcao, listarAcoes, listarReferenciasEducacao, listarTodasAtividades, obterAcao, type ResumoAcao, type AcaoEducativa } from "@/lib/educacao-api";
+import { gerarDocxAcao, gerarPdfAcao } from "@/lib/educacao-documento";
 import { formatarData } from "@/lib/sestran";
 import { RelatorioModulo } from "@/components/relatorio/RelatorioModulo";
 import { textoSimples } from "@/lib/texto-formatado";
@@ -48,33 +49,52 @@ function EducacaoTransito() {
   const [escolaId, setEscolaId] = useState(TODOS); const [orientadorId, setOrientadorId] = useState(TODOS);
   const [arquivadas, setArquivadas] = useState(false);
   const [formulario, setFormulario] = useState(false); const [editando, setEditando] = useState<AcaoEducativa | null>(null);
+  const [duplicando, setDuplicando] = useState(false);
+  const [carregandoId, setCarregandoId] = useState<string | null>(null);
   const [detalhe, setDetalhe] = useState<AcaoEducativa | null>(null); const [confirmar, setConfirmar] = useState<AcaoEducativa | null>(null);
   const periodo = useMemo(() => intervaloDaVisao(referencia, visao), [referencia, visao]);
   const filtros = useMemo(() => ({ inicio: periodo.inicio, fim: periodo.fim, arquivadas, ...(status !== TODOS ? { status } : {}), ...(categoria !== TODOS ? { categoria } : {}), ...(escolaId !== TODOS ? { escolaId } : {}), ...(orientadorId !== TODOS ? { orientadorId } : {}) }), [periodo, arquivadas, status, categoria, escolaId, orientadorId]);
   const acoes = useQuery({ queryKey: ["educacao", "acoes", filtros], queryFn: () => listarAcoes(filtros) });
   const referencias = useQuery({ queryKey: ["educacao", "referencias"], queryFn: listarReferenciasEducacao });
+  const todasAtividades = useQuery({ queryKey: ["educacao", "todas-atividades"], queryFn: listarTodasAtividades });
   const arquivar = useMutation({ mutationFn: (a: AcaoEducativa) => arquivarAcao(a.id, !a.arquivada), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["educacao"] }); queryClient.invalidateQueries({ queryKey: ["painel"] }); setConfirmar(null); toast.success(arquivadas ? "Ação restaurada." : "Ação arquivada."); }, onError: () => toast.error("O administrador precisa autorizar o arquivamento ou restauração.") });
-  const hoje = dataLocalIso(new Date()); const linhas = acoes.data ?? [];
+  const linhas = acoes.data ?? [];
   const resumos = [
-    { titulo: "Atividades de hoje", valor: linhas.filter((a) => a.data_acao === hoje && a.status !== "CANCELADA").length, filtro: "dia" as VisaoCalendario },
-    { titulo: "Futuras", valor: linhas.filter((a) => a.data_acao > hoje && a.status === "AGENDADA").length, filtro: "lista" as VisaoCalendario },
-    { titulo: "Realizadas", valor: linhas.filter((a) => a.status === "REALIZADA").length, filtro: "lista" as VisaoCalendario },
+    { titulo: "Em Andamento", status: "EM_ANDAMENTO" as StatusAcao },
+    { titulo: "Agendada", status: "AGENDADA" as StatusAcao },
+    { titulo: "Concluída", status: "REALIZADA" as StatusAcao },
   ];
 
-  function editar(a: AcaoEducativa) { setDetalhe(null); setEditando(a); setFormulario(true); }
+  function editar(a: AcaoEducativa) { setDuplicando(false); setDetalhe(null); setEditando(a); setFormulario(true); }
+  async function acaoDaLista(resumo: ResumoAcao, operacao: AcaoDaLista) {
+    if (carregandoId) return;
+    if ((operacao === "editar" || operacao === "duplicar") && !podeOperar) return;
+    if (operacao === "arquivar" && !podeArquivar) return;
+    if ((operacao === "pdf" || operacao === "docx") && !temAcesso(sessao, "EDUCACAO", "RELATORIO")) return;
+    setCarregandoId(resumo.id);
+    try {
+      const { acao } = await obterAcao(resumo.id);
+      if (operacao === "editar") editar(acao);
+      else if (operacao === "duplicar") { setEditando(acao); setDuplicando(true); setFormulario(true); }
+      else if (operacao === "arquivar") setConfirmar(acao);
+      else if (operacao === "pdf") await gerarPdfAcao(acao);
+      else await gerarDocxAcao(acao);
+    } catch { toast.error("Não foi possível abrir a atividade ou gerar o documento. Tente novamente."); }
+    finally { setCarregandoId(null); }
+  }
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="font-display text-2xl font-semibold">Educação no Trânsito</h1><p className="text-sm text-muted-foreground">Programação e acompanhamento das ações educativas.</p></div><div className="flex flex-wrap gap-2"><RelatorioModulo modulo="EDUCACAO" titulo="Educação no Trânsito" arquivo="relatorio-educacao-transito" colunas={["Data","Título da Ação","Local","Situação"]} buscar={async (inicio, fim) => (await listarAcoes({ ...(inicio ? { inicio } : {}), ...(fim ? { fim } : {}) })).map((a) => [formatarData(a.data_acao), textoSimples(a.titulo), a.local ?? a.escolas?.nome ?? "—", STATUS_ACAO_LABEL[a.status]])} /><Button type="button" variant="outline" onClick={() => setArquivadas((v) => !v)}><Archive className="mr-2 h-4 w-4" />{arquivadas ? "Ver ativas" : "Ver arquivadas"}</Button>{podeOperar && <Button type="button" onClick={() => { setEditando(null); setFormulario(true); }}><Plus className="mr-2 h-4 w-4" />Nova ação</Button>}</div></div>
-    <section className="grid gap-3 sm:grid-cols-3">{resumos.map((r) => <Button key={r.titulo} variant="outline" className="h-auto justify-between px-4 py-3 text-left" onClick={() => { setVisao(r.filtro); if (r.filtro === "dia") setReferencia(new Date()); if (r.titulo === "Realizadas") setStatus("REALIZADA"); }}><span><span className="block text-xs text-muted-foreground">{r.titulo}</span><span className="font-display text-2xl font-semibold">{r.valor}</span></span><CalendarDays className="h-5 w-5 text-primary" /></Button>)}</section>
+    <section aria-label="Totais por situação" className="grid gap-3 sm:grid-cols-3">{resumos.map((r) => <Button key={r.status} variant="outline" aria-pressed={status === r.status} className="h-auto justify-between px-4 py-3 text-left" onClick={() => { setStatus(r.status); setVisao("lista"); }}><span><span className="block text-xs text-muted-foreground">{r.titulo}</span><span className="font-display text-2xl font-semibold">{todasAtividades.isError ? "—" : todasAtividades.isPending ? "…" : todasAtividades.data.filter(a => !a.arquivada && a.status === r.status).length}</span></span><CalendarDays className="h-5 w-5 text-primary" /></Button>)}</section>
     <Card><CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Filter className="h-4 w-4" />Filtros</CardTitle></CardHeader><CardContent className="grid gap-3 md:grid-cols-4">
       <div><Label htmlFor="f-status-acao">Situação</Label><Select value={status} onValueChange={setStatus}><SelectTrigger id="f-status-acao"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={TODOS}>Todas</SelectItem>{STATUS_ACAO.map((s) => <SelectItem key={s} value={s}>{STATUS_ACAO_LABEL[s]}</SelectItem>)}</SelectContent></Select></div>
       <div><Label htmlFor="f-categoria-acao">Categoria</Label><Select value={categoria} onValueChange={setCategoria}><SelectTrigger id="f-categoria-acao"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={TODOS}>Todas</SelectItem>{(referencias.data?.categorias ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}{!c.ativo ? " (excluída)" : ""}</SelectItem>)}</SelectContent></Select></div>
       <div><Label htmlFor="f-escola-acao">Escola</Label><Select value={escolaId} onValueChange={setEscolaId}><SelectTrigger id="f-escola-acao"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={TODOS}>Todas</SelectItem>{(referencias.data?.escolas ?? []).map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}</SelectContent></Select></div>
       <div><Label htmlFor="f-orientador-acao">Orientador</Label><Select value={orientadorId} onValueChange={setOrientadorId}><SelectTrigger id="f-orientador-acao"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={TODOS}>Todos</SelectItem>{(referencias.data?.orientadores ?? []).map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}</SelectContent></Select></div>
     </CardContent></Card>
-    <ListaTodasAtividades />
+    <ListaTodasAtividades onAcao={acaoDaLista} carregandoId={carregandoId} />
     <Card><CardHeader className="flex flex-row items-center justify-between gap-3"><CardTitle className="text-base">Calendário</CardTitle><Tabs value={visao} onValueChange={(v) => setVisao(v as VisaoCalendario)}><TabsList>{([{ valor: "mes", rotulo: "Mês" }, { valor: "semana", rotulo: "Semana" }, { valor: "dia", rotulo: "Dia" }, { valor: "lista", rotulo: "Lista" }] as const).map((item) => <TabsTrigger key={item.valor} value={item.valor}>{item.rotulo}</TabsTrigger>)}</TabsList></Tabs></CardHeader><CardContent>{acoes.isLoading ? <div className="py-20 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /></div> : acoes.isError ? <p className="py-12 text-center text-sm text-destructive">Não foi possível carregar as ações.</p> : <CalendarioAcoes acoes={linhas} referencia={referencia} visao={visao} onReferenciaChange={setReferencia} onAbrir={setDetalhe} />}</CardContent></Card>
 
-    <FormularioAcao aberto={formulario && podeOperar} onAbertoChange={setFormulario} acao={editando} />
+    <FormularioAcao aberto={formulario && podeOperar} onAbertoChange={v => { setFormulario(v); if (!v) setDuplicando(false); }} acao={editando} duplicando={duplicando} />
     <Dialog open={Boolean(detalhe)} onOpenChange={(v) => !v && setDetalhe(null)}><DialogContent><DialogHeader><DialogTitle>{detalhe && <TextoFormatado valor={detalhe.titulo} />}</DialogTitle><DialogDescription>{detalhe && (detalhe.categorias_educativas?.nome ?? CATEGORIA_ACAO_LABEL[detalhe.categoria] ?? detalhe.categoria)}</DialogDescription></DialogHeader>{detalhe && <div className="grid gap-3 text-sm sm:grid-cols-2"><p><span className="text-muted-foreground">Data</span><br />{formatarData(detalhe.data_acao)} · {detalhe.horario_inicio?.slice(0,5) ?? "Horário livre"}</p><p><span className="text-muted-foreground">Situação</span><br /><Badge variant="outline" className={STATUS_ACAO_CLASSE[detalhe.status]}>{STATUS_ACAO_LABEL[detalhe.status]}</Badge></p><p><span className="text-muted-foreground">Escola / local</span><br />{detalhe.escolas?.nome ?? detalhe.local ?? "—"}</p><p><span className="text-muted-foreground">Orientador</span><br />{detalhe.orientadores?.nome ?? "—"}</p><p><span className="text-muted-foreground">Tema</span><br />{detalhe.temas_educativos?.nome ?? "—"}</p><p><span className="text-muted-foreground">Público / participantes</span><br />{detalhe.publico_alvo ?? "—"} · {detalhe.participantes ?? "—"}</p>{detalhe.descricao && <p className="sm:col-span-2"><span className="text-muted-foreground">Descrição</span><br /><TextoFormatado valor={detalhe.descricao} /></p>}</div>}<DialogFooter>{detalhe && <Button type="button" variant="outline" asChild><Link to="/agenda-educativa/$id" params={{ id: detalhe.id }}><Eye className="mr-2 h-4 w-4" />Visualizar</Link></Button>}{detalhe && <ExcluirAcaoButton id={detalhe.id} titulo={detalhe.titulo} onExcluida={() => setDetalhe(null)} />}{detalhe && podeArquivar && <Button type="button" variant="outline" onClick={() => { setConfirmar(detalhe); setDetalhe(null); }}><Archive className="mr-2 h-4 w-4" />{detalhe.arquivada ? "Restaurar" : "Arquivar"}</Button>}{detalhe && podeOperar && !detalhe.arquivada && <Button type="button" onClick={() => editar(detalhe)}><Pencil className="mr-2 h-4 w-4" />Editar</Button>}<Button type="button" variant="outline" onClick={() => setDetalhe(null)}><Eye className="mr-2 h-4 w-4" />Fechar</Button></DialogFooter></DialogContent></Dialog>
     <AlertDialog open={Boolean(confirmar)} onOpenChange={(v) => !v && setConfirmar(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{confirmar?.arquivada ? "Restaurar ação?" : "Arquivar ação?"}</AlertDialogTitle><AlertDialogDescription>O registro e seu histórico serão preservados.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => confirmar && arquivar.mutate(confirmar)}>Confirmar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </div>;

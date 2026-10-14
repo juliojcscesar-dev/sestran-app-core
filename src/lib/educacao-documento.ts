@@ -145,3 +145,45 @@ export async function gerarPdfAcao(acao: AcaoEducativa) {
   const nome = `acao-educativa-${criarDataLocal(acao.data_acao).toISOString().slice(0, 10)}.pdf`;
   baixar(doc.output("blob"), nome);
 }
+
+/** Documento editável da mesma ação, incluindo textos formatados e fotos. */
+export async function gerarDocxAcao(acao: AcaoEducativa) {
+  const { Document, Packer, Paragraph, TextRun, ImageRun, Header, AlignmentType } = await import("docx");
+  const paragrafo = (texto: string) => new Paragraph({ spacing: { after: 140 }, children: lerTextoFormatado(texto).flatMap(t => t.texto.split("\n").map((linha, i) => new TextRun({ text: linha, bold: Boolean(t.negrito), italics: Boolean(t.italico), ...(t.sublinhado ? { underline: {} } : {}), ...(i ? { break: 1 } : {}) }))) });
+  const children = [new Paragraph({ heading: "Heading1", alignment: AlignmentType.CENTER, children: [new TextRun("AGENDA ELETRÔNICA — EDUCAÇÃO NO TRÂNSITO")] })];
+  const campos = [
+    ["Data", criarDataLocal(acao.data_acao).toLocaleDateString("pt-BR")], ["Situação", STATUS_ACAO_LABEL[acao.status]],
+    ["Título da Ação", acao.titulo], ["Categoria", acao.categorias_educativas?.nome ?? CATEGORIA_ACAO_LABEL[acao.categoria] ?? acao.categoria],
+    ["Tipo", acao.tipo_atividade], ["Escola", acao.escolas?.nome], ["Tema", acao.temas_educativos?.nome], ["Local", acao.local],
+    ["Endereço", [acao.endereco, acao.numero_endereco].filter(Boolean).join(", ")], ["Bairro", acao.bairro],
+    ["Início", acao.horario_inicio?.slice(0, 5)], ["Término", acao.horario_fim?.slice(0, 5)],
+    ["Equipe", [acao.equipe, acao.orientadores?.nome].filter(Boolean).join(" · ")], ["Público-alvo", acao.publico_alvo],
+    ["Participantes", acao.participantes == null ? null : String(acao.participantes)],
+    ["Atividade", acao.descricao], ["Observações", acao.observacoes], ["Relatório", acao.relatorio_texto],
+  ];
+  for (const [rotulo, valor] of campos) {
+    if (!valor) continue;
+    children.push(new Paragraph({ children: [new TextRun({ text: rotulo ?? "", bold: true })] }), paragrafo(valor));
+  }
+  for (const foto of acao.relatorio_imagens) {
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(foto.src)) continue;
+    const blob = await (await fetch(foto.src)).blob();
+    const bitmap = await createImageBitmap(blob);
+    const escala = Math.min(680 * Math.min(100, Math.max(20, foto.largura || 100)) / 100 / bitmap.width, 850 / bitmap.height);
+    const width = Math.round(bitmap.width * escala), height = Math.round(bitmap.height * escala);
+    const canvas = document.createElement("canvas"); canvas.width = bitmap.width; canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) { bitmap.close(); throw new Error("Não foi possível exportar a foto."); }
+    ctx.drawImage(bitmap, 0, 0); bitmap.close();
+    const imagem = await (await fetch(canvas.toDataURL("image/png"))).arrayBuffer();
+    children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: "png", data: imagem, transformation: { width, height }, altText: { title: "Foto da atividade", description: foto.legenda || "Registro da ação educativa", name: foto.id } })] }));
+    if (foto.legenda) children.push(paragrafo(foto.legenda));
+  }
+  const logo = await carregarLogo();
+  const doc = new Document({ styles: { default: { document: { run: { font: "Arial", size: 20 } } } }, sections: [{
+    properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1800, right: 680, bottom: 850, left: 680, header: 500 } } },
+    ...(logo ? { headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: "png", data: await (await fetch(logo)).arrayBuffer(), transformation: { width: 460, height: 70 } })] })] }) } } : {}),
+    children,
+  }] });
+  baixar(await Packer.toBlob(doc), `acao-educativa-${acao.data_acao}.docx`);
+}
