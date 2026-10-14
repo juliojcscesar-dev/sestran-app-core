@@ -105,7 +105,7 @@ export async function gerarRelatorioPdf({ titulo, periodo, colunas, linhas, arqu
     doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(PALETA.tinta);
     colunas.forEach((coluna, i) => {
       const xx = x + larguras.slice(0, i).reduce((a, b) => a + b, 0);
-      doc.text(coluna, xx + 2, y + 5, { maxWidth: larguras[i] - 4 });
+      doc.text(coluna, xx + 2, y + 5, { maxWidth: (larguras[i] ?? 0) - 4 });
     });
     y += 7;
   }
@@ -118,7 +118,7 @@ export async function gerarRelatorioPdf({ titulo, periodo, colunas, linhas, arqu
   }
   linhas.forEach((linha, indice) => {
     doc.setFontSize(8);
-    const quebradas = linha.map((celula, i) => doc.splitTextToSize(celula || "—", larguras[i] - 4) as string[]);
+    const quebradas = linha.map((celula, i) => doc.splitTextToSize(celula || "—", (larguras[i] ?? 0) - 4) as string[]);
     const h = Math.max(...quebradas.map((q) => q.length)) * 3.6 + 4;
     if (y + h > 282) { doc.addPage(); cabecalho(); }
     if (indice % 2 === 0) { doc.setFillColor(245, 251, 255); doc.rect(x, y, largura, h, "F"); }
