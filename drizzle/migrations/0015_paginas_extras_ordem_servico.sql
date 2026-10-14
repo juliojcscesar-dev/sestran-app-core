@@ -1,0 +1,2 @@
+ALTER TABLE public.ordens_servico ADD COLUMN IF NOT EXISTS paginas_extras jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.ordens_servico ADD CONSTRAINT ordens_servico_paginas_extras_array CHECK (jsonb_typeof(paginas_extras) = 'array' AND jsonb_array_length(paginas_extras) <= 5);

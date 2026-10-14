@@ -639,6 +639,7 @@ export type Database = {
           natureza: string | null
           numero: string
           observacoes: string | null
+          paginas_extras: Json
           percurso: Json | null
           prioridade: string
           relatorio_imagens: Json
@@ -674,6 +675,7 @@ export type Database = {
           natureza?: string | null
           numero: string
           observacoes?: string | null
+          paginas_extras?: Json
           percurso?: Json | null
           prioridade?: string
           relatorio_imagens?: Json
@@ -709,6 +711,7 @@ export type Database = {
           natureza?: string | null
           numero?: string
           observacoes?: string | null
+          paginas_extras?: Json
           percurso?: Json | null
           prioridade?: string
           relatorio_imagens?: Json
