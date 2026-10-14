@@ -21,6 +21,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { SeletorRegistro } from "@/components/os/SeletorRegistro";
 import { MapaOS } from "@/components/os/MapaOS";
 import { EditorMapaImagem } from "@/components/os/EditorMapaImagem";
+import { EditorRelatorio } from "@/components/EditorRelatorio";
+import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -147,6 +149,10 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const [mapaImagem, setMapaImagem] = useState<string | null>(
     typeof o?.["mapa_imagem"] === "string" ? (o["mapa_imagem"] as string) : null,
   );
+  const [relatorioTexto, setRelatorioTexto] = useState((o?.["relatorio_texto"] as string) ?? "");
+  const [relatorioImagens, setRelatorioImagens] = useState<ImagemRelatorio[]>(
+    Array.isArray(o?.["relatorio_imagens"]) ? (o["relatorio_imagens"] as ImagemRelatorio[]) : [],
+  );
   const [solicitarRecorte, setSolicitarRecorte] = useState(0);
   const [editandoImagem, setEditandoImagem] = useState(false);
   const [erros, setErros] = useState<Record<string, string>>({});
@@ -225,6 +231,8 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         status_manual: statusManual,
         percurso,
         mapa_imagem: mapaImagem,
+        relatorio_texto: relatorioTexto.trim() || null,
+        relatorio_imagens: relatorioImagens,
         interdicoes,
         servicos: servicos.map((tipo_servico_id) => ({ tipo_servico_id, detalhe: detalhesServicos[tipo_servico_id]?.trim() || null })),
 
@@ -786,6 +794,26 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         </CardHeader>
         <CardContent>
           <EditorTexto rotulo="Observações da O.S." value={observacoes} onChange={setObservacoes} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Relatório</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <EditorRelatorio
+            id="os-relatorio"
+            rotulo="Texto do relatório"
+            texto={relatorioTexto}
+            onTexto={setRelatorioTexto}
+            imagens={relatorioImagens}
+            onImagens={setRelatorioImagens}
+          />
+          <p className="text-xs text-muted-foreground">
+            Preenchimento opcional. As fotos podem ser incluídas ou não; o relatório só aparece no
+            documento final quando tiver texto ou fotos.
+          </p>
         </CardContent>
       </Card>
 
