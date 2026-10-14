@@ -20,6 +20,8 @@ import { temAcesso } from "@/lib/permissoes";
 import { CATEGORIAS_ACAO, CATEGORIA_ACAO_LABEL, dataLocalIso, intervaloDaVisao, STATUS_ACAO, STATUS_ACAO_CLASSE, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao, type VisaoCalendario } from "@/lib/educacao";
 import { arquivarAcao, listarAcoes, listarReferenciasEducacao, type AcaoEducativa } from "@/lib/educacao-api";
 import { formatarData } from "@/lib/sestran";
+import { RelatorioModulo } from "@/components/relatorio/RelatorioModulo";
+import { textoSimples } from "@/lib/texto-formatado";
 
 export const Route = createFileRoute("/_authenticated/educacao-transito")({
   head: () => ({ meta: [
@@ -60,7 +62,7 @@ function EducacaoTransito() {
 
   function editar(a: AcaoEducativa) { setDetalhe(null); setEditando(a); setFormulario(true); }
   return <div className="space-y-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="font-display text-2xl font-semibold">Educação no Trânsito</h1><p className="text-sm text-muted-foreground">Programação e acompanhamento das ações educativas.</p></div><div className="flex gap-2"><Button type="button" variant="outline" onClick={() => setArquivadas((v) => !v)}><Archive className="mr-2 h-4 w-4" />{arquivadas ? "Ver ativas" : "Ver arquivadas"}</Button>{podeOperar && <Button type="button" onClick={() => { setEditando(null); setFormulario(true); }}><Plus className="mr-2 h-4 w-4" />Nova ação</Button>}</div></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="font-display text-2xl font-semibold">Educação no Trânsito</h1><p className="text-sm text-muted-foreground">Programação e acompanhamento das ações educativas.</p></div><div className="flex gap-2"><RelatorioModulo titulo="Educação no Trânsito" arquivo="relatorio-educacao-transito" colunas={["Data","Título da Ação","Local","Situação"]} buscar={async (inicio, fim) => (await listarAcoes({ ...(inicio ? { inicio } : {}), ...(fim ? { fim } : {}) })).map((a) => [formatarData(a.data_acao), textoSimples(a.titulo), a.local ?? a.escolas?.nome ?? "—", STATUS_ACAO_LABEL[a.status]])} /><Button type="button" variant="outline" onClick={() => setArquivadas((v) => !v)}><Archive className="mr-2 h-4 w-4" />{arquivadas ? "Ver ativas" : "Ver arquivadas"}</Button>{podeOperar && <Button type="button" onClick={() => { setEditando(null); setFormulario(true); }}><Plus className="mr-2 h-4 w-4" />Nova ação</Button>}</div></div>
     <section className="grid gap-3 sm:grid-cols-3">{resumos.map((r) => <Button key={r.titulo} variant="outline" className="h-auto justify-between px-4 py-3 text-left" onClick={() => { setVisao(r.filtro); if (r.filtro === "dia") setReferencia(new Date()); if (r.titulo === "Realizadas") setStatus("REALIZADA"); }}><span><span className="block text-xs text-muted-foreground">{r.titulo}</span><span className="font-display text-2xl font-semibold">{r.valor}</span></span><CalendarDays className="h-5 w-5 text-primary" /></Button>)}</section>
     <Card><CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Filter className="h-4 w-4" />Filtros</CardTitle></CardHeader><CardContent className="grid gap-3 md:grid-cols-4">
       <div><Label htmlFor="f-status-acao">Situação</Label><Select value={status} onValueChange={setStatus}><SelectTrigger id="f-status-acao"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={TODOS}>Todas</SelectItem>{STATUS_ACAO.map((s) => <SelectItem key={s} value={s}>{STATUS_ACAO_LABEL[s]}</SelectItem>)}</SelectContent></Select></div>
