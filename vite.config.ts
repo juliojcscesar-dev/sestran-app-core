@@ -8,9 +8,9 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   vite: {
-    // Prebundle the calendar alongside React before any route is opened.
-    // Discovering it lazily can leave an open preview using two optimizer generations.
-    optimizeDeps: { include: ["react-day-picker", "date-fns/locale"] },
+    // Prebundle lazy calendar/list dependencies with React so opening the
+    // educational list cannot replace the optimizer generation mid-session.
+    optimizeDeps: { include: ["react", "react-dom/client", "@tanstack/react-query", "@radix-ui/react-scroll-area", "react-day-picker", "date-fns/locale"] },
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
