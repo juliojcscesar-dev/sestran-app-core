@@ -1,5 +1,6 @@
 import { TextoFormatado } from "@/components/TextoFormatado";
 import { juntarTextosFormatados } from "@/lib/texto-formatado";
+import { resumoHistorico } from "@/lib/historico";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -298,13 +299,13 @@ function VisualizarOS() {
                 {new Date(h.created_at).toLocaleString("pt-BR")}
               </p>
               {h.alteracoes && typeof h.alteracoes === "object" && (
-                <ul className="mt-1 list-disc pl-5 text-muted-foreground">
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">
                   {Object.entries(h.alteracoes as Record<string, unknown>).map(([campo, val]) => (
-                    <li key={campo}>
+                    <li key={campo} className="min-w-0 break-words">
                       {CAMPO_LABEL[campo] ?? campo}
                       {val && typeof val === "object" && "de" in (val as object)
-                        ? `: ${String((val as Record<string, unknown>)["de"] ?? "—")} → ${String(
-                            (val as Record<string, unknown>)["para"] ?? "—",
+                        ? `: ${resumoHistorico((val as Record<string, unknown>)["de"])} → ${resumoHistorico(
+                            (val as Record<string, unknown>)["para"],
                           )}`
                         : ""}
                     </li>
