@@ -25,7 +25,7 @@ export function intervaloPeriodo(
     return { de: referencia, ate: referencia, rotulo: formatarDataBr(referencia) };
   }
   if (tipo === "mes") {
-    const [ano, mes] = referencia.split("-").map(Number);
+    const [ano = 2000, mes = 1] = referencia.split("-").map(Number);
     const ultimo = new Date(ano, mes, 0).getDate();
     return {
       de: `${referencia}-01`,
