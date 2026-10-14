@@ -2,6 +2,7 @@ import { lerTextoFormatado, juntarTextosFormatados, salvarTextoFormatado, type T
 import { formatarDataBr, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import type { OrdemCompleta } from "@/lib/os-api";
 import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
+import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
 
 
 export type IdentificacaoOrgao = { orgao: string; secretaria: string; logo_url: string; autoridade?: string; cargo_autoridade?: string };
@@ -93,6 +94,11 @@ export function montarConteudo(dados: OrdemCompleta) {
     interdicoes: dados.interdicoes ?? [],
     /* Captura já salva do mapa; quando ausente, é gerada automaticamente. */
     mapaImagem: typeof o["mapa_imagem"] === "string" ? (o["mapa_imagem"] as string) : null,
+    /* Relatório preenchido pelo operador; texto e fotos são opcionais. */
+    relatorio: {
+      texto: typeof o["relatorio_texto"] === "string" ? o["relatorio_texto"] : "",
+      imagens: Array.isArray(o["relatorio_imagens"]) ? (o["relatorio_imagens"] as ImagemRelatorio[]) : [],
+    },
   };
 }
 
@@ -268,6 +274,22 @@ export async function gerarPdf(dados: OrdemCompleta, ident: IdentificacaoOrgao) 
     const w = h * props.width / props.height;
     doc.addImage(mapa, "PNG", x + (largura - w) / 2, y, w, h);
   }
+  if (conteudo.relatorio.texto || conteudo.relatorio.imagens.length) {
+    if (conteudo.relatorio.texto) caixa(conteudo.relatorio.texto, "Relatório");
+    for (const foto of conteudo.relatorio.imagens) {
+      if (!foto.src.startsWith("data:image")) continue;
+      const props = doc.getImageProperties(foto.src);
+      let w = Math.max(20, (largura * (foto.largura || 100)) / 100);
+      let h = (w * props.height) / props.width;
+      if (h > 230) { h = 230; w = (h * props.width) / props.height; }
+      garantir(h + 4);
+      doc.setDrawColor(PALETA.borda); doc.rect(x + (largura - w) / 2, y, w, h);
+      doc.addImage(foto.src, foto.src.startsWith("data:image/png") ? "PNG" : "JPEG", x + (largura - w) / 2, y, w, h);
+      y += h;
+      if (foto.legenda?.trim()) { garantir(7); doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(PALETA.tinta); doc.text(foto.legenda.trim(), 105, y + 3.5, { align: "center" }); y += 5; }
+      y += 2;
+    }
+  }
   baixar(doc.output("blob"), nomeArquivo(conteudo.numero, "pdf"));
 }
 
@@ -297,6 +319,16 @@ export async function gerarDocx(dados: OrdemCompleta, ident: IdentificacaoOrgao)
     const img = await new Promise<HTMLImageElement>((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = reject; i.src = mapa; });
     const w = Math.min(690, 397 * img.width / img.height); const h = w * img.height / img.width;
     children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: "png", data: dataUrlParaBytes(mapa), transformation: { width: w, height: h } })] }));
+  }
+  if (c.relatorio.texto || c.relatorio.imagens.length) {
+    children.push(tabela([{ valores: ["Relatório"], titulo: true }, ...(c.relatorio.texto ? [{ valores: [c.relatorio.texto] }] : [])]), espaco());
+    for (const foto of c.relatorio.imagens) {
+      if (!foto.src.startsWith("data:image")) continue;
+      const el = await new Promise<HTMLImageElement>((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = reject; i.src = foto.src; });
+      const w = Math.min(690, (690 * (foto.largura || 100)) / 100); const h = (w * el.height) / el.width;
+      children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: foto.src.startsWith("data:image/png") ? "png" : "jpg", data: dataUrlParaBytes(foto.src), transformation: { width: w, height: h } })] }));
+      if (foto.legenda?.trim()) children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: foto.legenda.trim(), italics: true, size: 17, color: "083F69" })] }));
+    }
   }
   const assinatura = new Paragraph({ alignment: AlignmentType.CENTER, border: { top: { style: BorderStyle.SINGLE, size: 6, color: "0B5D8F" } }, indent: { left: 2948, right: 2948 }, children: [] });
   const doc = new Document({ styles: { default: { document: { run: { font: "Arial", size: 19 } } } }, sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 3250, right: 680, bottom: 1500, left: 680, header: 1134, footer: 560 } } }, headers: { default: new Header({ children: [header, espaco(), titulo] }) }, footers: { default: new Footer({ children: [assinatura, p(ident.autoridade ?? "Carlos Hideki de Souza Fujimori", false, "083F69", true), p(ident.cargo_autoridade ?? "Diretor de Trânsito", true, "083F69", true)] }) }, children }] });

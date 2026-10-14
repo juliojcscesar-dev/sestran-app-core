@@ -1,5 +1,13 @@
 # Roadmap — SESTRAN
 
+## Relatório na Ordem de Serviço (solicitado 13/10)
+- [x] Guardar texto e até 6 fotos do relatório junto à O.S.
+- [x] Preencher no formulário com negrito, itálico e sublinhado; fotos opcionais (salvar só com texto, só com fotos ou vazio)
+- [x] Mostrar na visualização e nos documentos PDF e DOCX, escondendo quando vazio
+- [x] Conferir cadastro, edição, recarregamento e exportações sem perder as demais funções
+
+## Atualização de dados ao abrir a página (solicitado 13/10)
+
 ## Atualização de dados ao abrir a página (solicitado 13/10)
 - [x] Retirar a verificação automática de 30 segundos e a nova busca ao voltar para a aba
 - [x] Conferir o painel carregando os dados e nenhuma busca nos 45 segundos seguintes

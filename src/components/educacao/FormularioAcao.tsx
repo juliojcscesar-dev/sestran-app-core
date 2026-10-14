@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { EditorTexto } from "@/components/EditorTexto";
 import { textoSimples } from "@/lib/texto-formatado";
-import { EditorRelatorio } from "@/components/educacao/EditorRelatorio";
-import type { ImagemRelatorio } from "@/lib/educacao-imagens";
+import { EditorRelatorio } from "@/components/EditorRelatorio";
+import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
 import { CATEGORIAS_ACAO, CATEGORIA_ACAO_LABEL, STATUS_ACAO, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao } from "@/lib/educacao";
 import { atualizarAcao, criarAcao, criarTema, listarReferenciasEducacao, type AcaoEducativa, type DadosAcao } from "@/lib/educacao-api";
 import { useSessao } from "@/hooks/useSessao";

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { StatusOS } from "@/lib/os";
 import type { InterdicaoMapa, PercursoMapa } from "@/lib/mapa";
+import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
 
 export type AgenteOS = {
   agente_id: string;
@@ -33,6 +34,8 @@ export type DadosOS = {
   status_manual?: boolean;
   percurso: PercursoMapa | null;
   mapa_imagem?: string | null;
+  relatorio_texto: string | null;
+  relatorio_imagens: ImagemRelatorio[];
   servicos: { tipo_servico_id: string; detalhe: string | null }[];
   agentes: AgenteOS[];
   orientadores: OrientadorOS[];
@@ -222,6 +225,8 @@ function camposOrdem(dados: DadosOS) {
     status_manual: dados.status_manual ?? false,
     percurso: dados.percurso ? (dados.percurso as unknown as never) : null,
     mapa_imagem: dados.mapa_imagem !== undefined ? dados.mapa_imagem : null,
+    relatorio_texto: dados.relatorio_texto,
+    relatorio_imagens: (dados.relatorio_imagens ?? []) as unknown as never,
   };
 }
 

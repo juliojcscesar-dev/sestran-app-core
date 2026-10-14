@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CategoriaAcao, StatusAcao } from "@/lib/educacao";
-import type { ImagemRelatorio } from "@/lib/educacao-imagens";
+import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
 import type { Json } from "@/integrations/supabase/types";
 
 export type AcaoEducativa = {

@@ -641,6 +641,8 @@ export type Database = {
           observacoes: string | null
           percurso: Json | null
           prioridade: string
+          relatorio_imagens: Json
+          relatorio_texto: string | null
           remetente: string | null
           sequencial: number | null
           solicitante_id: string | null
@@ -674,6 +676,8 @@ export type Database = {
           observacoes?: string | null
           percurso?: Json | null
           prioridade?: string
+          relatorio_imagens?: Json
+          relatorio_texto?: string | null
           remetente?: string | null
           sequencial?: number | null
           solicitante_id?: string | null
@@ -707,6 +711,8 @@ export type Database = {
           observacoes?: string | null
           percurso?: Json | null
           prioridade?: string
+          relatorio_imagens?: Json
+          relatorio_texto?: string | null
           remetente?: string | null
           sequencial?: number | null
           solicitante_id?: string | null
