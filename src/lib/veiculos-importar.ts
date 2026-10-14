@@ -95,7 +95,7 @@ export async function lerPlanilhaVeiculos(arquivo: File): Promise<LinhaImportaca
       break;
     }
   }
-  if (cabecalho < 0 || col.veiculo == null || col.veiculo < 0) {
+  if (cabecalho < 0 || col["veiculo"] == null || col["veiculo"] < 0) {
     throw new Error("Não encontrei o cabeçalho da planilha. Use o modelo com as colunas Nº, Data de verificação, Bairro, Endereço e Marca/Modelo/Placa/Chassi.");
   }
 
@@ -103,20 +103,20 @@ export async function lerPlanilhaVeiculos(arquivo: File): Promise<LinhaImportaca
   for (let i = cabecalho + 1; i < grade.length; i++) {
     const r = grade[i] ?? [];
     const pegar = (c: number | undefined) => (c != null && c >= 0 ? r[c] : null);
-    const endereco = textoCelula(pegar(col.endereco));
-    const veiculoTxt = textoCelula(pegar(col.veiculo));
-    const bairro = textoCelula(pegar(col.bairro));
+    const endereco = textoCelula(pegar(col["endereco"]));
+    const veiculoTxt = textoCelula(pegar(col["veiculo"]));
+    const bairro = textoCelula(pegar(col["bairro"]));
     if (!endereco && !veiculoTxt && !bairro) continue; // linha em branco
 
     const { marca, modelo, placa } = separarVeiculo(veiculoTxt);
-    const verificacao = dataIso(pegar(col.verificacao));
-    const notificacao = dataIso(pegar(col.notificacao));
-    const recolhimento = dataIso(pegar(col.recolhimento));
-    const { situacao, observacao } = situacaoDe(textoCelula(pegar(col.situacao)));
+    const verificacao = dataIso(pegar(col["verificacao"]));
+    const notificacao = dataIso(pegar(col["notificacao"]));
+    const recolhimento = dataIso(pegar(col["recolhimento"]));
+    const { situacao, observacao } = situacaoDe(textoCelula(pegar(col["situacao"])));
 
-    const aviso = !endereco ? "Sem endereço" : !verificacao ? "Sem data de verificação" : undefined;
+    const aviso = (!endereco ? "Sem endereço" : !verificacao ? "Sem data de verificação" : null) ?? undefined;
     linhas.push({
-      numero: textoCelula(pegar(col.numero)) || String(linhas.length + 1),
+      numero: textoCelula(pegar(col["numero"])) || String(linhas.length + 1),
       dados: {
         situacao,
         placa,
