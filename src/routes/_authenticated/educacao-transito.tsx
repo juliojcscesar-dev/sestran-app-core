@@ -53,7 +53,7 @@ function EducacaoTransito() {
   const [carregandoId, setCarregandoId] = useState<string | null>(null);
   const [detalhe, setDetalhe] = useState<AcaoEducativa | null>(null); const [confirmar, setConfirmar] = useState<AcaoEducativa | null>(null);
   const periodo = useMemo(() => intervaloDaVisao(referencia, visao), [referencia, visao]);
-  const filtros = useMemo(() => ({ inicio: periodo.inicio, fim: periodo.fim, arquivadas, ...(status !== TODOS ? { status } : {}), ...(categoria !== TODOS ? { categoria } : {}), ...(escolaId !== TODOS ? { escolaId } : {}), ...(orientadorId !== TODOS ? { orientadorId } : {}) }), [periodo, arquivadas, status, categoria, escolaId, orientadorId]);
+  const filtros = useMemo(() => ({ ...(visao !== "lista" ? { inicio: periodo.inicio, fim: periodo.fim } : {}), arquivadas, ...(status !== TODOS ? { status } : {}), ...(categoria !== TODOS ? { categoria } : {}), ...(escolaId !== TODOS ? { escolaId } : {}), ...(orientadorId !== TODOS ? { orientadorId } : {}) }), [periodo, visao, arquivadas, status, categoria, escolaId, orientadorId]);
   const acoes = useQuery({ queryKey: ["educacao", "acoes", filtros], queryFn: () => listarAcoes(filtros) });
   const referencias = useQuery({ queryKey: ["educacao", "referencias"], queryFn: listarReferenciasEducacao });
   const todasAtividades = useQuery({ queryKey: ["educacao", "todas-atividades"], queryFn: listarTodasAtividades });
