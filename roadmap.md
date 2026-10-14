@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Logos e identificação da Central de Sistema (14/10)
+- [ ] Colocar as logos oficiais e os textos solicitados na página principal
+- [ ] Aplicar uma identificação discreta no menu e atualizar o ícone do navegador
+- [ ] Conferir página principal e menu em computador, tablet e celular
+
 ## Adaptação a computador, tablet e celular (solicitado 13/10)
 - [x] Conferir painel, módulos, formulários, documentos e usuários nos três tamanhos de tela
 - [x] Fazer as barras de ações quebrarem linha e as tabelas rolarem dentro do próprio quadro
