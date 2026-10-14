@@ -27,8 +27,11 @@ function dataIso(valor: unknown): string | null {
   const texto = String(valor).trim();
   const m = texto.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
   if (m) {
-    const ano = m[3].length === 2 ? `20${m[3]}` : m[3];
-    return `${ano}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    const dia = m[1] ?? "1";
+    const mes = m[2] ?? "1";
+    const anoBruto = m[3] ?? "2000";
+    const ano = anoBruto.length === 2 ? `20${anoBruto}` : anoBruto;
+    return `${ano}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
   }
   return null;
 }
@@ -71,7 +74,9 @@ function textoCelula(valor: unknown): string {
 export async function lerPlanilhaVeiculos(arquivo: File): Promise<LinhaImportacao[]> {
   const buffer = await arquivo.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array", cellDates: true });
-  const ws = wb.Sheets[wb.SheetNames[0]];
+  const nomeAba = wb.SheetNames[0] ?? "";
+  const ws = wb.Sheets[nomeAba];
+  if (!ws) throw new Error("A planilha está vazia.");
   const grade = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: true, defval: null });
 
   // Localiza a linha de cabeçalho pela célula "Nº" e mapeia as colunas pelo título.
@@ -95,7 +100,7 @@ export async function lerPlanilhaVeiculos(arquivo: File): Promise<LinhaImportaca
       break;
     }
   }
-  if (cabecalho < 0 || col["veiculo"] == null || col["veiculo"] < 0) {
+  if (cabecalho < 0 || col["veiculo"] == null || (col["veiculo"] ?? -1) < 0) {
     throw new Error("Não encontrei o cabeçalho da planilha. Use o modelo com as colunas Nº, Data de verificação, Bairro, Endereço e Marca/Modelo/Placa/Chassi.");
   }
 
