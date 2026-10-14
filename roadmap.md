@@ -1,5 +1,9 @@
 # Roadmap — SESTRAN
 
+## Atualização de dados ao abrir a página (solicitado 13/10)
+- [x] Retirar a verificação automática de 30 segundos e a nova busca ao voltar para a aba
+- [x] Conferir o painel carregando os dados e nenhuma busca nos 45 segundos seguintes
+
 ## Painel integrado com calendários (13/10)
 - [x] Aplicar o modelo em três colunas com calendários de O.S. e Educação e resumo de veículos
 - [x] Ligar datas e registros aos documentos reais, respeitando os acessos por módulo

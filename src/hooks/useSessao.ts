@@ -46,7 +46,6 @@ export function useSessao() {
       };
     },
     staleTime: 60_000,
-    refetchInterval: 30_000,
   });
 }
 
