@@ -1,5 +1,11 @@
 # Roadmap — SESTRAN
 
+## Adaptação a computador, tablet e celular (solicitado 13/10)
+- [x] Conferir painel, módulos, formulários, documentos e usuários nos três tamanhos de tela
+- [x] Fazer as barras de ações quebrarem linha e as tabelas rolarem dentro do próprio quadro
+- [x] Impedir que valores longos do histórico alarguem a página; verificar celular sem cortes
+
+
 ## Relatório por período nos três módulos (solicitado 13/10)
 - [x] Botão "Relatório" na página inicial de O.S., Veículos Abandonados e Educação
 - [x] Escolha de período Dia, Mês, Ano ou Geral com contagem de registros

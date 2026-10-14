@@ -23,3 +23,4 @@
 - Keep dashboard calendars in a shared presentation component, with independent month/day selection and permission-scoped live reads; link records to existing document routes rather than duplicating mutation flows.
 - Prebundle calendar dependencies with React at preview startup and session-guard recovery of known stale calendar optimizer errors; this prevents mixed React generations in already-open previews without masking ordinary hook bugs.
 - Fill module reports through one shared editor component and one shared image helper, with photos optional so a report may hold text alone; this keeps the order and educational documents identical without duplicating validation.
+- Summarize oversized history values when writing them (resumo_valor_hist) and render history through resumoHistorico; raw base64 or long JSON inside history strings stretches the page on every screen size and bloats the history table.
