@@ -26,7 +26,7 @@ import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
+import { diaDaSemana, STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import {
   lerPercurso,
   PERCURSO_VAZIO,
@@ -491,6 +491,9 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                 value={dataServico}
                 onChange={(e) => setDataServico(e.target.value)}
               />
+              {diaDaSemana(dataServico) && (
+                <p className="mt-1 text-xs text-muted-foreground">{diaDaSemana(dataServico)}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="hora_inicio">Início</Label>

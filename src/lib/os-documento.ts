@@ -1,5 +1,5 @@
 import { lerTextoFormatado, juntarTextosFormatados, salvarTextoFormatado, type TrechoTexto } from "@/lib/texto-formatado";
-import { formatarDataBr, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
+import { formatarDataBr, formatarDataBrComDia, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import type { OrdemCompleta } from "@/lib/os-api";
 import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
 import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
@@ -38,7 +38,7 @@ export function montarConteudo(dados: OrdemCompleta) {
     { rotulo: "Solicitante", valor: texto(o.solicitantes?.nome) },
     { rotulo: "Evento", valor: texto(o.eventos?.titulo) },
     { rotulo: "Local", valor: texto(o["local"]) },
-    { rotulo: "Data", valor: formatarDataBr(o["data_servico"] as string) },
+    { rotulo: "Data", valor: formatarDataBrComDia(o["data_servico"] as string) },
     {
       rotulo: "Horário",
       valor: periodoHorario(o["hora_inicio"] as string, o["hora_fim"] as string),
@@ -167,7 +167,7 @@ function camposDocumento(dados: OrdemCompleta) {
     [campo("De", o.remetente), campo("Para", o.destinatario)],
     [campo("Natureza", o.natureza), campo("Solicitante", o.solicitantes?.nome)],
     [campo("Local", o.local)],
-    [campo("Data do Serviço", formatarDataBr(o.data_servico)), campo("Horário", o.hora_inicio ? formatarHora(o.hora_inicio) : ""), campo("Encerramento", o.hora_fim ? formatarHora(o.hora_fim) : "")],
+    [campo("Data do Serviço", formatarDataBrComDia(o.data_servico)), campo("Horário", o.hora_inicio ? formatarHora(o.hora_inicio) : ""), campo("Encerramento", o.hora_fim ? formatarHora(o.hora_fim) : "")],
     [campo("Evento", o.eventos?.titulo)],
   ].map((linha) => linha.filter((c) => c.valor)).filter((linha) => linha.length);
 }
