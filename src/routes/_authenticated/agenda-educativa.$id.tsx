@@ -17,7 +17,15 @@ function AgendaEducativa() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const query = useQuery({ queryKey: ['educacao', 'documento', id], queryFn: () => obterAcao(id) });
-  return <div className="space-y-5"><div className="flex flex-wrap items-center justify-between gap-3 print:hidden"><Button variant="outline" asChild><Link to="/educacao-transito"><ArrowLeft className="mr-2 h-4 w-4" />Voltar</Link></Button><div className="flex gap-2">{query.data && <ExcluirAcaoButton id={id} titulo={query.data.acao.titulo} onExcluida={() => navigate({ to: '/educacao-transito', replace: true })} />}<Button disabled={!query.data} onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Imprimir</Button></div></div>
+  const [gerando, setGerando] = useState(false);
+  async function gerarPdf() {
+    if (!query.data) return;
+    setGerando(true);
+    try { await gerarPdfAcao(query.data.acao); }
+    catch { toast.error('Não foi possível gerar o PDF. Tente novamente.'); }
+    finally { setGerando(false); }
+  }
+  return <div className="space-y-5"><div className="flex flex-wrap items-center justify-between gap-3 print:hidden"><Button variant="outline" asChild><Link to="/educacao-transito"><ArrowLeft className="mr-2 h-4 w-4" />Voltar</Link></Button><div className="flex gap-2">{query.data && <ExcluirAcaoButton id={id} titulo={query.data.acao.titulo} onExcluida={() => navigate({ to: '/educacao-transito', replace: true })} />}<Button disabled={!query.data || gerando} onClick={gerarPdf}>{gerando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}Gerar PDF</Button><Button variant="outline" disabled={!query.data} onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Imprimir</Button></div></div>
     {query.isPending ? <p role="status">Carregando documento…</p> : query.isError ? <p role="alert" className="text-destructive">Não foi possível carregar o documento. <Button variant="outline" onClick={() => query.refetch()}>Tentar novamente</Button></p> : <DocumentoAcao acao={query.data.acao} />}
   </div>;
 }
