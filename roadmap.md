@@ -1,5 +1,11 @@
 # Roadmap — SESTRAN
 
+## Lista e cadastros da Educação (14/10)
+- [ ] Lista de todas as atividades entre Filtros e Calendário com rolagem vertical
+- [ ] Retirar Orientador do formulário preservando dados antigos
+- [ ] Editar e excluir categorias, escolas e temas com permissões e preservação do histórico
+- [ ] Testar lista, cadastros, salvamento e recarregamento
+
 ## Logos e identificação da Central de Sistema (14/10)
 - [x] Colocar as logos oficiais e os textos solicitados na página principal
 - [x] Aplicar uma identificação discreta no menu e atualizar o ícone do navegador
