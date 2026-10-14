@@ -18,6 +18,7 @@ export type AcaoEducativa = {
   horario_inicio: string | null;
   horario_fim: string | null;
   categoria: CategoriaAcao;
+  categorias_educativas: { nome: string } | null;
   status: StatusAcao;
   status_manual?: boolean;
   local: string | null;
@@ -35,7 +36,7 @@ export type AcaoEducativa = {
 
 export type DadosAcao = Omit<
   AcaoEducativa,
-  "id" | "arquivada" | "escolas" | "orientadores" | "temas_educativos"
+  "id" | "arquivada" | "escolas" | "orientadores" | "temas_educativos" | "categorias_educativas"
 >;
 
 export type FiltrosAcao = {
@@ -49,7 +50,7 @@ export type FiltrosAcao = {
 };
 
 const selecao =
-  "id,titulo,descricao,data_acao,horario_inicio,horario_fim,categoria,status,status_manual,local,publico_alvo,participantes,observacoes,escola_id,orientador_id,tema_id,arquivada,tipo_atividade,endereco,numero_endereco,bairro,equipe,relatorio_texto,relatorio_imagens,escolas(nome),orientadores(nome),temas_educativos(nome)";
+  "id,titulo,descricao,data_acao,horario_inicio,horario_fim,categoria,status,status_manual,local,publico_alvo,participantes,observacoes,escola_id,orientador_id,tema_id,arquivada,tipo_atividade,endereco,numero_endereco,bairro,equipe,relatorio_texto,relatorio_imagens,escolas(nome),orientadores(nome),temas_educativos(nome),categorias_educativas(nome)";
 
 export async function listarAcoes(filtros: FiltrosAcao = {}) {
   let query = supabase
@@ -118,15 +119,47 @@ export async function excluirAcao(id: string) {
 }
 
 export async function listarReferenciasEducacao() {
-  const [escolas, orientadores, temas] = await Promise.all([
-    supabase.from("escolas").select("id,nome").eq("ativo", true).order("nome"),
+  const [escolas, orientadores, temas, categorias] = await Promise.all([
+    supabase.from("escolas").select("id,nome,ativo").order("nome"),
     supabase.from("orientadores").select("id,nome").eq("ativo", true).order("nome"),
-    supabase.from("temas_educativos").select("id,nome").eq("ativo", true).order("nome"),
+    supabase.from("temas_educativos").select("id,nome,ativo").order("nome"),
+    supabase.from("categorias_educativas").select("id,nome,ativo").order("nome"),
   ]);
   if (escolas.error) throw escolas.error;
   if (orientadores.error) throw orientadores.error;
   if (temas.error) throw temas.error;
-  return { escolas: escolas.data ?? [], orientadores: orientadores.data ?? [], temas: temas.data ?? [] };
+  if (categorias.error) throw categorias.error;
+  return { escolas: escolas.data ?? [], orientadores: orientadores.data ?? [], temas: temas.data ?? [], categorias: categorias.data ?? [] };
+}
+
+export type TipoCadastroEducativo = "categorias_educativas" | "escolas" | "temas_educativos";
+
+export async function salvarCadastroEducativo(tipo: TipoCadastroEducativo, nome: string, id?: string) {
+  const limpo = nome.trim();
+  if (limpo.length < 3 || limpo.length > 160) throw new Error("Informe um nome entre 3 e 160 caracteres.");
+  const query = id ? supabase.from(tipo).update({ nome: limpo }).eq("id", id) : supabase.from(tipo).insert({ nome: limpo });
+  const { data, error } = await query.select("id,nome").single();
+  if (error) throw error;
+  return data;
+}
+
+export async function excluirCadastroEducativo(tipo: TipoCadastroEducativo, id: string) {
+  const { error } = await supabase.from(tipo).update({ ativo: false }).eq("id", id).select("id").single();
+  if (error) throw error;
+}
+
+export type ResumoAcao = Pick<AcaoEducativa, "id" | "titulo" | "data_acao" | "horario_inicio" | "status" | "arquivada">;
+
+export async function listarTodasAtividades() {
+  const linhas: ResumoAcao[] = [];
+  for (let inicio = 0; ; inicio += 500) {
+    const { data, error } = await supabase.from("acoes_educativas")
+      .select("id,titulo,data_acao,horario_inicio,status,arquivada")
+      .order("data_acao", { ascending: false }).order("id").range(inicio, inicio + 499);
+    if (error) throw error;
+    linhas.push(...(data ?? []) as ResumoAcao[]);
+    if (!data || data.length < 500) return linhas;
+  }
 }
 
 export async function criarTema(nome: string) {

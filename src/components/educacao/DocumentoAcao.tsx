@@ -9,7 +9,7 @@ function Campo({ nome, valor }: { nome: string; valor?: string | number | null |
 
 export function DocumentoAcao({ acao }: { acao: AcaoEducativa }) {
   return <article className="final-paper agenda-paper" aria-label="Documento final da ação educativa">
-    <div className="agenda-row"><Campo nome="DATA DO EVENTO" valor={criarDataLocal(acao.data_acao).toLocaleDateString('pt-BR')} /><Campo nome="TIPO" valor={acao.tipo_atividade || CATEGORIA_ACAO_LABEL[acao.categoria]} /></div>
+    <div className="agenda-row"><Campo nome="DATA DO EVENTO" valor={criarDataLocal(acao.data_acao).toLocaleDateString('pt-BR')} /><Campo nome="TIPO" valor={acao.tipo_atividade || acao.categorias_educativas?.nome || CATEGORIA_ACAO_LABEL[acao.categoria] || acao.categoria} /></div>
     <h1>AGENDA ELETRÔNICA - EDUCAÇÃO NO TRÂNSITO</h1>
     <section><Campo nome="TEMA" valor={acao.temas_educativos?.nome} /><Campo nome="EVENTO" valor={acao.titulo} /><Campo nome="LOCAL" valor={acao.local || acao.escolas?.nome} />
       <div className="agenda-address"><Campo nome="ENDEREÇO" valor={acao.endereco} /><Campo nome="Nº" valor={acao.numero_endereco} /><Campo nome="BAIRRO" valor={acao.bairro} /></div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,10 +12,12 @@ import { EditorTexto } from "@/components/EditorTexto";
 import { textoSimples } from "@/lib/texto-formatado";
 import { EditorRelatorio } from "@/components/EditorRelatorio";
 import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
-import { CATEGORIAS_ACAO, CATEGORIA_ACAO_LABEL, STATUS_ACAO, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao } from "@/lib/educacao";
-import { atualizarAcao, criarAcao, criarTema, listarReferenciasEducacao, type AcaoEducativa, type DadosAcao } from "@/lib/educacao-api";
+import { STATUS_ACAO, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao } from "@/lib/educacao";
+import { atualizarAcao, criarAcao, listarReferenciasEducacao, type AcaoEducativa, type DadosAcao } from "@/lib/educacao-api";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
+
+import { CampoCadastroEducativo } from "@/components/educacao/CampoCadastroEducativo";
 
 const NENHUM = "__nenhum__";
 
@@ -50,7 +52,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
   const { data: sessao } = useSessao();
   const podePreencher = temAcesso(sessao, "EDUCACAO", "OPERADOR") && (!acao?.arquivada || temAcesso(sessao, "EDUCACAO", "EXCLUIR"));
   const [estado, setEstado] = useState<Estado>(() => estadoDe(acao));
-  const [novoTema, setNovoTema] = useState("");
+  const podeExcluir = temAcesso(sessao, "EDUCACAO", "EXCLUIR");
   const [imagens, setImagens] = useState<ImagemRelatorio[]>([]);
   const referencias = useQuery({ queryKey: ["educacao", "referencias"], queryFn: listarReferenciasEducacao, enabled: aberto });
 
@@ -60,6 +62,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
     mutationFn: async () => {
       if (!podePreencher) throw new Error("Solicite ao administrador a liberação para preencher este módulo.");
       if (textoSimples(estado.titulo).trim().length < 3) throw new Error("Informe um título com pelo menos 3 caracteres.");
+      if (!estado.categoria) throw new Error("Selecione uma categoria.");
       if (!estado.data_acao) throw new Error("Informe a data da ação.");
       if (estado.horario_inicio && estado.horario_fim && estado.horario_fim <= estado.horario_inicio) throw new Error("O horário final deve ser posterior ao inicial.");
       const dados: DadosAcao = {
@@ -85,15 +88,6 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
     onError: (erro: unknown) => toast.error(erro instanceof Error ? erro.message : typeof erro === "object" && erro !== null && "message" in erro ? String(erro.message) : "Não foi possível salvar a ação."),
   });
 
-  const adicionarTema = useMutation({
-    mutationFn: () => criarTema(novoTema),
-    onSuccess: (tema) => {
-      queryClient.invalidateQueries({ queryKey: ["educacao", "referencias"] });
-      setEstado((e) => ({ ...e, tema_id: tema.id })); setNovoTema(""); toast.success("Tema cadastrado.");
-    },
-    onError: () => toast.error("Não foi possível cadastrar o tema."),
-  });
-
   const campo = (chave: keyof Estado, valor: string | boolean) => setEstado((e) => ({ ...e, [chave]: valor }));
 
   if (!podePreencher) return null;
@@ -104,14 +98,12 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
         <DialogHeader><DialogTitle>{acao ? "Editar ação educativa" : "Nova ação educativa"}</DialogTitle><DialogDescription>Registre a programação e a situação da atividade.</DialogDescription></DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2"><Label htmlFor="acao-titulo">Título da Ação *</Label><EditorTexto id="acao-titulo" rotulo="Título da Ação" compacto value={estado.titulo} onChange={(valor) => campo("titulo", valor)} /></div>
-          <div><Label htmlFor="acao-categoria">Categoria *</Label><Select value={estado.categoria} onValueChange={(v) => campo("categoria", v)}><SelectTrigger id="acao-categoria"><SelectValue /></SelectTrigger><SelectContent>{CATEGORIAS_ACAO.map((c) => <SelectItem key={c} value={c}>{CATEGORIA_ACAO_LABEL[c]}</SelectItem>)}</SelectContent></Select></div>
+          <CampoCadastroEducativo tipo="categorias_educativas" rotulo="Categoria" id="acao-categoria" valor={estado.categoria} opcoes={referencias.data?.categorias ?? []} onChange={v => campo("categoria", v)} podeExcluir={podeExcluir} obrigatorio />
           <div><Label htmlFor="acao-status">Situação *</Label><Select value={estado.status_manual ? estado.status : "__auto"} onValueChange={(v) => { if (v === "__auto") campo("status_manual", false); else { campo("status_manual", true); campo("status", v); } }}><SelectTrigger id="acao-status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="__auto">Automática pelo calendário ({STATUS_ACAO_LABEL[estado.status]})</SelectItem>{STATUS_ACAO.map((s) => <SelectItem key={s} value={s}>{STATUS_ACAO_LABEL[s]}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="acao-data">Data do evento *</Label><Input id="acao-data" type="date" value={estado.data_acao} onChange={(e) => campo("data_acao", e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-2"><div><Label htmlFor="acao-inicio">Início</Label><Input id="acao-inicio" type="time" value={estado.horario_inicio} onChange={(e) => campo("horario_inicio", e.target.value)} /></div><div><Label htmlFor="acao-fim">Término</Label><Input id="acao-fim" type="time" value={estado.horario_fim} onChange={(e) => campo("horario_fim", e.target.value)} /></div></div>
-          <div><Label htmlFor="acao-escola">Escola</Label><Select value={estado.escola_id} onValueChange={(v) => campo("escola_id", v)}><SelectTrigger id="acao-escola"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NENHUM}>Nenhuma</SelectItem>{(referencias.data?.escolas ?? []).map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}</SelectContent></Select></div>
-          <div><Label htmlFor="acao-orientador">Orientador</Label><Select value={estado.orientador_id} onValueChange={(v) => campo("orientador_id", v)}><SelectTrigger id="acao-orientador"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NENHUM}>Nenhum</SelectItem>{(referencias.data?.orientadores ?? []).map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}</SelectContent></Select></div>
-          <div><Label htmlFor="acao-tema">Tema</Label><Select value={estado.tema_id} onValueChange={(v) => campo("tema_id", v)}><SelectTrigger id="acao-tema"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NENHUM}>Nenhum</SelectItem>{(referencias.data?.temas ?? []).map((i) => <SelectItem key={i.id} value={i.id}>{i.nome}</SelectItem>)}</SelectContent></Select></div>
-          <div><Label htmlFor="novo-tema">Cadastrar tema</Label><div className="flex gap-2"><Input id="novo-tema" value={novoTema} onChange={(e) => setNovoTema(e.target.value)} placeholder="Nome do tema" /><Button type="button" size="icon" variant="outline" aria-label="Cadastrar tema" disabled={novoTema.trim().length < 3 || adicionarTema.isPending} onClick={() => adicionarTema.mutate()}><Plus className="h-4 w-4" /></Button></div></div>
+          <CampoCadastroEducativo tipo="escolas" rotulo="Escola" id="acao-escola" valor={estado.escola_id} opcoes={referencias.data?.escolas ?? []} onChange={v => campo("escola_id", v)} podeExcluir={podeExcluir} />
+          <CampoCadastroEducativo tipo="temas_educativos" rotulo="Tema" id="acao-tema" valor={estado.tema_id} opcoes={referencias.data?.temas ?? []} onChange={v => campo("tema_id", v)} podeExcluir={podeExcluir} />
           <div><Label htmlFor="acao-local">Local</Label><Input id="acao-local" value={estado.local} onChange={(e) => campo("local", e.target.value)} /></div>
           <div className="md:col-span-2"><Label htmlFor="acao-endereco">Endereço</Label><Input id="acao-endereco" value={estado.endereco} onChange={e => campo("endereco", e.target.value)} /></div>
           <div><Label htmlFor="acao-numero">Número</Label><Input id="acao-numero" value={estado.numero_endereco} onChange={e => campo("numero_endereco", e.target.value)} /></div>

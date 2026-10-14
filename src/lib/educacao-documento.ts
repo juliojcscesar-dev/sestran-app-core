@@ -111,7 +111,7 @@ export async function gerarPdfAcao(acao: AcaoEducativa) {
   const campo = (rotulo: string, valor: string | null | undefined) => ({ rotulo, valor: valor?.trim() ?? "" });
   campos([
     [campo("Título da Ação", acao.titulo)],
-    [campo("Tipo", acao.tipo_atividade || CATEGORIA_ACAO_LABEL[acao.categoria]), campo("Tema", acao.temas_educativos?.nome)],
+    [campo("Tipo", acao.tipo_atividade || acao.categorias_educativas?.nome || CATEGORIA_ACAO_LABEL[acao.categoria] || acao.categoria), campo("Tema", acao.temas_educativos?.nome)],
     [campo("Local", acao.local || acao.escolas?.nome)],
     [campo("Endereço", [acao.endereco, acao.numero_endereco].filter(Boolean).join(", ") || null), campo("Bairro", acao.bairro)],
     [campo("Início", acao.horario_inicio?.slice(0, 5)), campo("Término", acao.horario_fim?.slice(0, 5))],
