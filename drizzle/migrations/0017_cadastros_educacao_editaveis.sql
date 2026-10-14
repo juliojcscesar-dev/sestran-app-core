@@ -1,0 +1,14 @@
+CREATE TABLE public.categorias_educativas (id text PRIMARY KEY DEFAULT gen_random_uuid()::text, nome text NOT NULL CHECK (char_length(btrim(nome)) BETWEEN 3 AND 160), ativo boolean NOT NULL DEFAULT true);
+GRANT SELECT, INSERT, UPDATE ON public.categorias_educativas TO authenticated;
+GRANT ALL ON public.categorias_educativas TO service_role;
+ALTER TABLE public.categorias_educativas ENABLE ROW LEVEL SECURITY;
+CREATE POLICY categorias_select ON public.categorias_educativas FOR SELECT TO authenticated USING (public.acesso_modulo(auth.uid(),'EDUCACAO','CONSULTA'));
+CREATE POLICY categorias_insert ON public.categorias_educativas FOR INSERT TO authenticated WITH CHECK (public.acesso_modulo(auth.uid(),'EDUCACAO','OPERADOR'));
+CREATE POLICY categorias_update ON public.categorias_educativas FOR UPDATE TO authenticated USING (public.acesso_modulo(auth.uid(),'EDUCACAO','OPERADOR')) WITH CHECK (public.acesso_modulo(auth.uid(),'EDUCACAO','OPERADOR'));
+INSERT INTO public.categorias_educativas(id,nome) SELECT codigo, CASE codigo WHEN 'EVENTO_ESCOLA' THEN 'Evento em escola' WHEN 'BLITZ_EDUCATIVA' THEN 'Blitz educativa' WHEN 'PALESTRA' THEN 'Palestra' WHEN 'OUTRA' THEN 'Outra ação' ELSE codigo END FROM (SELECT unnest(ARRAY['EVENTO_ESCOLA','BLITZ_EDUCATIVA','PALESTRA','OUTRA']) codigo UNION SELECT DISTINCT categoria FROM public.acoes_educativas WHERE categoria IS NOT NULL) c;
+ALTER TABLE public.acoes_educativas ADD CONSTRAINT acoes_categoria_catalogo_fkey FOREIGN KEY (categoria) REFERENCES public.categorias_educativas(id);
+CREATE OR REPLACE FUNCTION public.proteger_exclusao_cadastro_educativo() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF OLD.ativo IS DISTINCT FROM NEW.ativo AND NOT public.acesso_modulo(auth.uid(),'EDUCACAO','EXCLUIR') THEN RAISE EXCEPTION 'O administrador precisa autorizar a exclusão de opções neste módulo.' USING ERRCODE='42501'; END IF; RETURN NEW; END $$;
+CREATE TRIGGER proteger_categoria_educativa BEFORE UPDATE ON public.categorias_educativas FOR EACH ROW EXECUTE FUNCTION public.proteger_exclusao_cadastro_educativo();
+CREATE TRIGGER proteger_escola_educativa BEFORE UPDATE ON public.escolas FOR EACH ROW EXECUTE FUNCTION public.proteger_exclusao_cadastro_educativo();
+CREATE TRIGGER proteger_tema_educativo BEFORE UPDATE ON public.temas_educativos FOR EACH ROW EXECUTE FUNCTION public.proteger_exclusao_cadastro_educativo();
+COMMENT ON TABLE public.categorias_educativas IS 'Catálogo de categorias educativas; exclusão lógica preserva referências de atividades antigas.';

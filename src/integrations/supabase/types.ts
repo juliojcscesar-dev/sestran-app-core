@@ -145,6 +145,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "acoes_categoria_catalogo_fkey"
+            columns: ["categoria"]
+            isOneToOne: false
+            referencedRelation: "categorias_educativas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "acoes_educativas_escola_id_fkey"
             columns: ["escola_id"]
             isOneToOne: false
@@ -233,6 +240,24 @@ export type Database = {
           id?: string
           nome?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      categorias_educativas: {
+        Row: {
+          ativo: boolean
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          id?: string
+          nome?: string
         }
         Relationships: []
       }
