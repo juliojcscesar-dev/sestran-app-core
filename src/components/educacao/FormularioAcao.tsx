@@ -47,16 +47,16 @@ function estadoDe(acao?: AcaoEducativa | null): Estado {
   };
 }
 
-export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boolean; onAbertoChange: (aberto: boolean) => void; acao?: AcaoEducativa | null }) {
+export function FormularioAcao({ aberto, onAbertoChange, acao, duplicando = false }: { aberto: boolean; onAbertoChange: (aberto: boolean) => void; acao?: AcaoEducativa | null; duplicando?: boolean }) {
   const queryClient = useQueryClient();
   const { data: sessao } = useSessao();
-  const podePreencher = temAcesso(sessao, "EDUCACAO", "OPERADOR") && (!acao?.arquivada || temAcesso(sessao, "EDUCACAO", "EXCLUIR"));
+  const podePreencher = temAcesso(sessao, "EDUCACAO", "OPERADOR") && (duplicando || !acao?.arquivada || temAcesso(sessao, "EDUCACAO", "EXCLUIR"));
   const [estado, setEstado] = useState<Estado>(() => estadoDe(acao));
   const podeExcluir = temAcesso(sessao, "EDUCACAO", "EXCLUIR");
   const [imagens, setImagens] = useState<ImagemRelatorio[]>([]);
   const referencias = useQuery({ queryKey: ["educacao", "referencias"], queryFn: listarReferenciasEducacao, enabled: aberto });
 
-  useEffect(() => { if (aberto) { setEstado(estadoDe(acao)); setImagens(acao?.relatorio_imagens ?? []); } }, [aberto, acao]);
+  useEffect(() => { if (aberto) { setEstado(duplicando ? { ...estadoDe(acao), status: "AGENDADA", status_manual: false } : estadoDe(acao)); setImagens(acao?.relatorio_imagens ?? []); } }, [aberto, acao, duplicando]);
 
   const salvar = useMutation({
     mutationFn: async () => {
@@ -77,12 +77,12 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
         orientador_id: estado.orientador_id === NENHUM ? null : estado.orientador_id,
         tema_id: estado.tema_id === NENHUM ? null : estado.tema_id,
       };
-      if (acao) await atualizarAcao(acao.id, dados); else await criarAcao(dados);
+      if (acao && !duplicando) await atualizarAcao(acao.id, dados); else await criarAcao(dados);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["educacao"] });
       queryClient.invalidateQueries({ queryKey: ["painel"] });
-      toast.success(acao ? "Ação educativa atualizada." : "Ação educativa cadastrada.");
+      toast.success(duplicando ? "Ação educativa duplicada." : acao ? "Ação educativa atualizada." : "Ação educativa cadastrada.");
       onAbertoChange(false);
     },
     onError: (erro: unknown) => toast.error(erro instanceof Error ? erro.message : typeof erro === "object" && erro !== null && "message" in erro ? String(erro.message) : "Não foi possível salvar a ação."),
@@ -95,7 +95,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao }: { aberto: boole
   return (
     <Dialog open={aberto} onOpenChange={onAbertoChange}>
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
-        <DialogHeader><DialogTitle>{acao ? "Editar ação educativa" : "Nova ação educativa"}</DialogTitle><DialogDescription>Registre a programação e a situação da atividade.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>{duplicando ? "Duplicar ação educativa" : acao ? "Editar ação educativa" : "Nova ação educativa"}</DialogTitle><DialogDescription>Registre a programação e a situação da atividade.</DialogDescription></DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2"><Label htmlFor="acao-titulo">Título da Ação *</Label><EditorTexto id="acao-titulo" rotulo="Título da Ação" compacto value={estado.titulo} onChange={(valor) => campo("titulo", valor)} /></div>
           <CampoCadastroEducativo tipo="categorias_educativas" rotulo="Categoria" id="acao-categoria" valor={estado.categoria} opcoes={referencias.data?.categorias ?? []} onChange={v => campo("categoria", v)} podeExcluir={podeExcluir} obrigatorio />
