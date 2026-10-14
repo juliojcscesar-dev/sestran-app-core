@@ -491,6 +491,9 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                 value={dataServico}
                 onChange={(e) => setDataServico(e.target.value)}
               />
+              {diaDaSemana(dataServico) && (
+                <p className="mt-1 text-xs text-muted-foreground">{diaDaSemana(dataServico)}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="hora_inicio">Início</Label>

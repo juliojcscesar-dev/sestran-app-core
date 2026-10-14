@@ -62,6 +62,30 @@ export function formatarDataBr(valor: string | null | undefined) {
   return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
 
+const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+function indiceDiaSemana(valor: string) {
+  const [ano, mes, dia] = valor.slice(0, 10).split("-").map(Number);
+  const data = new Date(ano, mes - 1, dia);
+  return Number.isNaN(data.getTime()) ? null : data.getDay();
+}
+
+/** Dia da semana por extenso, ex.: "Quarta-feira". */
+export function diaDaSemana(valor: string | null | undefined) {
+  if (!valor) return "";
+  const indice = indiceDiaSemana(valor);
+  if (indice === null) return "";
+  return indice === 0 || indice === 6 ? DIAS_SEMANA[indice] : `${DIAS_SEMANA[indice]}-feira`;
+}
+
+/** Data no padrão brasileiro com o dia da semana, ex.: 14/10/2026 (Quarta). */
+export function formatarDataBrComDia(valor: string | null | undefined) {
+  const data = formatarDataBr(valor);
+  if (data === "—") return "—";
+  const indice = indiceDiaSemana(valor as string);
+  return indice === null ? data : `${data} (${DIAS_SEMANA[indice]})`;
+}
+
 export function periodoHorario(inicio?: string | null, fim?: string | null) {
   if (!inicio && !fim) return "—";
   if (inicio && fim) return `${formatarHora(inicio)} às ${formatarHora(fim)}`;

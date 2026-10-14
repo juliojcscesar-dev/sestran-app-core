@@ -244,7 +244,7 @@ function VisualizarOS() {
               <LinhaDocumento rotulo="Solicitante" valor={o.solicitantes?.nome ?? ""} />
               <LinhaDocumento rotulo="Local" valor={String(o["local"] ?? "")} inteira />
               <div className="os-doc-date-row">
-                <div><span className="os-doc-label">Data do Serviço:</span><div className="os-doc-line">{formatarDataBr(o["data_servico"] as string)}</div></div>
+                <div><span className="os-doc-label">Data do Serviço:</span><div className="os-doc-line">{formatarDataBrComDia(o["data_servico"] as string)}</div></div>
                 {Boolean(o["hora_inicio"]) && <div><span className="os-doc-label">Horário:</span><div className="os-doc-line">{formatarHora(o["hora_inicio"] as string)}</div></div>}
                 {Boolean(o["hora_fim"]) && <div><span className="os-doc-label">Encerramento:</span><div className="os-doc-line">{formatarHora(o["hora_fim"] as string)}</div></div>}
               </div>
