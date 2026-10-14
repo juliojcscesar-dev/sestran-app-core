@@ -26,7 +26,7 @@ import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
+import { diaDaSemana, STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import {
   lerPercurso,
   PERCURSO_VAZIO,
