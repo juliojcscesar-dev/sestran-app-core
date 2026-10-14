@@ -65,7 +65,7 @@ export function formatarDataBr(valor: string | null | undefined) {
 const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 function indiceDiaSemana(valor: string) {
-  const [ano, mes, dia] = valor.slice(0, 10).split("-").map(Number);
+  const [ano = NaN, mes = NaN, dia = NaN] = valor.slice(0, 10).split("-").map(Number);
   const data = new Date(ano, mes - 1, dia);
   return Number.isNaN(data.getTime()) ? null : data.getDay();
 }
