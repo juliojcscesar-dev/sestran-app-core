@@ -83,14 +83,14 @@ export async function lerPlanilhaVeiculos(arquivo: File): Promise<LinhaImportaca
     if (idxNum >= 0) {
       cabecalho = i;
       col = {
-        numero: idxNum,
-        verificacao: linha.findIndex((c) => c.includes("VERIFICA")),
-        notificacao: linha.findIndex((c) => c.includes("NOTIFICA")),
-        recolhimento: linha.findIndex((c) => c.includes("RECOLHIMENTO")),
-        bairro: linha.findIndex((c) => c === "BAIRRO" || c.startsWith("BAIRRO")),
-        endereco: linha.findIndex((c) => c.startsWith("ENDERE")),
-        veiculo: linha.findIndex((c) => c.includes("MARCA") || c.includes("MODELO") || c.includes("CHASSI")),
-        situacao: linha.findIndex((c) => c.includes("RECOLHIDO/DATA") || c.includes("SITUA")),
+        ["numero"]: idxNum,
+        ["verificacao"]: linha.findIndex((c) => c.includes("VERIFICA")),
+        ["notificacao"]: linha.findIndex((c) => c.includes("NOTIFICA")),
+        ["recolhimento"]: linha.findIndex((c) => c.includes("RECOLHIMENTO")),
+        ["bairro"]: linha.findIndex((c) => c === "BAIRRO" || c.startsWith("BAIRRO")),
+        ["endereco"]: linha.findIndex((c) => c.startsWith("ENDERE")),
+        ["veiculo"]: linha.findIndex((c) => c.includes("MARCA") || c.includes("MODELO") || c.includes("CHASSI")),
+        ["situacao"]: linha.findIndex((c) => c.includes("RECOLHIDO/DATA") || c.includes("SITUA")),
       };
       break;
     }
