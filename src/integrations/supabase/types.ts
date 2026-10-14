@@ -908,6 +908,27 @@ export type Database = {
           },
         ]
       }
+      situacoes_veiculo: {
+        Row: {
+          ativo: boolean
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          ativo?: boolean
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          ativo?: boolean
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: []
+      }
       solicitantes: {
         Row: {
           ativo: boolean

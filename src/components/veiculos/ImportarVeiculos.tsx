@@ -118,7 +118,7 @@ export function ImportarVeiculos() {
                           {l.dados.bairro && <span className="block text-xs text-muted-foreground">{l.dados.bairro}</span>}
                           {l.aviso && <span className="block text-xs text-amber-600">{l.aviso}</span>}
                         </TableCell>
-                        <TableCell>{STATUS_VEICULO_LABEL[statusEfetivo({ ...l.dados, status: "", prazo_recolhimento: null })]}</TableCell>
+                        <TableCell>{(STATUS_VEICULO_LABEL[statusEfetivo({ ...l.dados, status: "", prazo_recolhimento: null })] ?? String(statusEfetivo({ ...l.dados, status: "", prazo_recolhimento: null })))}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

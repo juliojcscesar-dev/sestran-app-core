@@ -134,6 +134,13 @@
       "when": 1791998032857,
       "tag": "0018_validar_categoria_catalogo_educativo",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792002901266,
+      "tag": "0019_situacoes_veiculo_editaveis",
+      "breakpoints": true
     }
   ]
 }

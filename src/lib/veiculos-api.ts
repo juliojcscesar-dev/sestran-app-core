@@ -215,3 +215,26 @@ export async function listarBairros() {
   for (const l of linhas) if (l.bairro) nomes.add(l.bairro);
   return [...nomes].sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
+
+export async function listarSituacoesVeiculo() {
+  const res = await supabase.from("situacoes_veiculo").select("id, nome, ativo, ordem").order("ordem").order("nome");
+  return (checar(res) ?? []) as { id: string; nome: string; ativo: boolean; ordem: number }[];
+}
+
+export async function salvarSituacaoVeiculo(nome: string, id?: string) {
+  const limpo = nome.trim().replace(/\s+/g, " ");
+  if (limpo.length < 2) throw new Error("Informe o nome da situação.");
+  const existentes = await listarSituacoesVeiculo();
+  if (existentes.some(s => s.ativo && s.id !== id && s.nome.localeCompare(limpo, "pt-BR", { sensitivity: "base" }) === 0)) throw new Error("Já existe uma situação com esse nome.");
+  const res = id
+    ? await supabase.from("situacoes_veiculo").update({ nome: limpo }).eq("id", id).select("id, nome").single()
+    : await supabase.from("situacoes_veiculo").insert({ nome: limpo }).select("id, nome").single();
+  const item = checar(res);
+  if (!item) throw new Error("Não foi possível salvar a situação.");
+  return item as { id: string; nome: string };
+}
+
+export async function excluirSituacaoVeiculo(id: string) {
+  const res = await supabase.from("situacoes_veiculo").update({ ativo: false }).eq("id", id).select("id");
+  if (!checar(res)?.length) throw new Error("Exclusão não autorizada pelo administrador.");
+}

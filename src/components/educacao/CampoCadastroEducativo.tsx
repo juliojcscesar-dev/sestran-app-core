@@ -12,22 +12,23 @@ import { salvarCadastroEducativo, excluirCadastroEducativo, type TipoCadastroEdu
 
 type Opcao = { id: string; nome: string; ativo: boolean };
 
-export function CampoCadastroEducativo({ tipo, rotulo, id, valor, opcoes, onChange, podeExcluir, obrigatorio = false }: {
-  tipo: TipoCadastroEducativo; rotulo: string; id: string; valor: string; opcoes: Opcao[]; onChange: (valor: string) => void; podeExcluir: boolean; obrigatorio?: boolean;
+export function CampoCadastroEducativo({ tipo, rotulo, id, valor, opcoes, onChange, podeExcluir, obrigatorio = false, salvarFn, excluirFn, chaveConsulta = "educacao", descricao = "Nome da opção no cadastro educativo." }: {
+  salvarFn?: (nome: string, id?: string) => Promise<{ id: string }>; excluirFn?: (id: string) => Promise<void>; chaveConsulta?: string; descricao?: string;
+  tipo?: TipoCadastroEducativo; rotulo: string; id: string; valor: string; opcoes: Opcao[]; onChange: (valor: string) => void; podeExcluir: boolean; obrigatorio?: boolean;
 }) {
   const client = useQueryClient();
   const [editor, setEditor] = useState<"novo" | "editar" | null>(null);
   const [nome, setNome] = useState("");
   const [confirmar, setConfirmar] = useState(false);
   const selecionado = opcoes.find(o => o.id === valor);
-  const atualizar = () => { client.invalidateQueries({ queryKey: ["educacao"] }); client.invalidateQueries({ queryKey: ["painel"] }); };
+  const atualizar = () => { client.invalidateQueries({ queryKey: [chaveConsulta] }); client.invalidateQueries({ queryKey: ["painel"] }); };
   const salvar = useMutation({
-    mutationFn: () => salvarCadastroEducativo(tipo, nome, editor === "editar" ? selecionado?.id : undefined),
+    mutationFn: () => { const alvo = editor === "editar" ? selecionado?.id : undefined; return salvarFn ? salvarFn(nome, alvo) : salvarCadastroEducativo(tipo!, nome, alvo); },
     onSuccess: (item) => { atualizar(); onChange(item.id); setEditor(null); toast.success("Cadastro salvo."); },
     onError: (erro) => toast.error(erro.message || "Não foi possível salvar o cadastro."),
   });
   const excluir = useMutation({
-    mutationFn: async () => { if (!podeExcluir || !selecionado) throw new Error("Exclusão não autorizada."); await excluirCadastroEducativo(tipo, selecionado.id); },
+    mutationFn: async () => { if (!podeExcluir || !selecionado) throw new Error("Exclusão não autorizada."); if (excluirFn) await excluirFn(selecionado.id); else await excluirCadastroEducativo(tipo!, selecionado.id); },
     onSuccess: () => { atualizar(); onChange(obrigatorio ? "" : "__nenhum__"); setConfirmar(false); toast.success("Opção excluída dos novos cadastros. Histórico preservado."); },
     onError: (erro) => toast.error(erro.message || "Não foi possível excluir a opção."),
   });
@@ -42,7 +43,7 @@ export function CampoCadastroEducativo({ tipo, rotulo, id, valor, opcoes, onChan
       <Button type="button" variant="ghost" size="icon" title={`Editar ${rotulo}`} aria-label={`Editar ${rotulo}`} disabled={!selecionado?.ativo} onClick={() => { setNome(selecionado?.nome ?? ""); setEditor("editar"); }}><Pencil className="h-4 w-4" /></Button>
       {podeExcluir && <Button type="button" variant="ghost" size="icon" title={`Excluir ${rotulo}`} aria-label={`Excluir ${rotulo}`} disabled={!selecionado?.ativo} onClick={() => setConfirmar(true)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
     </div>
-    <Dialog open={editor !== null} onOpenChange={aberto => !aberto && setEditor(null)}><DialogContent><DialogHeader><DialogTitle>{editor === "editar" ? "Editar" : "Cadastrar"} {rotulo}</DialogTitle><DialogDescription>Nome da opção no cadastro educativo.</DialogDescription></DialogHeader><Label htmlFor={`${id}-nome`}>Nome</Label><Input id={`${id}-nome`} maxLength={160} value={nome} onChange={e => setNome(e.target.value)} /><DialogFooter><Button variant="outline" onClick={() => setEditor(null)}>Cancelar</Button><Button disabled={salvar.isPending || nome.trim().length < 3} onClick={() => salvar.mutate()}>Salvar cadastro</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={editor !== null} onOpenChange={aberto => !aberto && setEditor(null)}><DialogContent><DialogHeader><DialogTitle>{editor === "editar" ? "Editar" : "Cadastrar"} {rotulo}</DialogTitle><DialogDescription>{descricao}</DialogDescription></DialogHeader><Label htmlFor={`${id}-nome`}>Nome</Label><Input id={`${id}-nome`} maxLength={160} value={nome} onChange={e => setNome(e.target.value)} /><DialogFooter><Button variant="outline" onClick={() => setEditor(null)}>Cancelar</Button><Button disabled={salvar.isPending || nome.trim().length < 3} onClick={() => salvar.mutate()}>Salvar cadastro</Button></DialogFooter></DialogContent></Dialog>
     <AlertDialog open={confirmar} onOpenChange={setConfirmar}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir {rotulo}?</AlertDialogTitle><AlertDialogDescription>“{selecionado?.nome}” deixará de aparecer nas novas seleções. Atividades antigas e seus vínculos serão preservados.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={excluir.isPending}>Cancelar</AlertDialogCancel><AlertDialogAction disabled={excluir.isPending} onClick={e => { e.preventDefault(); excluir.mutate(); }}>Excluir opção</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </div>;
 }
