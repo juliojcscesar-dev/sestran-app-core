@@ -1,9 +1,9 @@
 # Roadmap — SESTRAN
 
 ## Ações e totais da Educação (14/10)
-- [ ] Incluir visualizar, editar, duplicar, documentos, arquivar e excluir em Todas as atividades
-- [ ] Mostrar totais Em Andamento, Agendada e Concluída sem limitar ao mês do calendário
-- [ ] Verificar ações, permissões e apresentação no navegador
+- [x] Incluir visualizar, editar, duplicar, documentos, arquivar e excluir em Todas as atividades
+- [x] Mostrar totais Em Andamento, Agendada e Concluída sem limitar ao mês do calendário
+- [x] Verificar edição, duplicação salva/reaberta/excluída, PDF/DOCX, confirmações e apresentação no navegador
 
 ## Lista e cadastros da Educação (14/10)
 - [x] Lista de todas as atividades entre Filtros e Calendário com rolagem vertical
