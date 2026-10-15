@@ -29,7 +29,7 @@ const ESTADO = ["Bom", "Regular", "Ruim", "Danificado", "Não se aplica"];
 const SITUACOES = ["No pátio", "Aguardando vistoria", "Vistoria concluída", "Em análise administrativa", "Em processo de liberação", "Liberado", "Encaminhado para destinação"];
 const CATEGORIAS = ["Automóvel", "Motocicleta", "Caminhonete", "Caminhão", "Ônibus", "Outro"];
 const MOTIVOS = ["Abandono", "Conservação precária", "Abandono e conservação precária"];
-const DOCS = ["CPF", "RG", "CNH", "Desconhecido"];
+const DOCS = ["CPF", "RG", "CNH", "CNPJ", "Desconhecido"];
 
 export const Route = createFileRoute("/_authenticated/veiculos-recolhidos")({
   head: () => ({ meta: [
