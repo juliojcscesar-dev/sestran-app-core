@@ -113,7 +113,7 @@ function VeiculosRecolhidos() {
       if (error) throw error;
       const achados = data ?? [];
       if (!achados.length) { toast.info("Nenhum veículo abandonado encontrado com essa identificação."); return; }
-      const a = achados[0];
+      const a = achados[0]!;
       setF((p) => ({
         ...p,
         placa: a.placa ?? p.placa,
