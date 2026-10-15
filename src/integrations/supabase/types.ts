@@ -1254,6 +1254,99 @@ export type Database = {
           },
         ]
       }
+      veiculos_recolhidos: {
+        Row: {
+          agente: string | null
+          atualizado_em: string
+          categoria: string | null
+          chassi: string | null
+          checklist: Json
+          cor: string | null
+          criado_em: string
+          criado_por: string | null
+          data_notificacao: string | null
+          data_recolhimento: string
+          data_vistoria: string | null
+          documento: string | null
+          endereco: string | null
+          hora_recolhimento: string | null
+          id: string
+          local_encontrado: string | null
+          marca: string
+          modelo: string
+          motivo: string | null
+          numero_documento: string | null
+          obs_vistoria: string | null
+          observacoes: string | null
+          placa: string | null
+          proprietario: string | null
+          situacao: string
+          telefone: string | null
+          tipo_documento: string | null
+          vistoriador: string | null
+        }
+        Insert: {
+          agente?: string | null
+          atualizado_em?: string
+          categoria?: string | null
+          chassi?: string | null
+          checklist?: Json
+          cor?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_notificacao?: string | null
+          data_recolhimento: string
+          data_vistoria?: string | null
+          documento?: string | null
+          endereco?: string | null
+          hora_recolhimento?: string | null
+          id?: string
+          local_encontrado?: string | null
+          marca: string
+          modelo: string
+          motivo?: string | null
+          numero_documento?: string | null
+          obs_vistoria?: string | null
+          observacoes?: string | null
+          placa?: string | null
+          proprietario?: string | null
+          situacao?: string
+          telefone?: string | null
+          tipo_documento?: string | null
+          vistoriador?: string | null
+        }
+        Update: {
+          agente?: string | null
+          atualizado_em?: string
+          categoria?: string | null
+          chassi?: string | null
+          checklist?: Json
+          cor?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_notificacao?: string | null
+          data_recolhimento?: string
+          data_vistoria?: string | null
+          documento?: string | null
+          endereco?: string | null
+          hora_recolhimento?: string | null
+          id?: string
+          local_encontrado?: string | null
+          marca?: string
+          modelo?: string
+          motivo?: string | null
+          numero_documento?: string | null
+          obs_vistoria?: string | null
+          observacoes?: string | null
+          placa?: string | null
+          proprietario?: string | null
+          situacao?: string
+          telefone?: string | null
+          tipo_documento?: string | null
+          vistoriador?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

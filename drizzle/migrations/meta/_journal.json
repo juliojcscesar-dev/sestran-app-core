@@ -141,6 +141,13 @@
       "when": 1792002901266,
       "tag": "0019_situacoes_veiculo_editaveis",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792071343254,
+      "tag": "0020_veiculos_recolhidos",
+      "breakpoints": true
     }
   ]
 }
