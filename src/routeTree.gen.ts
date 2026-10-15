@@ -24,6 +24,7 @@ import { Route as AuthenticatedSolicitantesRouteImport } from './routes/_authent
 import { Route as AuthenticatedTerritorioRouteImport } from './routes/_authenticated/territorio'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedVeiculosAbandonadosRouteImport } from './routes/_authenticated/veiculos-abandonados'
+import { Route as AuthenticatedVeiculosRecolhidosRouteImport } from './routes/_authenticated/veiculos-recolhidos'
 import { Route as AuthenticatedAgendaEducativaIdRouteImport } from './routes/_authenticated/agenda-educativa.$id'
 import { Route as AuthenticatedDocumentoVeiculoIdRouteImport } from './routes/_authenticated/documento-veiculo.$id'
 import { Route as AuthenticatedOrdensServicoIndexRouteImport } from './routes/_authenticated/ordens-servico/index'
@@ -110,6 +111,12 @@ const AuthenticatedVeiculosAbandonadosRoute =
     path: '/veiculos-abandonados',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedVeiculosRecolhidosRoute =
+  AuthenticatedVeiculosRecolhidosRouteImport.update({
+    id: '/veiculos-recolhidos',
+    path: '/veiculos-recolhidos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAgendaEducativaIdRoute =
   AuthenticatedAgendaEducativaIdRouteImport.update({
     id: '/agenda-educativa/$id',
@@ -168,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/territorio': typeof AuthenticatedTerritorioRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
+  '/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
   '/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
   '/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -191,6 +199,7 @@ export interface FileRoutesByTo {
   '/territorio': typeof AuthenticatedTerritorioRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
+  '/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
   '/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
   '/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -216,6 +225,7 @@ export interface FileRoutesById {
   '/_authenticated/territorio': typeof AuthenticatedTerritorioRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
+  '/_authenticated/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
   '/_authenticated/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
   '/_authenticated/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/_authenticated/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/territorio'
     | '/usuarios'
     | '/veiculos-abandonados'
+    | '/veiculos-recolhidos'
     | '/agenda-educativa/$id'
     | '/documento-veiculo/$id'
     | '/ordens-servico/nova'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/territorio'
     | '/usuarios'
     | '/veiculos-abandonados'
+    | '/veiculos-recolhidos'
     | '/agenda-educativa/$id'
     | '/documento-veiculo/$id'
     | '/ordens-servico/nova'
@@ -288,6 +300,7 @@ export interface FileRouteTypes {
     | '/_authenticated/territorio'
     | '/_authenticated/usuarios'
     | '/_authenticated/veiculos-abandonados'
+    | '/_authenticated/veiculos-recolhidos'
     | '/_authenticated/agenda-educativa/$id'
     | '/_authenticated/documento-veiculo/$id'
     | '/_authenticated/ordens-servico/nova'
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVeiculosAbandonadosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/veiculos-recolhidos': {
+      id: '/_authenticated/veiculos-recolhidos'
+      path: '/veiculos-recolhidos'
+      fullPath: '/veiculos-recolhidos'
+      preLoaderRoute: typeof AuthenticatedVeiculosRecolhidosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/agenda-educativa/$id': {
       id: '/_authenticated/agenda-educativa/$id'
       path: '/agenda-educativa/$id'
@@ -475,6 +495,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTerritorioRoute: typeof AuthenticatedTerritorioRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVeiculosAbandonadosRoute: typeof AuthenticatedVeiculosAbandonadosRoute
+  AuthenticatedVeiculosRecolhidosRoute: typeof AuthenticatedVeiculosRecolhidosRoute
   AuthenticatedAgendaEducativaIdRoute: typeof AuthenticatedAgendaEducativaIdRoute
   AuthenticatedDocumentoVeiculoIdRoute: typeof AuthenticatedDocumentoVeiculoIdRoute
   AuthenticatedOrdensServicoNovaRoute: typeof AuthenticatedOrdensServicoNovaRoute
@@ -496,6 +517,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTerritorioRoute: AuthenticatedTerritorioRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVeiculosAbandonadosRoute: AuthenticatedVeiculosAbandonadosRoute,
+  AuthenticatedVeiculosRecolhidosRoute: AuthenticatedVeiculosRecolhidosRoute,
   AuthenticatedAgendaEducativaIdRoute: AuthenticatedAgendaEducativaIdRoute,
   AuthenticatedDocumentoVeiculoIdRoute: AuthenticatedDocumentoVeiculoIdRoute,
   AuthenticatedOrdensServicoNovaRoute: AuthenticatedOrdensServicoNovaRoute,
