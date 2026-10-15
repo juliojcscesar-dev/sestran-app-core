@@ -101,6 +101,34 @@ function VeiculosRecolhidos() {
   const novo = () => { setEditId(null); setF(vazio()); setAberto(true); };
   const editar = (r: Registro) => { const { id, criado_por, criado_em, atualizado_em, ...resto } = r; void criado_por; void criado_em; void atualizado_em; setEditId(id); setF({ ...(Object.fromEntries(Object.entries(resto).map(([k, v]) => [k, v ?? ""])) as unknown as Form), hora_recolhimento: r.hora_recolhimento?.slice(0, 5) ?? "", checklist: checklistDe(r) }); setAberto(true); };
   const set = (k: keyof Form) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const [buscando, setBuscando] = useState(false);
+  const buscarAbandonado = async (origem: "placa" | "chassi") => {
+    const termo = (origem === "placa" ? f.placa : f.chassi)?.trim();
+    if (!termo || termo.length < 3 || buscando) return;
+    setBuscando(true);
+    try {
+      const col = origem === "placa" ? "placa" : "chassi";
+      const valor = origem === "placa" ? termo.toUpperCase() : termo;
+      const { data, error } = await supabase.from("veiculos_abandonados").select("placa, chassi, marca, modelo, cor, endereco, bairro, data_notificacao, observacoes, situacao, status").ilike(col, valor).limit(5);
+      if (error) throw error;
+      const achados = data ?? [];
+      if (!achados.length) { toast.info("Nenhum veículo abandonado encontrado com essa identificação."); return; }
+      const a = achados[0];
+      setF((p) => ({
+        ...p,
+        placa: a.placa ?? p.placa,
+        chassi: a.chassi ?? p.chassi,
+        marca: a.marca ?? p.marca,
+        modelo: a.modelo ?? p.modelo,
+        cor: a.cor ?? p.cor,
+        local_encontrado: p.local_encontrado || [a.endereco, a.bairro].filter(Boolean).join(" - "),
+        data_notificacao: a.data_notificacao ?? p.data_notificacao,
+        observacoes: p.observacoes || (a.observacoes ?? ""),
+      }));
+      toast.success(`Dados de ${a.placa ?? `${a.marca} ${a.modelo}`} preenchidos a partir de Veículos Abandonados.`);
+    } catch { toast.error("Não foi possível consultar Veículos Abandonados."); }
+    finally { setBuscando(false); }
+  };
   const setItem = (i: number, k: keyof ItemCheck, v: string) => setF((p) => ({ ...p, checklist: p.checklist.map((c, j) => (j === i ? { ...c, [k]: v } : c)) }));
 
   const hoje = new Date();
