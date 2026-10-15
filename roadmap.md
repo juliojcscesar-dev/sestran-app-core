@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Imagens nas observações de veículos recolhidos (15/10)
+- [ ] Permitir adicionar/remover até três imagens e salvar junto ao cadastro
+- [ ] Aplicar limite 7 × 9 cm e texto acima na edição e ficha impressa
+- [ ] Verificar salvamento, reabertura, remoção e impressão no navegador
+
 ## Ações e totais da Educação (14/10)
 - [x] Incluir visualizar, editar, duplicar, documentos, arquivar e excluir em Todas as atividades
 - [x] Mostrar totais Em Andamento, Agendada e Concluída sem limitar ao mês do calendário
