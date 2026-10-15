@@ -101,6 +101,34 @@ function VeiculosRecolhidos() {
   const novo = () => { setEditId(null); setF(vazio()); setAberto(true); };
   const editar = (r: Registro) => { const { id, criado_por, criado_em, atualizado_em, ...resto } = r; void criado_por; void criado_em; void atualizado_em; setEditId(id); setF({ ...(Object.fromEntries(Object.entries(resto).map(([k, v]) => [k, v ?? ""])) as unknown as Form), hora_recolhimento: r.hora_recolhimento?.slice(0, 5) ?? "", checklist: checklistDe(r) }); setAberto(true); };
   const set = (k: keyof Form) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const [buscando, setBuscando] = useState(false);
+  const buscarAbandonado = async (origem: "placa" | "chassi") => {
+    const termo = (origem === "placa" ? f.placa : f.chassi)?.trim();
+    if (!termo || termo.length < 3 || buscando) return;
+    setBuscando(true);
+    try {
+      const col = origem === "placa" ? "placa" : "chassi";
+      const valor = origem === "placa" ? termo.toUpperCase() : termo;
+      const { data, error } = await supabase.from("veiculos_abandonados").select("placa, chassi, marca, modelo, cor, endereco, bairro, data_notificacao, observacoes, situacao, status").ilike(col, valor).limit(5);
+      if (error) throw error;
+      const achados = data ?? [];
+      if (!achados.length) { toast.info("Nenhum veículo abandonado encontrado com essa identificação."); return; }
+      const a = achados[0]!;
+      setF((p) => ({
+        ...p,
+        placa: a.placa ?? p.placa,
+        chassi: a.chassi ?? p.chassi,
+        marca: a.marca ?? p.marca,
+        modelo: a.modelo ?? p.modelo,
+        cor: a.cor ?? p.cor,
+        local_encontrado: p.local_encontrado || [a.endereco, a.bairro].filter(Boolean).join(" - "),
+        data_notificacao: a.data_notificacao ?? p.data_notificacao,
+        observacoes: p.observacoes || (a.observacoes ?? ""),
+      }));
+      toast.success(`Dados de ${a.placa ?? `${a.marca} ${a.modelo}`} preenchidos a partir de Veículos Abandonados.`);
+    } catch { toast.error("Não foi possível consultar Veículos Abandonados."); }
+    finally { setBuscando(false); }
+  };
   const setItem = (i: number, k: keyof ItemCheck, v: string) => setF((p) => ({ ...p, checklist: p.checklist.map((c, j) => (j === i ? { ...c, [k]: v } : c)) }));
 
   const hoje = new Date();
@@ -142,7 +170,7 @@ function VeiculosRecolhidos() {
 
     <Dialog open={aberto && opera} onOpenChange={setAberto}><DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle>{editId ? "Editar veículo" : "Cadastrar veículo"}</DialogTitle></DialogHeader>
       <div className="space-y-5 text-sm">
-        <section><h3 className="mb-2 font-semibold">1. Dados do veículo</h3><div className="grid gap-3 sm:grid-cols-3">{campo("Marca *", "marca")}{campo("Modelo *", "modelo")}{campo("Placa", "placa")}{campo("Chassi", "chassi")}{campo("Cor", "cor")}<div className="space-y-1"><Label>Categoria</Label><Sel v={f.categoria ?? ""} on={set("categoria")} ops={CATEGORIAS} /></div>{campo("Data da notificação", "data_notificacao", "date")}{campo("Data do recolhimento *", "data_recolhimento", "date")}{campo("Hora do recolhimento", "hora_recolhimento", "time")}{campo("Local onde foi encontrado", "local_encontrado", "text", "sm:col-span-3")}<div className="space-y-1"><Label>Motivo do recolhimento</Label><Sel v={f.motivo ?? ""} on={set("motivo")} ops={MOTIVOS} /></div>{campo("Agente responsável", "agente")}{campo("Nº auto/documento", "documento")}<div className="space-y-1 sm:col-span-3"><Label>Observações gerais</Label><Textarea value={f.observacoes ?? ""} onChange={(e) => set("observacoes")(e.target.value)} /></div></div></section>
+        <section><h3 className="mb-2 font-semibold">1. Dados do veículo</h3><div className="grid gap-3 sm:grid-cols-3">{campo("Marca *", "marca")}{campo("Modelo *", "modelo")}<div className="space-y-1"><Label>Placa</Label><Input value={f.placa ?? ""} onChange={(e) => set("placa")(e.target.value)} onBlur={() => void buscarAbandonado("placa")} placeholder="ABC1D23" /></div><div className="space-y-1"><Label>Chassi</Label><Input value={f.chassi ?? ""} onChange={(e) => set("chassi")(e.target.value)} onBlur={() => void buscarAbandonado("chassi")} /></div>{campo("Cor", "cor")}<div className="space-y-1"><Label>Categoria</Label><Sel v={f.categoria ?? ""} on={set("categoria")} ops={CATEGORIAS} /></div>{campo("Data da notificação", "data_notificacao", "date")}{campo("Data do recolhimento *", "data_recolhimento", "date")}{campo("Hora do recolhimento", "hora_recolhimento", "time")}{campo("Local onde foi encontrado", "local_encontrado", "text", "sm:col-span-3")}<div className="space-y-1"><Label>Motivo do recolhimento</Label><Sel v={f.motivo ?? ""} on={set("motivo")} ops={MOTIVOS} /></div>{campo("Agente responsável", "agente")}{campo("Nº auto/documento", "documento")}<div className="space-y-1 sm:col-span-3"><Label>Observações gerais</Label><Textarea value={f.observacoes ?? ""} onChange={(e) => set("observacoes")(e.target.value)} /></div></div></section>
         <section><h3 className="mb-2 font-semibold">2. Dados do proprietário</h3><div className="grid gap-3 sm:grid-cols-3">{campo("Nome completo", "proprietario")}<div className="space-y-1"><Label>Tipo de documento</Label><Sel v={f.tipo_documento ?? ""} on={set("tipo_documento")} ops={DOCS} /></div>{campo("Número do documento", "numero_documento")}{campo("Endereço completo", "endereco", "text", "sm:col-span-2")}{campo("Telefone", "telefone")}</div></section>
         <section><h3 className="mb-2 font-semibold">3. Checklist de vistoria</h3><div className="overflow-x-auto rounded-md border"><table className="w-full min-w-[720px] text-sm"><thead className="bg-muted"><tr><th className="p-2 text-left">Item</th><th className="p-2 text-left">Presença</th><th className="p-2 text-left">Estado</th><th className="p-2 text-left">Observação</th></tr></thead><tbody>{f.checklist.map((c, i) => <tr key={c.item} className="border-t"><td className="p-2">{c.item}</td><td className="p-2"><Sel v={c.presenca} on={(v) => setItem(i, "presenca", v)} ops={PRESENCA} /></td><td className="p-2"><Sel v={c.estado} on={(v) => setItem(i, "estado", v)} ops={ESTADO} /></td><td className="p-2"><Input value={c.obs} onChange={(e) => setItem(i, "obs", e.target.value)} /></td></tr>)}</tbody></table></div>
           <div className="mt-3 space-y-1"><Label>Observações gerais da vistoria</Label><Textarea value={f.obs_vistoria ?? ""} onChange={(e) => set("obs_vistoria")(e.target.value)} /></div>
