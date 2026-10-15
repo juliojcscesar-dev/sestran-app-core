@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
+import { ImagensObservacoes } from "@/components/veiculos/ImagensObservacoes";
+import { imagensRecolhido } from "@/lib/recolhidos-imagens";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,26 +44,31 @@ export const Route = createFileRoute("/_authenticated/veiculos-recolhidos")({
 
 const dataBR = (s?: string | null) => (s ? new Date(`${s}T12:00:00`).toLocaleDateString("pt-BR") : "—");
 function diasNoPatio(r: Registro) { const i = new Date(`${r.data_recolhimento}T00:00:00`); const h = new Date(); h.setHours(0, 0, 0, 0); return Math.max(0, Math.floor((h.getTime() - i.getTime()) / 86400000)); }
-function checklistDe(r?: Partial<Registro> | null): ItemCheck[] { const l = (Array.isArray(r?.checklist) ? r!.checklist : []) as unknown as ItemCheck[]; return ITENS.map((item) => { const x = l.find((c) => c.item === item); return { item, presenca: x?.presenca ?? "", estado: x?.estado ?? "", obs: x?.obs ?? "" }; }); }
+function checklistDe(r?: Partial<Registro> | null): ItemCheck[] { const l = (Array.isArray(r?.checklist) ? r?.checklist : []) as unknown as ItemCheck[]; return ITENS.map((item) => { const x = l.find((c) => c.item === item); return { item, presenca: x?.presenca ?? "", estado: x?.estado ?? "", obs: x?.obs ?? "" }; }); }
 const checklistCompleto = (r: Registro) => checklistDe(r).every((c) => c.presenca && c.presenca !== "Não verificado" && c.estado);
 function Selo({ r }: { r: Registro }) { const d = diasNoPatio(r); if (r.situacao === "Liberado") return <Badge variant="outline" className="border-green-600/40 text-green-700">Liberado</Badge>; if (d >= 90) return <Badge variant="destructive">90 dias ou mais</Badge>; if (d >= 75) return <Badge variant="outline" className="border-amber-500/50 text-amber-700">Prazo próximo</Badge>; return <Badge variant="secondary">{r.situacao}</Badge>; }
 
-const esc = (v: unknown) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+const esc = (v: unknown) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 function imprimir(titulo: string, corpo: string) {
   const w = window.open("", "_blank"); if (!w) { toast.error("Permita janelas pop-up para imprimir."); return; }
-  w.document.write(`<!doctype html><html><head><title>${esc(titulo)}</title><style>body{font:12px Arial,sans-serif;margin:24px;color:#111}header{text-align:center;margin-bottom:12px}header img{max-height:70px}h1{font-size:16px;margin:6px 0}h2{font-size:13px;margin:14px 0 6px;border-bottom:1px solid #999}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:4px 6px;text-align:left;vertical-align:top}th{background:#eee}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px}.ass{margin-top:40px;text-align:center}</style></head><body><header><img src="/assets/logo-header.png" alt=""/><h1>${esc(titulo)}</h1></header>${corpo}<script>window.onload=()=>{window.print()}<\/script></body></html>`);
+  w.document.write(`<!doctype html><html><head><title>${esc(titulo)}</title><style>body{font:12px Arial,sans-serif;margin:24px;color:#111}header{text-align:center;margin-bottom:12px}header img{max-height:70px}h1{font-size:16px;margin:6px 0}h2{font-size:13px;margin:14px 0 6px;border-bottom:1px solid #999}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:4px 6px;text-align:left;vertical-align:top}th{background:#eee}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px}.ass{margin-top:40px;text-align:center}.observacoes{margin:12px 0;break-inside:avoid}.observacoes p{white-space:pre-wrap;overflow-wrap:anywhere}.observacoes-imagens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:3mm}.observacoes-imagens img{display:block;width:auto;height:auto;max-width:min(100%,7cm);max-height:9cm;object-fit:contain;margin:0 auto}@page{size:A4;margin:12mm}</style></head><body><header><img src="/assets/logo-header.png" alt=""/><h1>${esc(titulo)}</h1></header>${corpo}<script>window.onload=()=>{window.print()}<\/script></body></html>`);
   w.document.close();
+}
+function observacoesFicha(r: Registro) {
+  const imagens = imagensRecolhido(r.observacoes_imagens);
+  if (!r.observacoes && !imagens.length) return "";
+  return `<section class="observacoes"><b>Observações:</b>${r.observacoes ? `<p>${esc(r.observacoes)}</p>` : ""}${imagens.length ? `<div class="observacoes-imagens">${imagens.map((src, i) => `<img src="${src}" alt="Imagem ${i + 1} das observações"/>`).join("")}</div>` : ""}</section>`;
 }
 function ficha(r: Registro) {
   const c = (l: string, v: unknown) => `<div><b>${l}:</b> ${esc(v || "—")}</div>`;
-  return `<h2>1. Dados do veículo</h2><div class="g">${c("Marca", r.marca)}${c("Modelo", r.modelo)}${c("Placa", r.placa)}${c("Chassi", r.chassi)}${c("Cor", r.cor)}${c("Categoria", r.categoria)}${c("Notificação", dataBR(r.data_notificacao))}${c("Recolhimento", `${dataBR(r.data_recolhimento)} ${r.hora_recolhimento?.slice(0, 5) ?? ""}`)}${c("Dias no pátio", diasNoPatio(r))}${c("Local", r.local_encontrado)}${c("Motivo", r.motivo)}${c("Agente", r.agente)}${c("Nº auto/documento", r.documento)}${c("Situação", r.situacao)}</div>${r.observacoes ? `<p><b>Observações:</b> ${esc(r.observacoes)}</p>` : ""}
+  return `<h2>1. Dados do veículo</h2><div class="g">${c("Marca", r.marca)}${c("Modelo", r.modelo)}${c("Placa", r.placa)}${c("Chassi", r.chassi)}${c("Cor", r.cor)}${c("Categoria", r.categoria)}${c("Notificação", dataBR(r.data_notificacao))}${c("Recolhimento", `${dataBR(r.data_recolhimento)} ${r.hora_recolhimento?.slice(0, 5) ?? ""}`)}${c("Dias no pátio", diasNoPatio(r))}${c("Local", r.local_encontrado)}${c("Motivo", r.motivo)}${c("Agente", r.agente)}${c("Nº auto/documento", r.documento)}${c("Situação", r.situacao)}</div>${observacoesFicha(r)}
   <h2>2. Proprietário</h2><div class="g">${c("Nome", r.proprietario)}${c(r.tipo_documento || "Documento", r.numero_documento)}${c("Telefone", r.telefone)}${c("Endereço", r.endereco)}</div>
   <h2>3. Checklist de vistoria</h2><table><thead><tr><th>Item</th><th>Presença</th><th>Estado</th><th>Observação</th></tr></thead><tbody>${checklistDe(r).map((i) => `<tr><td>${esc(i.item)}</td><td>${esc(i.presenca || "—")}</td><td>${esc(i.estado || "—")}</td><td>${esc(i.obs)}</td></tr>`).join("")}</tbody></table>
   ${r.obs_vistoria ? `<p><b>Observações da vistoria:</b> ${esc(r.obs_vistoria)}</p>` : ""}<div class="g">${c("Vistoriador", r.vistoriador)}${c("Data da vistoria", dataBR(r.data_vistoria))}</div><div class="ass">______________________________<br/>${esc(r.vistoriador || "Responsável pela vistoria")}</div>`;
 }
 
-type Form = Omit<Registro, "id" | "criado_por" | "criado_em" | "atualizado_em" | "checklist"> & { checklist: ItemCheck[] };
-const vazio = (): Form => ({ marca: "", modelo: "", placa: "", chassi: "", cor: "", categoria: "", data_notificacao: "", data_recolhimento: new Date().toISOString().slice(0, 10), hora_recolhimento: "", local_encontrado: "", motivo: "Abandono", agente: "", documento: "", observacoes: "", proprietario: "", tipo_documento: "", numero_documento: "", endereco: "", telefone: "", obs_vistoria: "", vistoriador: "", data_vistoria: "", situacao: "No pátio", checklist: checklistDe(null) });
+type Form = Omit<Registro, "id" | "criado_por" | "criado_em" | "atualizado_em" | "checklist" | "observacoes_imagens"> & { checklist: ItemCheck[]; observacoes_imagens: string[] };
+const vazio = (): Form => ({ marca: "", modelo: "", placa: "", chassi: "", cor: "", categoria: "", data_notificacao: "", data_recolhimento: new Date().toISOString().slice(0, 10), hora_recolhimento: "", local_encontrado: "", motivo: "Abandono", agente: "", documento: "", observacoes: "", observacoes_imagens: [], proprietario: "", tipo_documento: "", numero_documento: "", endereco: "", telefone: "", obs_vistoria: "", vistoriador: "", data_vistoria: "", situacao: "No pátio", checklist: checklistDe(null) });
 
 function Sel({ v, on, ops, ph = "Selecione" }: { v: string; on: (s: string) => void; ops: string[]; ph?: string }) {
   return <select className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={v} onChange={(e) => on(e.target.value)}><option value="">{ph}</option>{ops.map((o) => <option key={o}>{o}</option>)}</select>;
@@ -76,6 +83,7 @@ function VeiculosRecolhidos() {
   const [busca, setBusca] = useState(""); const [filtro, setFiltro] = useState("");
   const [rDe, setRDe] = useState(""); const [rAte, setRAte] = useState(""); const [rSit, setRSit] = useState("");
   const [aberto, setAberto] = useState(false); const [editId, setEditId] = useState<string | null>(null);
+  const [processandoImagens, setProcessandoImagens] = useState(false);
   const [f, setF] = useState<Form>(vazio()); const [excluir, setExcluir] = useState<Registro | null>(null);
 
   const q = useQuery({ queryKey: ["veiculos-recolhidos"], queryFn: async () => { const { data, error } = await supabase.from("veiculos_recolhidos").select("*").order("data_recolhimento", { ascending: false }); if (error) throw error; return data; } });
@@ -99,7 +107,7 @@ function VeiculosRecolhidos() {
   });
 
   const novo = () => { setEditId(null); setF(vazio()); setAberto(true); };
-  const editar = (r: Registro) => { const { id, criado_por, criado_em, atualizado_em, ...resto } = r; void criado_por; void criado_em; void atualizado_em; setEditId(id); setF({ ...(Object.fromEntries(Object.entries(resto).map(([k, v]) => [k, v ?? ""])) as unknown as Form), hora_recolhimento: r.hora_recolhimento?.slice(0, 5) ?? "", checklist: checklistDe(r) }); setAberto(true); };
+  const editar = (r: Registro) => { const { id, criado_por, criado_em, atualizado_em, ...resto } = r; void criado_por; void criado_em; void atualizado_em; setEditId(id); setF({ ...(Object.fromEntries(Object.entries(resto).map(([k, v]) => [k, v ?? ""])) as unknown as Form), hora_recolhimento: r.hora_recolhimento?.slice(0, 5) ?? "", observacoes_imagens: imagensRecolhido(r.observacoes_imagens), checklist: checklistDe(r) }); setAberto(true); };
   const set = (k: keyof Form) => (v: string) => setF((p) => ({ ...p, [k]: v }));
   const [buscando, setBuscando] = useState(false);
   const buscarAbandonado = async (origem: "placa" | "chassi") => {
@@ -113,7 +121,8 @@ function VeiculosRecolhidos() {
       if (error) throw error;
       const achados = data ?? [];
       if (!achados.length) { toast.info("Nenhum veículo abandonado encontrado com essa identificação."); return; }
-      const a = achados[0]!;
+      const a = achados[0];
+      if (!a) return;
       setF((p) => ({
         ...p,
         placa: a.placa ?? p.placa,
@@ -168,15 +177,15 @@ function VeiculosRecolhidos() {
       </TabsContent>
     </Tabs>
 
-    <Dialog open={aberto && opera} onOpenChange={setAberto}><DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle>{editId ? "Editar veículo" : "Cadastrar veículo"}</DialogTitle></DialogHeader>
+    <Dialog open={aberto && opera} onOpenChange={setAberto}><DialogContent className="max-h-[92vh] min-w-0 max-w-[calc(100vw-2rem)] grid-cols-[minmax(0,1fr)] overflow-y-auto sm:max-w-5xl"><DialogHeader><DialogTitle>{editId ? "Editar veículo" : "Cadastrar veículo"}</DialogTitle></DialogHeader>
       <div className="space-y-5 text-sm">
-        <section><h3 className="mb-2 font-semibold">1. Dados do veículo</h3><div className="grid gap-3 sm:grid-cols-3">{campo("Marca *", "marca")}{campo("Modelo *", "modelo")}<div className="space-y-1"><Label>Placa</Label><Input value={f.placa ?? ""} onChange={(e) => set("placa")(e.target.value)} onBlur={() => void buscarAbandonado("placa")} placeholder="ABC1D23" /></div><div className="space-y-1"><Label>Chassi</Label><Input value={f.chassi ?? ""} onChange={(e) => set("chassi")(e.target.value)} onBlur={() => void buscarAbandonado("chassi")} /></div>{campo("Cor", "cor")}<div className="space-y-1"><Label>Categoria</Label><Sel v={f.categoria ?? ""} on={set("categoria")} ops={CATEGORIAS} /></div>{campo("Data da notificação", "data_notificacao", "date")}{campo("Data do recolhimento *", "data_recolhimento", "date")}{campo("Hora do recolhimento", "hora_recolhimento", "time")}{campo("Local onde foi encontrado", "local_encontrado", "text", "sm:col-span-3")}<div className="space-y-1"><Label>Motivo do recolhimento</Label><Sel v={f.motivo ?? ""} on={set("motivo")} ops={MOTIVOS} /></div>{campo("Agente responsável", "agente")}{campo("Nº auto/documento", "documento")}<div className="space-y-1 sm:col-span-3"><Label>Observações gerais</Label><Textarea value={f.observacoes ?? ""} onChange={(e) => set("observacoes")(e.target.value)} /></div></div></section>
+        <section><h3 className="mb-2 font-semibold">1. Dados do veículo</h3><div className="grid gap-3 sm:grid-cols-3">{campo("Marca *", "marca")}{campo("Modelo *", "modelo")}<div className="space-y-1"><Label>Placa</Label><Input value={f.placa ?? ""} onChange={(e) => set("placa")(e.target.value)} onBlur={() => void buscarAbandonado("placa")} placeholder="ABC1D23" /></div><div className="space-y-1"><Label>Chassi</Label><Input value={f.chassi ?? ""} onChange={(e) => set("chassi")(e.target.value)} onBlur={() => void buscarAbandonado("chassi")} /></div>{campo("Cor", "cor")}<div className="space-y-1"><Label>Categoria</Label><Sel v={f.categoria ?? ""} on={set("categoria")} ops={CATEGORIAS} /></div>{campo("Data da notificação", "data_notificacao", "date")}{campo("Data do recolhimento *", "data_recolhimento", "date")}{campo("Hora do recolhimento", "hora_recolhimento", "time")}{campo("Local onde foi encontrado", "local_encontrado", "text", "sm:col-span-3")}<div className="space-y-1"><Label>Motivo do recolhimento</Label><Sel v={f.motivo ?? ""} on={set("motivo")} ops={MOTIVOS} /></div>{campo("Agente responsável", "agente")}{campo("Nº auto/documento", "documento")}<div className="space-y-1 sm:col-span-3"><Label htmlFor="observacoes-recolhido">Observações gerais</Label><Textarea id="observacoes-recolhido" value={f.observacoes ?? ""} onChange={(e) => set("observacoes")(e.target.value)} /><ImagensObservacoes imagens={f.observacoes_imagens} onChange={(imagens) => setF((p) => ({ ...p, observacoes_imagens: imagens }))} onOcupado={setProcessandoImagens} /></div></div></section>
         <section><h3 className="mb-2 font-semibold">2. Dados do proprietário</h3><div className="grid gap-3 sm:grid-cols-3">{campo("Nome completo", "proprietario")}<div className="space-y-1"><Label>Tipo de documento</Label><Sel v={f.tipo_documento ?? ""} on={set("tipo_documento")} ops={DOCS} /></div>{campo("Número do documento", "numero_documento")}{campo("Endereço completo", "endereco", "text", "sm:col-span-2")}{campo("Telefone", "telefone")}</div></section>
         <section><h3 className="mb-2 font-semibold">3. Checklist de vistoria</h3><div className="overflow-x-auto rounded-md border"><table className="w-full min-w-[720px] text-sm"><thead className="bg-muted"><tr><th className="p-2 text-left">Item</th><th className="p-2 text-left">Presença</th><th className="p-2 text-left">Estado</th><th className="p-2 text-left">Observação</th></tr></thead><tbody>{f.checklist.map((c, i) => <tr key={c.item} className="border-t"><td className="p-2">{c.item}</td><td className="p-2"><Sel v={c.presenca} on={(v) => setItem(i, "presenca", v)} ops={PRESENCA} /></td><td className="p-2"><Sel v={c.estado} on={(v) => setItem(i, "estado", v)} ops={ESTADO} /></td><td className="p-2"><Input value={c.obs} onChange={(e) => setItem(i, "obs", e.target.value)} /></td></tr>)}</tbody></table></div>
           <div className="mt-3 space-y-1"><Label>Observações gerais da vistoria</Label><Textarea value={f.obs_vistoria ?? ""} onChange={(e) => set("obs_vistoria")(e.target.value)} /></div>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">{campo("Responsável pela vistoria", "vistoriador")}{campo("Data da vistoria", "data_vistoria", "date")}<div className="space-y-1"><Label>Situação</Label><Sel v={f.situacao} on={set("situacao")} ops={SITUACOES} /></div></div></section>
       </div>
-      <DialogFooter><Button variant="outline" onClick={() => setAberto(false)}>Cancelar</Button><Button disabled={salvar.isPending} onClick={() => salvar.mutate()}>{salvar.isPending ? "Salvando…" : "Salvar veículo"}</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" onClick={() => setAberto(false)}>Cancelar</Button><Button disabled={salvar.isPending || processandoImagens} onClick={() => salvar.mutate()}>{salvar.isPending ? "Salvando…" : "Salvar veículo"}</Button></DialogFooter>
     </DialogContent></Dialog>
 
     <AlertDialog open={Boolean(excluir)} onOpenChange={(v) => !v && setExcluir(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir registro?</AlertDialogTitle><AlertDialogDescription>O veículo {excluir?.placa ?? `${excluir?.marca} ${excluir?.modelo}`} e seu checklist serão removidos definitivamente.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={(e) => { e.preventDefault(); if (excluir) remover.mutate(excluir.id); }}>Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>

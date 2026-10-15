@@ -1278,6 +1278,7 @@ export type Database = {
           numero_documento: string | null
           obs_vistoria: string | null
           observacoes: string | null
+          observacoes_imagens: Json
           placa: string | null
           proprietario: string | null
           situacao: string
@@ -1308,6 +1309,7 @@ export type Database = {
           numero_documento?: string | null
           obs_vistoria?: string | null
           observacoes?: string | null
+          observacoes_imagens?: Json
           placa?: string | null
           proprietario?: string | null
           situacao?: string
@@ -1338,6 +1340,7 @@ export type Database = {
           numero_documento?: string | null
           obs_vistoria?: string | null
           observacoes?: string | null
+          observacoes_imagens?: Json
           placa?: string | null
           proprietario?: string | null
           situacao?: string
