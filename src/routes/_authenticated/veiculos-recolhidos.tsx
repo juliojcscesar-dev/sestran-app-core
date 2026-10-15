@@ -84,8 +84,8 @@ function VeiculosRecolhidos() {
     mutationFn: async () => {
       if (!f.marca.trim() || !f.modelo.trim() || !f.data_recolhimento) throw new Error("Preencha marca, modelo e data do recolhimento.");
       const limpo = Object.fromEntries(Object.entries(f).map(([k, v]) => [k, typeof v === "string" ? (v.trim() || null) : v])) as Record<string, unknown>;
-      limpo.placa = typeof limpo.placa === "string" ? limpo.placa.toUpperCase() : null;
-      const payload = { ...limpo, marca: f.marca.trim(), modelo: f.modelo.trim(), situacao: f.situacao || "No pátio", checklist: f.checklist } as Database["public"]["Tables"]["veiculos_recolhidos"]["Insert"];
+      limpo["placa"] = typeof limpo["placa"] === "string" ? limpo["placa"].toUpperCase() : null;
+      const payload = { ...limpo, marca: f.marca.trim(), modelo: f.modelo.trim(), situacao: f.situacao || "No pátio", checklist: f.checklist } as unknown as Database["public"]["Tables"]["veiculos_recolhidos"]["Insert"];
       const { error } = editId ? await supabase.from("veiculos_recolhidos").update(payload).eq("id", editId) : await supabase.from("veiculos_recolhidos").insert(payload);
       if (error) throw new Error("Não foi possível salvar. Verifique sua permissão.");
     },
