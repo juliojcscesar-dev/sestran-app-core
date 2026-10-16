@@ -199,7 +199,7 @@ function PaginaCredenciais() {
               {docs.map((d, i) => (
                 <label key={d} className="flex items-start gap-2 text-sm"><Checkbox className="mt-0.5" checked={Boolean(f.checklist[i])} onCheckedChange={(v) => { const c = [...f.checklist]; c[i] = v === true; alterar({ checklist: c }); }} />{d}</label>
               ))}
-              <p className={`rounded-md px-3 py-2 text-sm font-semibold ${completo ? "bg-status-success/15 text-status-success" : "bg-accent/20 text-accent-foreground"}`}>{completo ? "Conferência completa" : `Conferência pendente (${conferidos}/${docs.length})`}</p>
+              <p className={`rounded-md px-3 py-2 text-sm font-semibold ${completo ? "bg-primary/10 text-primary" : "bg-accent/20 text-accent-foreground"}`}>{completo ? "Conferência completa" : `Conferência pendente (${conferidos}/${docs.length})`}</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5"><Label htmlFor="conf">Servidor responsável (opcional)</Label><Input id="conf" value={f.conferente} onChange={(e) => alterar({ conferente: e.target.value })} /></div>
                 <div className="space-y-1.5"><Label htmlFor="dconf">Data da conferência (opcional)</Label><Input id="dconf" type="date" value={f.data_conferencia} onChange={(e) => alterar({ data_conferencia: e.target.value })} /></div>
