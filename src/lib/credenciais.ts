@@ -80,14 +80,14 @@ export function camposCredencial(c: DadosCredencial): Campo[] {
   const yData = 242.6 + dy;
   return [
     { texto: c.numero_registro ?? "", x: (regIni + regFim) / 2, y: 178, tamanho: 12, centro: true },
-    { texto: ea || String(new Date().getFullYear()), x: regFim + 1, y: 179.5, tamanho: 12 },
+    { texto: ea || String(new Date().getFullYear()), x: regFim + 4.5, y: 179.5, tamanho: 12 },
     { texto: (c.nome ?? "").toLocaleUpperCase("pt-BR"), x: 170, y: (pcd ? 205.5 : 215.1), tamanho: 11 },
-    { texto: ed, x: 230 + dx, y: yData, tamanho: 12, centro: true },
-    { texto: em, x: 254.5 + dx, y: yData, tamanho: 12, centro: true },
-    { texto: ea, x: 272 + dx, y: yData, tamanho: 12 },
-    { texto: vd, x: 383.5 + dx, y: yData, tamanho: 12, centro: true },
-    { texto: vm, x: 405.6 + dx, y: yData, tamanho: 12, centro: true },
-    { texto: va, x: 421 + dx, y: yData, tamanho: 12 },
+    { texto: ed, x: 230 + dx, y: yData, tamanho: 11, centro: true },
+    { texto: em, x: 254.5 + dx, y: yData, tamanho: 11, centro: true },
+    { texto: ea, x: 271.5 + dx, y: yData, tamanho: 10.5 },
+    { texto: vd, x: 383.5 + dx, y: yData, tamanho: 11, centro: true },
+    { texto: vm, x: 405.6 + dx, y: yData, tamanho: 11, centro: true },
+    { texto: va, x: 420.5 + dx, y: yData, tamanho: 10.5 },
   ].filter((c) => c.texto);
 }
 
@@ -127,13 +127,13 @@ export async function gerarCredencialDocx(c: DadosCredencial) {
     })],
   });
   const campos = camposCredencial(c).map((f) => {
-    const largura = f.centro ? 60 : f.tamanho === 11 ? 330 : 40;
+    const largura = f.centro ? 60 : f.texto.length > 5 ? 330 : 40;
     const x = f.centro ? f.x - largura / 2 : f.x;
     return new d.Paragraph({
       frame: { type: "absolute", position: { x: tw(x), y: tw(f.y - f.tamanho * 0.95) }, width: tw(largura), height: tw(f.tamanho * 1.25), anchor: { horizontal: d.FrameAnchorType.PAGE, vertical: d.FrameAnchorType.PAGE } },
       alignment: f.centro ? d.AlignmentType.CENTER : d.AlignmentType.LEFT,
       spacing: { before: 0, after: 0, line: tw(f.tamanho * 1.2), lineRule: d.LineRuleType.EXACT },
-      children: [new d.TextRun({ text: f.texto, bold: true, font: "Arial", size: f.tamanho * 2 })],
+      children: [new d.TextRun({ text: f.texto, bold: true, font: "Arial", size: Math.round(f.tamanho * 2) })],
     });
   });
   const documento = new d.Document({
