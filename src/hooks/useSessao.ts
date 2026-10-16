@@ -21,7 +21,9 @@ export function useSessao() {
       const user = userData.user;
       if (!user) return null;
 
-      void supabase.rpc("atualizar_situacoes_automaticas");
+      // A chamada só é enviada quando aguardada; falhas não bloqueiam a sessão.
+      const atualizacao = await supabase.rpc("atualizar_situacoes_automaticas");
+      if (atualizacao.error) console.warn("Situações automáticas:", atualizacao.error.message);
       const [perfilQ, papeisQ, permissoesQ] = await Promise.all([
         supabase
           .from("profiles")
