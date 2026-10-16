@@ -80,7 +80,7 @@ export function camposCredencial(c: DadosCredencial): Campo[] {
   const yData = 242.6 + dy;
   return [
     { texto: c.numero_registro ?? "", x: (regIni + regFim) / 2, y: 178, tamanho: 12, centro: true },
-    { texto: ea || String(new Date().getFullYear()), x: (pcd ? 407.5 : 405.7) - 21.8, y: 179.5, tamanho: 12 },
+    { texto: ea || String(new Date().getFullYear()), x: (pcd ? 407.5 : 405.7) - 26.8, y: 179.5, tamanho: 12 },
     { texto: (c.nome ?? "").toLocaleUpperCase("pt-BR"), x: 170, y: (pcd ? 205.5 : 215.1), tamanho: 11 },
     { texto: ed, x: 230 + dx, y: yData, tamanho: 11, centro: true },
     { texto: em, x: 254.5 + dx, y: yData, tamanho: 11, centro: true },
