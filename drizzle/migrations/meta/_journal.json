@@ -162,6 +162,13 @@
       "when": 1792169438815,
       "tag": "0022_credenciais_vagas",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792171016040,
+      "tag": "0023_situacao_os_por_dia",
+      "breakpoints": true
     }
   ]
 }
