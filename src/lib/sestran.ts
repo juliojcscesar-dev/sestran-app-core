@@ -21,6 +21,7 @@ export const MODULOS: ModuloNav[] = [
   { titulo: "Veículos Abandonados", href: "/veiculos-abandonados", icone: "Car", disponivel: true },
   { titulo: "Veículos Recolhidos", href: "/veiculos-recolhidos", icone: "ClipboardCheck", disponivel: true },
   { titulo: "Educação no Trânsito", href: "/educacao-transito", icone: "GraduationCap", disponivel: true },
+  { titulo: "Credenciais de Vagas", href: "/credenciais", icone: "Accessibility", disponivel: true },
   {
     titulo: "Usuários e Acessos",
     href: "/usuarios",

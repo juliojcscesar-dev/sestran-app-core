@@ -155,6 +155,13 @@
       "when": 1792073671525,
       "tag": "0021_imagens_observacoes_recolhidos",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792169438815,
+      "tag": "0022_credenciais_vagas",
+      "breakpoints": true
     }
   ]
 }
