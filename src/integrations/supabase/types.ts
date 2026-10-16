@@ -1469,6 +1469,10 @@ export type Database = {
       pode_operar: { Args: { _user_id: string }; Returns: boolean }
       resumo_alteracoes_hist: { Args: { alteracoes: Json }; Returns: Json }
       resumo_valor_hist: { Args: { v: Json }; Returns: string }
+      situacao_por_dia: {
+        Args: { _concluida: string; _data: string }
+        Returns: string
+      }
       situacao_por_horario: {
         Args: { _concluida: string; _data: string; _fim: string; _ini: string }
         Returns: string
