@@ -19,6 +19,8 @@ type Props = {
   buscar: (de?: string, ate?: string) => Promise<string[][]>;
   /** Nome base do arquivo gerado, sem extensão. */
   arquivo: string;
+  /** Texto do botão; padrão "Relatório". */
+  rotulo?: string;
 };
 
 /** Botão "Relatório" da página inicial do módulo: escolhe o período e gera PDF ou DOCX. */
@@ -28,7 +30,7 @@ export function RelatorioModulo(props: Props & { modulo: ModuloAcesso }) {
   return <RelatorioModuloLiberado {...props} />;
 }
 
-function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo }: Props) {
+function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo, rotulo = "Relatório" }: Props) {
   const [aberto, setAberto] = useState(false);
   const [tipo, setTipo] = useState<TipoPeriodo>("mes");
   const [dia, setDia] = useState(hojeIso());
@@ -72,7 +74,7 @@ function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo }: Props) {
     <>
       <Button type="button" variant="outline" onClick={() => setAberto(true)}>
         <BarChart3 className="mr-2 h-4 w-4" aria-hidden="true" />
-        Relatório
+        {rotulo}
       </Button>
       <Dialog open={aberto} onOpenChange={setAberto}>
         <DialogContent className="max-w-md">
