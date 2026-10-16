@@ -279,6 +279,84 @@ export type Database = {
         }
         Relationships: []
       }
+      credenciais_vagas: {
+        Row: {
+          atualizado_em: string
+          bairro: string | null
+          checklist: Json
+          conferente: string | null
+          criado_em: string
+          criado_por: string | null
+          data_conferencia: string | null
+          data_emissao: string
+          data_validade: string | null
+          endereco: string | null
+          id: string
+          nascimento: string | null
+          nome: string
+          numero: string | null
+          numero_documento: string
+          numero_registro: string | null
+          observacoes: string | null
+          permitir_sem_checklist: boolean
+          telefone: string | null
+          tempo_validade: string | null
+          tipo: string
+          tipo_documento: string
+          validade_manual: boolean
+        }
+        Insert: {
+          atualizado_em?: string
+          bairro?: string | null
+          checklist?: Json
+          conferente?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_conferencia?: string | null
+          data_emissao?: string
+          data_validade?: string | null
+          endereco?: string | null
+          id?: string
+          nascimento?: string | null
+          nome: string
+          numero?: string | null
+          numero_documento: string
+          numero_registro?: string | null
+          observacoes?: string | null
+          permitir_sem_checklist?: boolean
+          telefone?: string | null
+          tempo_validade?: string | null
+          tipo: string
+          tipo_documento?: string
+          validade_manual?: boolean
+        }
+        Update: {
+          atualizado_em?: string
+          bairro?: string | null
+          checklist?: Json
+          conferente?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_conferencia?: string | null
+          data_emissao?: string
+          data_validade?: string | null
+          endereco?: string | null
+          id?: string
+          nascimento?: string | null
+          nome?: string
+          numero?: string | null
+          numero_documento?: string
+          numero_registro?: string | null
+          observacoes?: string | null
+          permitir_sem_checklist?: boolean
+          telefone?: string | null
+          tempo_validade?: string | null
+          tipo?: string
+          tipo_documento?: string
+          validade_manual?: boolean
+        }
+        Relationships: []
+      }
       escolas: {
         Row: {
           ativo: boolean
