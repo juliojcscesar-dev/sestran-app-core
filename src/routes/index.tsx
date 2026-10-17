@@ -69,7 +69,7 @@ function PaginaInicial() {
               key={modulo}
               className="flex min-h-24 items-center justify-center rounded-md border border-border bg-card px-4 py-6 text-center"
             >
-              <span className="font-display text-base font-bold text-portal-title sm:text-lg">
+              <span className="font-display text-base font-bold text-brand-ink sm:text-lg">
                 {modulo}
               </span>
             </div>
