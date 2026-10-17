@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Central de Sistema e acesso (17/10)
+- [ ] Aplicar imagem enviada e cabeçalho na página pública inicial
+- [ ] Atualizar nome e logos na página de acesso sem alterar funções
+- [ ] Conferir imagem, navegação e formulário no navegador
+
 ## Imagens nas observações de veículos recolhidos (15/10)
 - [x] Permitir adicionar/remover até três imagens e salvar junto ao cadastro
 - [x] Aplicar limite 7 × 9 cm e texto acima na edição e ficha impressa
