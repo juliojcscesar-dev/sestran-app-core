@@ -16,6 +16,7 @@ import { STATUS_ACAO, STATUS_ACAO_LABEL, type CategoriaAcao, type StatusAcao } f
 import { atualizarAcao, criarAcao, listarReferenciasEducacao, type AcaoEducativa, type DadosAcao } from "@/lib/educacao-api";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
+import { supabase } from "@/integrations/supabase/client";
 
 import { CampoCadastroEducativo } from "@/components/educacao/CampoCadastroEducativo";
 
@@ -55,6 +56,22 @@ export function FormularioAcao({ aberto, onAbertoChange, acao, duplicando = fals
   const podeExcluir = temAcesso(sessao, "EDUCACAO", "EXCLUIR");
   const [imagens, setImagens] = useState<ImagemRelatorio[]>([]);
   const referencias = useQuery({ queryKey: ["educacao", "referencias"], queryFn: listarReferenciasEducacao, enabled: aberto });
+  const [buscaEquipe, setBuscaEquipe] = useState("");
+  const nomesEquipe = useQuery({
+    queryKey: ["educacao", "nomes-equipe"], enabled: aberto,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("acoes_educativas").select("equipe").not("equipe", "is", null).limit(2000);
+      if (error) throw error;
+      const nomes = new Set<string>();
+      for (const r of data ?? []) for (const n of String(r.equipe ?? "").split(/[\n,;]+/)) { const t = n.trim(); if (t) nomes.add(t); }
+      return [...nomes].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    },
+  });
+  const adicionarNome = () => {
+    const nome = buscaEquipe.trim(); if (!nome) return;
+    setEstado(e => { const atuais = e.equipe.split(/\n/).map(s => s.trim()).filter(Boolean); return atuais.includes(nome) ? e : { ...e, equipe: [...atuais, nome].join("\n") }; });
+    setBuscaEquipe("");
+  };
 
   useEffect(() => { if (aberto) { setEstado(duplicando ? { ...estadoDe(acao), status: "AGENDADA", status_manual: false } : estadoDe(acao)); setImagens(acao?.relatorio_imagens ?? []); } }, [aberto, acao, duplicando]);
 
@@ -108,9 +125,11 @@ export function FormularioAcao({ aberto, onAbertoChange, acao, duplicando = fals
           <div className="md:col-span-2"><Label htmlFor="acao-endereco">Endereço</Label><Input id="acao-endereco" value={estado.endereco} onChange={e => campo("endereco", e.target.value)} /></div>
           <div><Label htmlFor="acao-numero">Número</Label><Input id="acao-numero" value={estado.numero_endereco} onChange={e => campo("numero_endereco", e.target.value)} /></div>
           <div><Label htmlFor="acao-bairro">Bairro</Label><Input id="acao-bairro" value={estado.bairro} onChange={e => campo("bairro", e.target.value)} /></div>
-          <div className="md:col-span-2"><Label htmlFor="acao-equipe">Equipe</Label><Textarea id="acao-equipe" value={estado.equipe} onChange={e => campo("equipe", e.target.value)} /></div>
+          <div className="md:col-span-2"><Label htmlFor="acao-equipe">Equipe</Label>
+            <div className="mb-2 flex gap-2"><Input list="acao-equipe-nomes" aria-label="Buscar nome já salvo na equipe" placeholder="Buscar nome já salvo…" value={buscaEquipe} onChange={e => setBuscaEquipe(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); adicionarNome(); } }} /><Button type="button" variant="outline" onClick={adicionarNome}>Adicionar</Button></div>
+            <datalist id="acao-equipe-nomes">{(nomesEquipe.data ?? []).map(n => <option key={n} value={n} />)}</datalist>
+            <Textarea id="acao-equipe" value={estado.equipe} onChange={e => campo("equipe", e.target.value)} /></div>
           <div><Label htmlFor="acao-publico">Público-alvo</Label><Input id="acao-publico" value={estado.publico_alvo} onChange={(e) => campo("publico_alvo", e.target.value)} /></div>
-          <div><Label htmlFor="acao-participantes">Participantes</Label><Input id="acao-participantes" type="number" min="0" value={estado.participantes} onChange={(e) => campo("participantes", e.target.value)} /></div>
           <div className="md:col-span-2"><Label htmlFor="acao-descricao">Atividade</Label><EditorTexto id="acao-descricao" rotulo="Atividade" value={estado.descricao} onChange={(valor) => campo("descricao", valor)} /></div>
           <EditorRelatorio texto={estado.relatorio_texto} onTexto={v => campo("relatorio_texto", v)} imagens={imagens} onImagens={setImagens} />
           <div className="md:col-span-2"><Label htmlFor="acao-observacoes">Observações</Label><EditorTexto id="acao-observacoes" rotulo="Observações" value={estado.observacoes} onChange={(valor) => campo("observacoes", valor)} /></div>
