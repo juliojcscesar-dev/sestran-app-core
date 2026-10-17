@@ -34,6 +34,14 @@ export const MODULOS: ModuloNav[] = [
 
 export function formatarData(valor: string | null | undefined) {
   if (!valor) return "—";
+  // Datas de calendário não representam meia-noite UTC: preserve o dia cadastrado.
+  const calendario = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+  if (calendario) {
+    const [, ano, mes, dia] = calendario;
+    const dataLocal = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    if (dataLocal.getFullYear() !== Number(ano) || dataLocal.getMonth() !== Number(mes) - 1 || dataLocal.getDate() !== Number(dia)) return "—";
+    return `${dia}/${mes}/${ano}`;
+  }
   const data = new Date(valor);
   if (Number.isNaN(data.getTime())) return "—";
   return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
