@@ -990,6 +990,7 @@ export type Database = {
         Row: {
           atualizado_em: string
           cargo: string | null
+          chefe_imediato: string | null
           criado_em: string
           criado_por: string | null
           data: string
@@ -1008,6 +1009,7 @@ export type Database = {
         Insert: {
           atualizado_em?: string
           cargo?: string | null
+          chefe_imediato?: string | null
           criado_em?: string
           criado_por?: string | null
           data?: string
@@ -1026,6 +1028,7 @@ export type Database = {
         Update: {
           atualizado_em?: string
           cargo?: string | null
+          chefe_imediato?: string | null
           criado_em?: string
           criado_por?: string | null
           data?: string
