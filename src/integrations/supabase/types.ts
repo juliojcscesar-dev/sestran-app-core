@@ -986,6 +986,63 @@ export type Database = {
           },
         ]
       }
+      sinalizacao_os: {
+        Row: {
+          atualizado_em: string
+          cargo: string | null
+          criado_em: string
+          criado_por: string | null
+          data: string
+          endereco: string
+          funcionario: string | null
+          id: string
+          imagens: Json
+          natureza: string
+          numero: string
+          observacao: string | null
+          pedido: string
+          preenchido: string | null
+          servico: string
+          status: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cargo?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          endereco: string
+          funcionario?: string | null
+          id?: string
+          imagens?: Json
+          natureza: string
+          numero: string
+          observacao?: string | null
+          pedido: string
+          preenchido?: string | null
+          servico: string
+          status?: string
+        }
+        Update: {
+          atualizado_em?: string
+          cargo?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          endereco?: string
+          funcionario?: string | null
+          id?: string
+          imagens?: Json
+          natureza?: string
+          numero?: string
+          observacao?: string | null
+          pedido?: string
+          preenchido?: string | null
+          servico?: string
+          status?: string
+        }
+        Relationships: []
+      }
       situacoes_veiculo: {
         Row: {
           ativo: boolean
