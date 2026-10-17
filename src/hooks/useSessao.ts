@@ -31,7 +31,7 @@ export function useSessao() {
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
-        supabase.from("user_module_permissions").select("modulo,nivel,pode_excluir,pode_relatorio").eq("user_id", user.id),
+        supabase.from("user_module_permissions").select("modulo,nivel,pode_excluir,pode_relatorio,pode_backup").eq("user_id", user.id),
       ]);
       if (perfilQ.error || papeisQ.error || permissoesQ.error) throw perfilQ.error ?? papeisQ.error ?? permissoesQ.error;
       const perfil = perfilQ.data;

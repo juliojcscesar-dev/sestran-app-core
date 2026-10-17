@@ -190,6 +190,13 @@
       "when": 1792258017348,
       "tag": "0026_sinalizacao_chefe_imediato",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1792258484425,
+      "tag": "0027_permissao_backup_credenciais",
+      "breakpoints": true
     }
   ]
 }

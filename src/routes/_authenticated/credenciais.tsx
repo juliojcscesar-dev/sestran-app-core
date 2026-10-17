@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileDown, FileText, FolderOpen, Plus, Save, Trash2 } from "lucide-react";
+import { DatabaseBackup, Upload, FileDown, FileText, FolderOpen, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -50,6 +50,28 @@ function PaginaCredenciais() {
   const { data: sessao } = useSessao();
   const podeOperar = temAcesso(sessao, "CREDENCIAIS", "OPERADOR");
   const podeExcluir = temAcesso(sessao, "CREDENCIAIS", "EXCLUIR");
+  const podeBackup = temAcesso(sessao, "CREDENCIAIS", "BACKUP");
+  const [restaurando, setRestaurando] = useState(false);
+  async function baixarBackup() {
+    const { data, error } = await supabase.from("credenciais_vagas").select("*").order("criado_em");
+    if (error) { toast.error("Não foi possível gerar o backup."); return; }
+    const blob = new Blob([JSON.stringify({ sistema: "SESTRAN", modulo: "credenciais_vagas", gerado_em: new Date().toISOString(), registros: data }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `backup_credenciais_${hojeIso()}.json`; a.click(); URL.revokeObjectURL(a.href);
+    toast.success(`Backup gerado com ${data?.length ?? 0} registro(s).`);
+  }
+  async function restaurarBackup(arquivo: File) {
+    setRestaurando(true);
+    try {
+      const json = JSON.parse(await arquivo.text()) as { modulo?: string; registros?: Registro[] };
+      if (json.modulo !== "credenciais_vagas" || !Array.isArray(json.registros)) throw new Error("Arquivo de backup inválido.");
+      if (!window.confirm(`Restaurar ${json.registros.length} registro(s)? Registros com o mesmo identificador serão substituídos pelos do backup; os demais não são apagados.`)) return;
+      const { error } = await supabase.from("credenciais_vagas").upsert(json.registros).select("id");
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["credenciais"] });
+      toast.success("Backup restaurado.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível restaurar o backup."); }
+    finally { setRestaurando(false); }
+  }
   const qc = useQueryClient();
   const [f, setF] = useState<Form>(vazio);
   const [busca, setBusca] = useState("");
@@ -157,6 +179,8 @@ function PaginaCredenciais() {
         <div className="flex flex-wrap gap-2">
           <RelatorioModulo modulo="CREDENCIAIS" rotulo="Relatório Idoso" titulo="Credenciais de Idoso" colunas={colunasRel} buscar={buscarRelatorio(TIPOS_GRUPO.IDOSO)} arquivo="relatorio_credenciais_idoso" />
           <RelatorioModulo modulo="CREDENCIAIS" rotulo="Relatório PCD" titulo="Credenciais PCD" colunas={colunasRel} buscar={buscarRelatorio(TIPOS_GRUPO.PCD)} arquivo="relatorio_credenciais_pcd" />
+          {podeBackup && <Button variant="outline" onClick={baixarBackup}><DatabaseBackup className="mr-2 h-4 w-4" />Backup</Button>}
+          {podeBackup && podeOperar && <Button variant="outline" asChild disabled={restaurando}><label className="cursor-pointer"><Upload className="mr-2 h-4 w-4" />{restaurando ? "Restaurando…" : "Restaurar backup"}<input type="file" accept="application/json,.json" className="sr-only" onChange={(e) => { const a = e.target.files?.[0]; e.target.value = ""; if (a) void restaurarBackup(a); }} /></label></Button>}
           {podeOperar && <Button variant="outline" onClick={() => setF(vazio())}><Plus className="mr-2 h-4 w-4" />Novo registro</Button>}
           {podeOperar && <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}><Save className="mr-2 h-4 w-4" />{salvar.isPending ? "Salvando…" : "Salvar solicitação"}</Button>}
         </div>
