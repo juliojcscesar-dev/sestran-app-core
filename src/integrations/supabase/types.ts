@@ -1165,6 +1165,7 @@ export type Database = {
           atualizado_por: string | null
           modulo: string
           nivel: string
+          pode_backup: boolean
           pode_excluir: boolean
           pode_relatorio: boolean
           updated_at: string
@@ -1174,6 +1175,7 @@ export type Database = {
           atualizado_por?: string | null
           modulo: string
           nivel?: string
+          pode_backup?: boolean
           pode_excluir?: boolean
           pode_relatorio?: boolean
           updated_at?: string
@@ -1183,6 +1185,7 @@ export type Database = {
           atualizado_por?: string | null
           modulo?: string
           nivel?: string
+          pode_backup?: boolean
           pode_excluir?: boolean
           pode_relatorio?: boolean
           updated_at?: string
@@ -1518,6 +1521,10 @@ export type Database = {
             }
             Returns: undefined
           }
+      definir_backup_modulo: {
+        Args: { _modulo: string; _pode_backup: boolean; _user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
