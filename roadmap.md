@@ -5,6 +5,11 @@
 - [x] Atualizar nome e logos na página de acesso sem alterar funções
 - [x] Conferir imagem, navegação e formulário no navegador
 
+## Página inicial leve (17/10)
+- [x] Retirar a imagem pesada e mostrar logos abaixo do cabeçalho
+- [x] Quadros com os títulos dos módulos, centralizados e em negrito azul-escuro
+- [x] Conferir a página no navegador em computador e celular
+
 ## Imagens nas observações de veículos recolhidos (15/10)
 - [x] Permitir adicionar/remover até três imagens e salvar junto ao cadastro
 - [x] Aplicar limite 7 × 9 cm e texto acima na edição e ficha impressa
