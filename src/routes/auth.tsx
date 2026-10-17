@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, TrafficCone } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { LogosInstitucionais } from "@/components/layout/LogosInstitucionais";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -134,18 +135,10 @@ function PaginaAcesso() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hidden flex-col justify-between bg-sidebar p-12 text-sidebar-foreground lg:flex">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-            <TrafficCone className="h-6 w-6" aria-hidden="true" />
-          </span>
-          <div>
-            <p className="font-display text-xl font-semibold">SESTRAN</p>
-            <p className="text-xs text-sidebar-foreground/70">Paranavaí — Paraná</p>
-          </div>
-        </div>
+        <LogosInstitucionais />
         <div>
           <h2 className="font-display text-3xl font-semibold leading-tight">
-            Gestão de Trânsito e Eventos
+            Central de Sistema
           </h2>
           <p className="mt-3 max-w-md text-sm text-sidebar-foreground/80">
             Sistema administrativo da Secretaria de Trânsito da Prefeitura Municipal de Paranavaí
@@ -157,7 +150,11 @@ function PaginaAcesso() {
         </p>
       </div>
 
-      <div className="flex items-center justify-center p-6">
+      <div className="flex flex-col items-center justify-center gap-6 p-6">
+        <div className="w-full max-w-md lg:hidden">
+          <LogosInstitucionais />
+          <h1 className="mt-5 text-center font-display text-2xl font-semibold">Central de Sistema</h1>
+        </div>
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-xl">Acesso ao sistema</CardTitle>

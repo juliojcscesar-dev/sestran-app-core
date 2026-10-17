@@ -61,9 +61,11 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-brand-surface: var(--brand-surface);
   --color-brand-ink: var(--brand-ink);
+  --color-portal-title: var(--portal-title);
 }
 
 :root {
+  --portal-title: oklch(0.96 0.21 108);
   --brand-surface: oklch(1 0 0);
   --brand-ink: oklch(0.24 0.03 250);
   --map-route: #1d4ed8;
