@@ -21,7 +21,7 @@ export function temAcesso(sessao: SessaoAcesso, modulo: ModuloAcesso, acao: "CON
   return p.nivel === "OPERADOR" && (acao !== "EXCLUIR" || p.pode_excluir);
 }
 export function moduloDoCaminho(pathname: string): ModuloAcesso | undefined {
-  if (pathname.startsWith("/ordens-servico")) return "OS";
+  if (pathname.startsWith("/ordens-servico") || pathname.startsWith("/sinalizacao-viaria")) return "OS";
   if (pathname.startsWith("/veiculos-abandonados") || pathname.startsWith("/veiculos-recolhidos") || pathname.startsWith("/documento-veiculo")) return "VEICULOS";
   if (pathname.startsWith("/educacao-transito") || pathname.startsWith("/agenda-educativa")) return "EDUCACAO";
   if (pathname.startsWith("/credenciais")) return "CREDENCIAIS";
