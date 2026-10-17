@@ -1,0 +1,1 @@
+ALTER TABLE public.sinalizacao_os ADD COLUMN IF NOT EXISTS chefe_imediato text;

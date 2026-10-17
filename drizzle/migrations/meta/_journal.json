@@ -183,6 +183,13 @@
       "when": 1792257228600,
       "tag": "0025_sinalizacao_viaria_os",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792258017348,
+      "tag": "0026_sinalizacao_chefe_imediato",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardList, Clock, Download, Hammer, Plus, Printer, RefreshCw, X } from "lucide-react";
@@ -22,7 +22,7 @@ const STATUS = ["Aguardando", "Em Execução", "Concluída", "Cancelada"];
 const NATUREZAS = ["Sinalização Vertical", "Sinalização Horizontal", "Quebra-molas", "Semafórico", "Reparos - Placas e Pinturas", "Reparos - Quebra-molas"];
 const COR: Record<string, string> = { Aguardando: "border-warning/50 bg-warning/20 text-warning-foreground", "Em Execução": "border-primary/40 bg-primary/10 text-primary", "Concluída": "border-success/40 bg-success/15 text-success", Cancelada: "border-destructive/40 bg-destructive/10 text-destructive" };
 const hoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
-const vazio = () => ({ id: "", pedido: "", numero: "", data: hoje(), status: "Aguardando", natureza: "", naturezaOutra: "", endereco: "", servico: "", funcionario: "", observacao: "", preenchido: "Juarez Santana", cargo: "Gerente de Divisão - Sinalização Viária", imagens: [] as string[] });
+const vazio = () => ({ id: "", pedido: "", numero: "", data: hoje(), status: "Aguardando", natureza: "", naturezaOutra: "", endereco: "", servico: "", funcionario: "", observacao: "", preenchido: "", chefe: "Juarez Santana", cargo: "Gerente de Divisão - Sinalização Viária", imagens: [] as string[] });
 const fmt = (s?: string | null) => { if (!s) return "—"; const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
 const esc = (v: unknown) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 const imgs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
@@ -54,16 +54,23 @@ function Sinalizacao() {
     if (error) throw error; return data;
   } });
   const ordens = q.data ?? [];
+  const [ultimosAplicados, setUltimosAplicados] = useState(false);
+  useEffect(() => {
+    if (ultimosAplicados || !q.data) return;
+    setUltimosAplicados(true);
+    const ultima = q.data[0];
+    if (ultima) setF((p) => (p.id ? p : { ...p, preenchido: p.preenchido || ultima.preenchido || "", funcionario: p.funcionario || ultima.funcionario || "" }));
+  }, [q.data, ultimosAplicados]);
   const lista = useMemo(() => { const t = busca.toLocaleLowerCase("pt-BR"); return ordens.filter((o) => (!fs || o.status === fs) && (!fn || o.natureza === fn) && [o.numero, o.endereco, o.servico, o.funcionario, o.pedido, o.natureza].join(" ").toLocaleLowerCase("pt-BR").includes(t)); }, [ordens, busca, fs, fn]);
 
   const proximo = () => { let max = 0; ordens.forEach((o) => { const n = parseInt(o.numero.replace(/\D/g, "")); if (n > max) max = n; }); return "OS-" + String(max + 1).padStart(4, "0"); };
 
   const salvar = useMutation({ mutationFn: async () => {
     const natureza = f.natureza === "Outro" ? (f.naturezaOutra.trim() || "Outro") : f.natureza;
-    const dados = { pedido: f.pedido, numero: f.numero.trim() || proximo(), data: f.data, status: f.status, natureza, endereco: f.endereco.trim(), servico: f.servico.trim(), funcionario: f.funcionario.trim() || null, observacao: f.observacao.trim() || null, preenchido: f.preenchido.trim() || null, cargo: f.cargo.trim() || null, imagens: f.imagens, atualizado_em: new Date().toISOString() };
+    const dados = { pedido: f.pedido, numero: f.numero.trim() || proximo(), data: f.data, status: f.status, natureza, endereco: f.endereco.trim(), servico: f.servico.trim(), funcionario: f.funcionario.trim() || null, observacao: f.observacao.trim() || null, preenchido: f.preenchido.trim() || null, chefe_imediato: f.chefe.trim() || null, cargo: f.cargo.trim() || null, imagens: f.imagens, atualizado_em: new Date().toISOString() };
     const r = f.id ? await supabase.from("sinalizacao_os").update(dados).eq("id", f.id).select("id") : await supabase.from("sinalizacao_os").insert(dados).select("id");
     if (r.error) throw r.error; if (!r.data?.length) throw new Error("Sem permissão para salvar.");
-  }, onSuccess: () => { toast.success(f.id ? "Ordem de serviço atualizada." : "Ordem de serviço salva com sucesso."); setF(vazio()); qc.invalidateQueries({ queryKey: ["sinalizacao_os"] }); }, onError: (e: Error) => toast.error(e.message) });
+  }, onSuccess: () => { toast.success(f.id ? "Ordem de serviço atualizada." : "Ordem de serviço salva com sucesso."); setF({ ...vazio(), preenchido: f.preenchido.trim(), funcionario: f.funcionario.trim() }); qc.invalidateQueries({ queryKey: ["sinalizacao_os"] }); }, onError: (e: Error) => toast.error(e.message) });
 
   const remover = useMutation({ mutationFn: async (id: string) => {
     const { data, error } = await supabase.from("sinalizacao_os").delete().eq("id", id).select("id");
@@ -72,7 +79,7 @@ function Sinalizacao() {
 
   function editar(o: Registro) {
     const conhecida = NATUREZAS.includes(o.natureza);
-    setF({ id: o.id, pedido: o.pedido, numero: o.numero, data: o.data, status: o.status, natureza: conhecida ? o.natureza : "Outro", naturezaOutra: conhecida ? "" : o.natureza, endereco: o.endereco, servico: o.servico, funcionario: o.funcionario ?? "", observacao: o.observacao ?? "", preenchido: o.preenchido ?? "", cargo: o.cargo ?? "", imagens: imgs(o.imagens) });
+    setF({ id: o.id, pedido: o.pedido, numero: o.numero, data: o.data, status: o.status, natureza: conhecida ? o.natureza : "Outro", naturezaOutra: conhecida ? "" : o.natureza, endereco: o.endereco, servico: o.servico, funcionario: o.funcionario ?? "", observacao: o.observacao ?? "", preenchido: o.preenchido ?? "", chefe: o.chefe_imediato ?? "", cargo: o.cargo ?? "", imagens: imgs(o.imagens) });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -86,7 +93,7 @@ function Sinalizacao() {
     const w = window.open("", "_blank"); if (!w) { toast.error("Permita pop-ups para visualizar a ordem."); return; }
     const campos = [["Pedido", o.pedido], ["Nº da O.S.", o.numero], ["Data", fmt(o.data)], ["Situação", o.status], ["Natureza", o.natureza], ["Endereço", o.endereco], ["Funcionário(s)", o.funcionario || "—"], ["Serviço", o.servico], ["Observações", o.observacao || "—"]];
     const fotos = imgs(o.imagens).map((s) => `<img src="${s}">`).join("") || "<p>Sem imagens anexadas.</p>";
-    w.document.write(`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Ordem ${esc(o.numero)}</title><style>body{font:14px Arial;color:#182b43;max-width:850px;margin:30px auto;padding:0 20px}header{text-align:center;border-bottom:2px solid #173f75;padding-bottom:14px}header img{max-height:70px}h1{font-size:20px;color:#173f75}h2{font-size:16px;color:#173f75;margin-top:22px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{padding:10px;border:1px solid #ddd;border-radius:6px}.l{font-size:11px;color:#667085;font-weight:bold;text-transform:uppercase}.v{margin-top:5px;white-space:pre-wrap}img{max-width:100%;max-height:280px;margin:8px}button{padding:9px 15px;margin-top:20px}@media print{button{display:none}}</style><header><img src="/assets/logo-header.png" alt=""><div><b>DITRAN - DIRETORIA DE TRÂNSITO</b></div><div>DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA</div><h1>ORDEM DE SERVIÇO — ${esc(o.numero)}</h1></header><div class="grid">${campos.map(([a, b]) => `<div class="box"><div class="l">${esc(a)}</div><div class="v">${esc(b)}</div></div>`).join("")}</div><h2>Imagens / anexos</h2>${fotos}<p style="margin-top:35px">Preenchimento: <b>${esc(o.preenchido || "—")}</b><br>${esc(o.cargo || "")}</p><button onclick="window.print()">Imprimir / Salvar PDF</button></html>`);
+    w.document.write(`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Ordem ${esc(o.numero)}</title><style>body{font:14px Arial;color:#182b43;max-width:850px;margin:30px auto;padding:0 20px}header{text-align:center;border-bottom:2px solid #173f75;padding-bottom:14px}header img{max-height:70px}h1{font-size:20px;color:#173f75}h2{font-size:16px;color:#173f75;margin-top:22px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{padding:10px;border:1px solid #ddd;border-radius:6px}.l{font-size:11px;color:#667085;font-weight:bold;text-transform:uppercase}.v{margin-top:5px;white-space:pre-wrap}img{max-width:100%;max-height:280px;margin:8px}button{padding:9px 15px;margin-top:20px}@media print{button{display:none}}</style><header><img src="/assets/logo-header.png" alt=""><div><b>DITRAN - DIRETORIA DE TRÂNSITO</b></div><div>DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA</div><h1>ORDEM DE SERVIÇO — ${esc(o.numero)}</h1></header><div class="grid">${campos.map(([a, b]) => `<div class="box"><div class="l">${esc(a)}</div><div class="v">${esc(b)}</div></div>`).join("")}</div><h2>Imagens / anexos</h2>${fotos}<p style="margin-top:35px">Preenchimento: <b>${esc(o.preenchido || "—")}</b></p>${o.chefe_imediato || o.cargo ? `<div style="text-align:center;margin-top:70px"><div style="border-top:1px solid #182b43;width:300px;margin:0 auto 6px"></div>${o.chefe_imediato ? `<div>${esc(o.chefe_imediato)}</div>` : ""}${o.cargo ? `<div><b>${esc(o.cargo)}</b></div>` : ""}</div>` : ""}<button onclick="window.print()">Imprimir / Salvar PDF</button></html>`);
     w.document.close();
   }
 
@@ -99,7 +106,7 @@ function Sinalizacao() {
 
   function exportarCSV() {
     if (!ordens.length) { toast.error("Não há ordens para exportar."); return; }
-    const cols = ["numero", "data", "pedido", "status", "natureza", "endereco", "servico", "funcionario", "observacao", "preenchido", "cargo"] as const;
+    const cols = ["numero", "data", "pedido", "status", "natureza", "endereco", "servico", "funcionario", "observacao", "preenchido", "chefe_imediato", "cargo"] as const;
     const csv = [cols.join(";"), ...ordens.map((o) => cols.map((k) => `"${String(o[k] ?? "").replace(/"/g, '""').replace(/\n/g, " ")}"`).join(";"))].join("\r\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" })); a.download = "relatorio_ordens_sinalizacao.csv"; a.click(); URL.revokeObjectURL(a.href);
   }
@@ -145,7 +152,8 @@ function Sinalizacao() {
               </div>
               <p className={secao}>RESPONSÁVEL PELO PREENCHIMENTO</p>
               <div className="space-y-1.5 sm:col-span-2"><Label>Nome de quem preencheu a O.S.</Label><Input value={f.preenchido} onChange={(e) => set("preenchido", e.target.value)} /></div>
-              <div className="space-y-1.5 sm:col-span-2"><Label>Cargo / setor</Label><Input value={f.cargo} onChange={(e) => set("cargo", e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Chefe imediato</Label><Input value={f.chefe} onChange={(e) => set("chefe", e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Cargo</Label><Input value={f.cargo} onChange={(e) => set("cargo", e.target.value)} /></div>
               <div className="flex flex-wrap justify-end gap-2 border-t pt-4 sm:col-span-2">
                 {f.id && <Button type="button" variant="outline" onClick={() => setF(vazio())}>Cancelar edição</Button>}
                 <Button type="button" variant="outline" onClick={() => setF((p) => ({ ...vazio(), id: p.id }))}>Limpar campos</Button>
