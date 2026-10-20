@@ -358,7 +358,7 @@ function Previa({ f, paginaInteira = false }: { f: Form; paginaInteira?: boolean
       <div className="relative w-full overflow-hidden" style={{ aspectRatio: paginaInteira ? "612 / 792" : "612 / 400", containerType: "inline-size" }}>
         <img src={urlModelo(f.tipo)} alt="Modelo da credencial" className="absolute left-0 top-0 w-full" />
         {campos.map((c, i) => (
-          <span key={i} className="absolute whitespace-nowrap font-bold leading-none text-foreground" style={{ left: `${(c.x / 612) * 100}%`, top: `${(c.y / 612) * 100}cqw`, fontSize: `${(c.tamanho / 612) * 100}cqw`, letterSpacing: c.espaco ? `${(c.espaco / 612) * 100}cqw` : undefined, fontFamily: "Arial, Helvetica, sans-serif", transform: `translate(${c.centro ? "-50%" : "0"}, -80%)` }}>{c.texto}</span>
+          <span key={i} className="absolute whitespace-nowrap font-bold leading-none text-foreground" style={{ left: `${(c.x / 612) * 100}%`, top: `${(c.y / 612) * 100}cqw`, fontSize: `${(c.tamanho / 612) * 100}cqw`, transformOrigin: "left center", fontFamily: "Arial, Helvetica, sans-serif", transform: `translate(${c.centro ? "-50%" : "0"}, -80%)${c.escala ? ` scaleX(${c.escala})` : ""}` }}>{c.texto}</span>
         ))}
       </div>
     </div>
