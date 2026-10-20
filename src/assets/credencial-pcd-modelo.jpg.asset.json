@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "asset_id": "4120c460-83ee-4c6d-b5d0-03fbafe27c58",
+  "asset_id": "85fc2bb7-f5d4-461a-84c5-ef141fa9dd2d",
   "project_id": "df2e17f3-5e78-4cfc-a4fd-000168d4cad0",
-  "url": "/__l5e/assets-v1/4120c460-83ee-4c6d-b5d0-03fbafe27c58/credencial-pcd-modelo.jpg",
-  "r2_key": "a/v1/df2e17f3-5e78-4cfc-a4fd-000168d4cad0/4120c460-83ee-4c6d-b5d0-03fbafe27c58/credencial-pcd-modelo.jpg",
-  "original_filename": "credencial-pcd-modelo.jpg",
-  "size": 575159,
+  "url": "/__l5e/assets-v1/85fc2bb7-f5d4-461a-84c5-ef141fa9dd2d/credencial-pcd-modelo-v2.jpg",
+  "r2_key": "a/v1/df2e17f3-5e78-4cfc-a4fd-000168d4cad0/85fc2bb7-f5d4-461a-84c5-ef141fa9dd2d/credencial-pcd-modelo-v2.jpg",
+  "original_filename": "credencial-pcd-modelo-v2.jpg",
+  "size": 729721,
   "content_type": "image/jpeg",
-  "created_at": "2026-10-16T16:56:11Z"
+  "created_at": "2026-10-20T14:21:20Z"
 }
