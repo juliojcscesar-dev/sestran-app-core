@@ -155,7 +155,7 @@ function PaginaCredenciais() {
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLocaleLowerCase("pt-BR");
-    return (lista.data ?? []).filter((r) => `${r.nome} ${r.numero_registro ?? ""} ${r.numero_documento}`.toLocaleLowerCase("pt-BR").includes(q));
+    return (lista.data ?? []).filter((r) => `${r.nome} ${r.numero_registro ?? ""} ${r.numero_documento} ${r.numero_documento.replace(/\D/g, "")}`.toLocaleLowerCase("pt-BR").includes(q));
   }, [lista.data, busca]);
 
   const buscarRelatorio = (tipos: readonly string[]) => async (de?: string, ate?: string) => {
