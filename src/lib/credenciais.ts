@@ -67,11 +67,26 @@ export function validadeAutomatica(tipo: string, emissao: string, tempo: string)
 
 export type DadosCredencial = { tipo: string; nome: string; numero_registro: string | null; data_emissao: string; data_validade: string | null };
 
-type Campo = { texto: string; x: number; y: number; tamanho: number; centro?: boolean };
+/** `espaco` = espaçamento extra entre letras (pt); negativo aproxima os algarismos sem reduzir a fonte. */
+type Campo = { texto: string; x: number; y: number; tamanho: number; centro?: boolean; espaco?: number };
 
-/** Tamanho (pt) das datas de emissão e validade. */
+/** Tamanho (pt) das datas de emissão e validade — dia, mês e ano iguais. */
 export const TAMANHO_DIA_MES = 13.5;
-export const TAMANHO_ANO = 10.5;
+export const TAMANHO_ANO = TAMANHO_DIA_MES;
+/** O ano da emissão fica entre a barra e "VÁLIDO ATÉ" (≈27,7 pt livres): algarismos levemente mais juntos. */
+const ESPACO_ANO_EMISSAO = -1.2;
+
+/** Próximo número de registro a partir dos números já digitados (mantém zeros à esquerda). */
+export function proximoNumeroRegistro(numeros: (string | null | undefined)[]) {
+  let maior = -1, largura = 0;
+  for (const n of numeros) {
+    const m = (n ?? "").trim().match(/^\d+/);
+    if (!m) continue;
+    const v = Number(m[0]);
+    if (v > maior) { maior = v; largura = m[0].length; }
+  }
+  return maior < 0 ? "" : String(maior + 1).padStart(largura, "0");
+}
 
 /** Campos variáveis em pontos (origem no canto superior esquerdo; y = linha de base). */
 export function camposCredencial(c: DadosCredencial): Campo[] {
@@ -88,7 +103,7 @@ export function camposCredencial(c: DadosCredencial): Campo[] {
     { texto: (c.nome ?? "").toLocaleUpperCase("pt-BR"), x: 170, y: (pcd ? 205.5 : 215.1), tamanho: 11 },
     { texto: ed, x: 230 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
     { texto: em, x: 254.5 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
-    { texto: ea, x: 270.5 + dx, y: yData, tamanho: TAMANHO_ANO },
+    { texto: ea, x: 270.3 + dx, y: yData, tamanho: TAMANHO_ANO, espaco: ESPACO_ANO_EMISSAO },
     { texto: vd, x: 383.5 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
     { texto: vm, x: 405.6 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
     { texto: va, x: 419.5 + dx, y: yData, tamanho: TAMANHO_ANO },
@@ -115,7 +130,7 @@ export async function gerarCredencialPdf(c: DadosCredencial) {
   doc.setFont("helvetica", "bold");
   for (const f of camposCredencial(c)) {
     doc.setFontSize(f.tamanho);
-    doc.text(f.texto, f.x, f.y, { align: f.centro ? "center" : "left" });
+    doc.text(f.texto, f.x, f.y, { align: f.centro ? "center" : "left", ...(f.espaco ? { charSpace: f.espaco } : {}) });
   }
   doc.save(`${nomeArquivo(c)}.pdf`);
 }
@@ -137,7 +152,7 @@ export async function gerarCredencialDocx(c: DadosCredencial) {
       frame: { type: "absolute", position: { x: tw(x), y: tw(f.y - f.tamanho * 0.95) }, width: tw(largura), height: tw(f.tamanho * 1.25), anchor: { horizontal: d.FrameAnchorType.PAGE, vertical: d.FrameAnchorType.PAGE } },
       alignment: f.centro ? d.AlignmentType.CENTER : d.AlignmentType.LEFT,
       spacing: { before: 0, after: 0, line: tw(f.tamanho * 1.2), lineRule: d.LineRuleType.EXACT },
-      children: [new d.TextRun({ text: f.texto, bold: true, font: "Arial", size: Math.round(f.tamanho * 2) })],
+      children: [new d.TextRun({ text: f.texto, bold: true, font: "Arial", size: Math.round(f.tamanho * 2), ...(f.espaco ? { characterSpacing: Math.round(f.espaco * 20) } : {}) })],
     });
   });
   const documento = new d.Document({
