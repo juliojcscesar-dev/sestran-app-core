@@ -31,6 +31,8 @@ export type DadosOS = {
   evento_id: string | null;
   trajeto: string | null;
   observacoes: string | null;
+  telefone?: string | null;
+  responsavel?: string | null;
   status: StatusOS;
   status_manual?: boolean;
   percurso: PercursoMapa | null;
@@ -223,6 +225,8 @@ function camposOrdem(dados: DadosOS) {
     evento_id: dados.evento_id,
     trajeto: dados.trajeto,
     observacoes: dados.observacoes,
+    telefone: dados.telefone ?? null,
+    responsavel: dados.responsavel ?? null,
     status: dados.status,
     status_manual: dados.status_manual ?? false,
     percurso: dados.percurso ? (dados.percurso as unknown as never) : null,
