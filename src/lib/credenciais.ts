@@ -71,7 +71,7 @@ type Campo = { texto: string; x: number; y: number; tamanho: number; centro?: bo
 
 /** Tamanho (pt) das datas de emissão e validade. */
 export const TAMANHO_DIA_MES = 13.5;
-export const TAMANHO_ANO = 11;
+export const TAMANHO_ANO = 10.5;
 
 /** Campos variáveis em pontos (origem no canto superior esquerdo; y = linha de base). */
 export function camposCredencial(c: DadosCredencial): Campo[] {
