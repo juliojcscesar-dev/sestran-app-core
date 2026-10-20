@@ -74,7 +74,7 @@ type Campo = { texto: string; x: number; y: number; tamanho: number; centro?: bo
 export const TAMANHO_DIA_MES = 13.5;
 export const TAMANHO_ANO = TAMANHO_DIA_MES;
 /** O ano da emissão fica entre a barra e "VÁLIDO ATÉ" (≈27,7 pt livres): algarismos levemente mais estreitos. */
-const ESCALA_ANO_EMISSAO = 0.88;
+const ESCALA_ANO_EMISSAO = 0.78;
 
 /** Próximo número de registro a partir dos números já digitados (mantém zeros à esquerda). */
 export function proximoNumeroRegistro(numeros: (string | null | undefined)[]) {
@@ -103,7 +103,7 @@ export function camposCredencial(c: DadosCredencial): Campo[] {
     { texto: (c.nome ?? "").toLocaleUpperCase("pt-BR"), x: 170, y: (pcd ? 205.5 : 215.1), tamanho: 11 },
     { texto: ed, x: 230 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
     { texto: em, x: 254.5 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
-    { texto: ea, x: 270.1 + dx, y: yData, tamanho: TAMANHO_ANO, escala: ESCALA_ANO_EMISSAO },
+    { texto: ea, x: 268.6 + dx, y: yData, tamanho: TAMANHO_ANO, escala: ESCALA_ANO_EMISSAO },
     { texto: vd, x: 383.5 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
     { texto: vm, x: 405.6 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
     { texto: va, x: 419.5 + dx, y: yData, tamanho: TAMANHO_ANO },
