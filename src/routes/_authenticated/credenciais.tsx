@@ -101,12 +101,12 @@ function PaginaCredenciais() {
   );
   const sugerido = useRef("");
   useEffect(() => {
-    if (!podeOperar || f.id || !proximo) return;
+    if (!podeOperar || f.id || lista.isPending) return;
     const atual = f.numero_registro.trim();
     if (atual !== "" && atual !== sugerido.current) return; // número digitado à mão ou de renovação: não substituir
     sugerido.current = proximo;
     if (atual !== proximo) setF((a) => ({ ...a, numero_registro: proximo }));
-  }, [podeOperar, f.id, f.numero_registro, proximo]);
+  }, [podeOperar, f.id, f.numero_registro, proximo, lista.isPending]);
 
   // Renovação: busca de credencial anterior da mesma modalidade por nome ou nº do registro.
   const [buscaRenov, setBuscaRenov] = useState("");
