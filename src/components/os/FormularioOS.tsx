@@ -27,6 +27,7 @@ import { EditorPaginasExtras } from "@/components/os/EditorPaginasExtras";
 import { lerPaginasExtras, paginasPreenchidas, type PaginaExtra } from "@/lib/paginas-extras";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
+import { exibirTelefone, mascararTelefone } from "@/lib/mascaras";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { diaDaSemana, STATUS_OS, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import {
@@ -108,7 +109,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const [horaFim, setHoraFim] = useState(((o?.["hora_fim"] as string) ?? "").slice(0, 5));
   const [eventoId, setEventoId] = useState<string | null>((o?.["evento_id"] as string) ?? null);
   const [trajeto, setTrajeto] = useState((o?.["trajeto"] as string) ?? "");
-  const [telefone, setTelefone] = useState((o?.["telefone"] as string) ?? "");
+  const [telefone, setTelefone] = useState(exibirTelefone((o?.["telefone"] as string) ?? ""));
   const [responsavel, setResponsavel] = useState((o?.["responsavel"] as string) ?? "");
   const [observacoes, setObservacoes] = useState((o?.["observacoes"] as string) ?? "");
   const [statusManual, setStatusManual] = useState<boolean>(!duplicando && Boolean(o?.["status_manual"]));
@@ -458,7 +459,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="telefone">Telefone</Label>
-              <Input id="telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(44) 00000-0000" />
+              <Input id="telefone" inputMode="tel" value={telefone} onChange={(e) => setTelefone(mascararTelefone(e.target.value))} placeholder="(44) 0000-0000" />
             </div>
             <div>
               <Label htmlFor="responsavel">Responsável</Label>

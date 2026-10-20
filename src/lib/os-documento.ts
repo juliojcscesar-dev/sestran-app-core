@@ -4,6 +4,7 @@ import type { OrdemCompleta } from "@/lib/os-api";
 import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
 import { lerPaginasExtras, paginasPreenchidas } from "@/lib/paginas-extras";
 import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
+import { exibirTelefone } from "@/lib/mascaras";
 
 
 export type IdentificacaoOrgao = { orgao: string; secretaria: string; logo_url: string; autoridade?: string; cargo_autoridade?: string };
@@ -37,7 +38,7 @@ export function montarConteudo(dados: OrdemCompleta) {
     { rotulo: "Para", valor: texto(o["destinatario"]) },
     { rotulo: "Natureza", valor: texto(o["natureza"]) },
     { rotulo: "Solicitante", valor: texto(o.solicitantes?.nome) },
-    ...(String(o["telefone"] ?? "").trim() ? [{ rotulo: "Telefone", valor: texto(o["telefone"]) }] : []),
+    ...(String(o["telefone"] ?? "").trim() ? [{ rotulo: "Telefone", valor: texto(exibirTelefone(String(o["telefone"] ?? ""))) }] : []),
     ...(String(o["responsavel"] ?? "").trim() ? [{ rotulo: "Responsável", valor: texto(o["responsavel"]) }] : []),
     { rotulo: "Evento", valor: texto(o.eventos?.titulo) },
     { rotulo: "Local", valor: texto(o["local"]) },
@@ -170,7 +171,7 @@ function camposDocumento(dados: OrdemCompleta) {
   return [
     [campo("De", o.remetente), campo("Para", o.destinatario)],
     [campo("Natureza", o.natureza), campo("Solicitante", o.solicitantes?.nome)],
-    [campo("Telefone", o.telefone), campo("Responsável", o.responsavel)],
+    [campo("Telefone", exibirTelefone(o.telefone)), campo("Responsável", o.responsavel)],
     [campo("Local", o.local)],
     [campo("Data do Serviço", formatarDataBrComDia(o.data_servico)), campo("Horário", o.hora_inicio ? formatarHora(o.hora_inicio) : ""), campo("Encerramento", o.hora_fim ? formatarHora(o.hora_fim) : "")],
     [campo("Evento", o.eventos?.titulo)],
