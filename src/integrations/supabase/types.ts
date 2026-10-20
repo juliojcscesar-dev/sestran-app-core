@@ -748,10 +748,12 @@ export type Database = {
           relatorio_imagens: Json
           relatorio_texto: string | null
           remetente: string | null
+          responsavel: string | null
           sequencial: number | null
           solicitante_id: string | null
           status: string
           status_manual: boolean
+          telefone: string | null
           tipo: string
           titulo: string | null
           trajeto: string | null
@@ -784,10 +786,12 @@ export type Database = {
           relatorio_imagens?: Json
           relatorio_texto?: string | null
           remetente?: string | null
+          responsavel?: string | null
           sequencial?: number | null
           solicitante_id?: string | null
           status?: string
           status_manual?: boolean
+          telefone?: string | null
           tipo?: string
           titulo?: string | null
           trajeto?: string | null
@@ -820,10 +824,12 @@ export type Database = {
           relatorio_imagens?: Json
           relatorio_texto?: string | null
           remetente?: string | null
+          responsavel?: string | null
           sequencial?: number | null
           solicitante_id?: string | null
           status?: string
           status_manual?: boolean
+          telefone?: string | null
           tipo?: string
           titulo?: string | null
           trajeto?: string | null
