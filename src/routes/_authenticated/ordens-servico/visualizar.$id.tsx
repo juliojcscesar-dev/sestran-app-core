@@ -36,6 +36,7 @@ import { descreverPercurso, lerPercurso } from "@/lib/mapa";
 import { larguraImagem, type ImagemRelatorio } from "@/lib/relatorio-imagens";
 import { alterarStatusOrdem, historicoOrdem, obterOrdem, obterConfiguracoes } from "@/lib/os-api";
 import { baixarDocumentoOS } from "@/lib/os-docs";
+import { exibirTelefone } from "@/lib/mascaras";
 
 export const Route = createFileRoute("/_authenticated/ordens-servico/visualizar/$id")({
   head: () => ({
@@ -245,7 +246,7 @@ function VisualizarOS() {
               <LinhaDocumento rotulo="Para" valor={String(o["destinatario"] ?? "")} />
               <LinhaDocumento rotulo="Natureza" valor={String(o["natureza"] ?? "")} />
               <LinhaDocumento rotulo="Solicitante" valor={o.solicitantes?.nome ?? ""} />
-              <LinhaDocumento rotulo="Telefone" valor={String(o["telefone"] ?? "")} />
+              <LinhaDocumento rotulo="Telefone" valor={exibirTelefone(String(o["telefone"] ?? ""))} />
               <LinhaDocumento rotulo="Responsável" valor={String(o["responsavel"] ?? "")} />
               <LinhaDocumento rotulo="Local" valor={String(o["local"] ?? "")} inteira />
               <div className="os-doc-date-row">

@@ -9,6 +9,7 @@ import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { formatarDataBr } from "@/lib/os";
 import { hojeIso } from "@/lib/veiculos";
+import { exibirDocumento, exibirTelefone, mascararDocumento, mascararTelefone } from "@/lib/mascaras";
 import {
   camposCredencial, DOCUMENTOS_CONFERENCIA, ehPcd, gerarCredencialDocx, gerarCredencialPdf,
   TIPOS_CREDENCIAL, TIPOS_GRUPO, urlModelo, validadeAutomatica, type TipoCredencial,
@@ -43,7 +44,7 @@ function vazio(): Form {
   return { id: null, tipo: "IDOSO", nome: "", tipo_documento: "CPF", numero_documento: "", nascimento: "", telefone: "", endereco: "", numero: "", bairro: "", observacoes: "", numero_registro: "", checklist: [], conferente: "", data_conferencia: "", data_emissao: hoje, data_validade: validadeAutomatica("IDOSO", hoje, ""), tempo_validade: "", validade_manual: false, permitir_sem_checklist: false };
 }
 function deRegistro(r: Registro): Form {
-  return { id: r.id, tipo: r.tipo as TipoCredencial, nome: r.nome, tipo_documento: r.tipo_documento, numero_documento: r.numero_documento, nascimento: r.nascimento ?? "", telefone: r.telefone ?? "", endereco: r.endereco ?? "", numero: r.numero ?? "", bairro: r.bairro ?? "", observacoes: r.observacoes ?? "", numero_registro: r.numero_registro ?? "", checklist: Array.isArray(r.checklist) ? (r.checklist as unknown[]).map(Boolean) : [], conferente: r.conferente ?? "", data_conferencia: r.data_conferencia ?? "", data_emissao: r.data_emissao, data_validade: r.data_validade ?? "", tempo_validade: r.tempo_validade ?? "", validade_manual: r.validade_manual, permitir_sem_checklist: r.permitir_sem_checklist };
+  return { id: r.id, tipo: r.tipo as TipoCredencial, nome: r.nome, tipo_documento: r.tipo_documento, numero_documento: exibirDocumento(r.tipo_documento, r.numero_documento), nascimento: r.nascimento ?? "", telefone: exibirTelefone(r.telefone), endereco: r.endereco ?? "", numero: r.numero ?? "", bairro: r.bairro ?? "", observacoes: r.observacoes ?? "", numero_registro: r.numero_registro ?? "", checklist: Array.isArray(r.checklist) ? (r.checklist as unknown[]).map(Boolean) : [], conferente: r.conferente ?? "", data_conferencia: r.data_conferencia ?? "", data_emissao: r.data_emissao, data_validade: r.data_validade ?? "", tempo_validade: r.tempo_validade ?? "", validade_manual: r.validade_manual, permitir_sem_checklist: r.permitir_sem_checklist };
 }
 
 function PaginaCredenciais() {
@@ -163,7 +164,7 @@ function PaginaCredenciais() {
     if (ate) q = q.lte("data_emissao", ate);
     const { data, error } = await q;
     if (error) throw error;
-    return data.map((r) => [r.numero_registro ?? "—", r.nome, `${r.tipo_documento} ${r.numero_documento}`, TIPOS_CREDENCIAL[r.tipo as TipoCredencial] ?? r.tipo, formatarDataBr(r.data_emissao), r.data_validade ? formatarDataBr(r.data_validade) : "—", r.bairro ?? "—"]);
+    return data.map((r) => [r.numero_registro ?? "—", r.nome, `${r.tipo_documento} ${exibirDocumento(r.tipo_documento, r.numero_documento)}`, TIPOS_CREDENCIAL[r.tipo as TipoCredencial] ?? r.tipo, formatarDataBr(r.data_emissao), r.data_validade ? formatarDataBr(r.data_validade) : "—", r.bairro ?? "—"]);
   };
   const colunasRel = ["Nº registro", "Nome", "Documento", "Tipo", "Emissão", "Válido até", "Bairro"];
 
@@ -193,10 +194,10 @@ function PaginaCredenciais() {
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="nome">Nome completo *</Label><Input id="nome" maxLength={200} value={f.nome} onChange={(e) => alterar({ nome: e.target.value })} /></div>
               <div className="space-y-1.5"><Label>Documento de identificação *</Label>
-                <Select value={f.tipo_documento} onValueChange={(v) => alterar({ tipo_documento: v })}><SelectTrigger aria-label="Documento de identificação"><SelectValue /></SelectTrigger><SelectContent>{["CPF", "RG", "CNH"].map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent></Select></div>
-              <div className="space-y-1.5"><Label htmlFor="doc">Número do {f.tipo_documento} *</Label><Input id="doc" maxLength={40} inputMode={f.tipo_documento === "CPF" ? "numeric" : "text"} placeholder={f.tipo_documento === "CPF" ? "000.000.000-00" : ""} value={f.numero_documento} onChange={(e) => alterar({ numero_documento: e.target.value })} /></div>
+                <Select value={f.tipo_documento} onValueChange={(v) => alterar({ tipo_documento: v, numero_documento: mascararDocumento(v, f.numero_documento) })}><SelectTrigger aria-label="Documento de identificação"><SelectValue /></SelectTrigger><SelectContent>{["CPF", "RG", "CNH"].map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent></Select></div>
+              <div className="space-y-1.5"><Label htmlFor="doc">Número do {f.tipo_documento} *</Label><Input id="doc" maxLength={40} inputMode={f.tipo_documento === "CPF" ? "numeric" : "text"} placeholder={f.tipo_documento === "CPF" ? "000.000.000-00" : ""} value={f.numero_documento} onChange={(e) => alterar({ numero_documento: mascararDocumento(f.tipo_documento, e.target.value) })} /></div>
               <div className="space-y-1.5"><Label htmlFor="nasc">Data de nascimento</Label><Input id="nasc" type="date" value={f.nascimento} onChange={(e) => alterar({ nascimento: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label htmlFor="tel">Telefone</Label><Input id="tel" inputMode="tel" placeholder="(44) 99999-9999" value={f.telefone} onChange={(e) => alterar({ telefone: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label htmlFor="tel">Telefone</Label><Input id="tel" inputMode="tel" placeholder="(44) 0000-0000" value={f.telefone} onChange={(e) => alterar({ telefone: mascararTelefone(e.target.value) })} /></div>
               <div className="space-y-1.5"><Label htmlFor="end">Endereço — Rua/Av.</Label><Input id="end" value={f.endereco} onChange={(e) => alterar({ endereco: e.target.value })} /></div>
               <div className="space-y-1.5"><Label htmlFor="num">Nº</Label><Input id="num" value={f.numero} onChange={(e) => alterar({ numero: e.target.value })} /></div>
               <div className="space-y-1.5"><Label htmlFor="bairro">Bairro</Label><Input id="bairro" value={f.bairro} onChange={(e) => alterar({ bairro: e.target.value })} /></div>
