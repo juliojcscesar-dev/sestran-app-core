@@ -108,6 +108,8 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const [horaFim, setHoraFim] = useState(((o?.["hora_fim"] as string) ?? "").slice(0, 5));
   const [eventoId, setEventoId] = useState<string | null>((o?.["evento_id"] as string) ?? null);
   const [trajeto, setTrajeto] = useState((o?.["trajeto"] as string) ?? "");
+  const [telefone, setTelefone] = useState((o?.["telefone"] as string) ?? "");
+  const [responsavel, setResponsavel] = useState((o?.["responsavel"] as string) ?? "");
   const [observacoes, setObservacoes] = useState((o?.["observacoes"] as string) ?? "");
   const [statusManual, setStatusManual] = useState<boolean>(!duplicando && Boolean(o?.["status_manual"]));
   const [status, setStatus] = useState<StatusOS>(
@@ -230,6 +232,8 @@ export function FormularioOS({ modo, inicial, id }: Props) {
         evento_id: eventoId,
         trajeto: trajeto.trim() || null,
         observacoes: observacoes.trim() || null,
+        telefone: telefone.trim() || null,
+        responsavel: responsavel.trim() || null,
         status,
         status_manual: statusManual,
         percurso,
@@ -450,6 +454,16 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                 return { id: novo.id, rotulo: novo.nome };
               }}
             />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="telefone">Telefone</Label>
+              <Input id="telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(44) 00000-0000" />
+            </div>
+            <div>
+              <Label htmlFor="responsavel">Responsável</Label>
+              <Input id="responsavel" value={responsavel} onChange={(e) => setResponsavel(e.target.value)} />
+            </div>
           </div>
           <div>
             <Label>Evento</Label>

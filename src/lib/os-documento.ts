@@ -37,6 +37,8 @@ export function montarConteudo(dados: OrdemCompleta) {
     { rotulo: "Para", valor: texto(o["destinatario"]) },
     { rotulo: "Natureza", valor: texto(o["natureza"]) },
     { rotulo: "Solicitante", valor: texto(o.solicitantes?.nome) },
+    ...(String(o["telefone"] ?? "").trim() ? [{ rotulo: "Telefone", valor: texto(o["telefone"]) }] : []),
+    ...(String(o["responsavel"] ?? "").trim() ? [{ rotulo: "Responsável", valor: texto(o["responsavel"]) }] : []),
     { rotulo: "Evento", valor: texto(o.eventos?.titulo) },
     { rotulo: "Local", valor: texto(o["local"]) },
     { rotulo: "Data", valor: formatarDataBrComDia(o["data_servico"] as string) },
@@ -168,6 +170,7 @@ function camposDocumento(dados: OrdemCompleta) {
   return [
     [campo("De", o.remetente), campo("Para", o.destinatario)],
     [campo("Natureza", o.natureza), campo("Solicitante", o.solicitantes?.nome)],
+    [campo("Telefone", o.telefone), campo("Responsável", o.responsavel)],
     [campo("Local", o.local)],
     [campo("Data do Serviço", formatarDataBrComDia(o.data_servico)), campo("Horário", o.hora_inicio ? formatarHora(o.hora_inicio) : ""), campo("Encerramento", o.hora_fim ? formatarHora(o.hora_fim) : "")],
     [campo("Evento", o.eventos?.titulo)],
