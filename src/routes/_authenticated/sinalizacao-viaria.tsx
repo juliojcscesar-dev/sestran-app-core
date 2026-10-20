@@ -41,8 +41,8 @@ export const Route = createFileRoute("/_authenticated/sinalizacao-viaria")({
 function Sinalizacao() {
   const { data: sessao } = useSessao();
   const qc = useQueryClient();
-  const podeEditar = temAcesso(sessao, "OS", "OPERADOR");
-  const podeExcluir = temAcesso(sessao, "OS", "EXCLUIR");
+  const podeEditar = temAcesso(sessao, "SINALIZACAO", "OPERADOR");
+  const podeExcluir = temAcesso(sessao, "SINALIZACAO", "EXCLUIR");
   const [f, setF] = useState(vazio());
   const [busca, setBusca] = useState(""); const [fs, setFs] = useState(""); const [fn, setFn] = useState("");
   const [excluir, setExcluir] = useState<Registro | null>(null);
