@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DatabaseBackup, Upload, FileDown, FileText, FolderOpen, Plus, Save, Trash2 } from "lucide-react";
+import { DatabaseBackup, Upload, Eye, FileDown, FileText, FolderOpen, Plus, Save, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -254,6 +255,7 @@ function PaginaCredenciais() {
             <CardContent className="space-y-3">
               <p className="text-sm font-semibold text-primary">{TIPOS_CREDENCIAL[f.tipo]}</p>
               <Previa f={f} />
+              <VisualizarCredencial f={f} />
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button className="flex-1" disabled={gerando !== null} onClick={() => emitir("pdf")}><FileText className="mr-2 h-4 w-4" />{gerando === "pdf" ? "Gerando…" : "Imprimir PDF"}</Button>
                 <Button className="flex-1" variant="outline" disabled={gerando !== null} onClick={() => emitir("docx")}><FileDown className="mr-2 h-4 w-4" />{gerando === "docx" ? "Gerando…" : "Exportar Word"}</Button>
@@ -291,17 +293,37 @@ function PaginaCredenciais() {
   );
 }
 
-/** Prévia com o próprio modelo oficial e os campos nas mesmas posições do documento final. */
-function Previa({ f }: { f: Form }) {
+/** Prévia com o próprio modelo oficial e os campos nas mesmas posições do documento final.
+    `paginaInteira` mostra a folha Carta completa em tamanho real (8,5 × 11 pol.). */
+function Previa({ f, paginaInteira = false }: { f: Form; paginaInteira?: boolean }) {
   const campos = camposCredencial({ tipo: f.tipo, nome: f.nome, numero_registro: f.numero_registro, data_emissao: f.data_emissao, data_validade: f.data_validade });
   return (
-    <div className="overflow-hidden rounded-md border bg-card">
-      <div className="relative w-full" style={{ aspectRatio: "612 / 400", containerType: "inline-size" }}>
+    <div className={paginaInteira ? "mx-auto w-[8.5in] shrink-0 border bg-card shadow" : "overflow-hidden rounded-md border bg-card"}>
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: paginaInteira ? "612 / 792" : "612 / 400", containerType: "inline-size" }}>
         <img src={urlModelo(f.tipo)} alt="Modelo da credencial" className="absolute left-0 top-0 w-full" />
         {campos.map((c, i) => (
           <span key={i} className="absolute whitespace-nowrap font-bold leading-none text-foreground" style={{ left: `${(c.x / 612) * 100}%`, top: `${(c.y / 612) * 100}cqw`, fontSize: `${(c.tamanho / 612) * 100}cqw`, fontFamily: "Arial, Helvetica, sans-serif", transform: `translate(${c.centro ? "-50%" : "0"}, -80%)` }}>{c.texto}</span>
         ))}
       </div>
     </div>
+  );
+}
+
+function VisualizarCredencial({ f }: { f: Form }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button className="w-full" variant="secondary"><Eye className="mr-2 h-4 w-4" />Visualização</Button>
+      </DialogTrigger>
+      <DialogContent className="flex h-[92vh] max-w-[calc(100vw-1.5rem)] flex-col gap-3 p-4 sm:max-w-[calc(8.5in+3rem)]">
+        <DialogHeader>
+          <DialogTitle>Visualização em tamanho real</DialogTitle>
+          <DialogDescription>{TIPOS_CREDENCIAL[f.tipo]} — folha Carta completa, como sai na impressão.</DialogDescription>
+        </DialogHeader>
+        <div className="min-h-0 flex-1 overflow-auto rounded-md bg-muted p-3">
+          <Previa f={f} paginaInteira />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
