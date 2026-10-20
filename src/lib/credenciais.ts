@@ -69,6 +69,10 @@ export type DadosCredencial = { tipo: string; nome: string; numero_registro: str
 
 type Campo = { texto: string; x: number; y: number; tamanho: number; centro?: boolean };
 
+/** Tamanho (pt) das datas de emissão e validade. */
+export const TAMANHO_DIA_MES = 13.5;
+export const TAMANHO_ANO = 11.5;
+
 /** Campos variáveis em pontos (origem no canto superior esquerdo; y = linha de base). */
 export function camposCredencial(c: DadosCredencial): Campo[] {
   const pcd = ehPcd(c.tipo);
@@ -82,12 +86,12 @@ export function camposCredencial(c: DadosCredencial): Campo[] {
     { texto: c.numero_registro ?? "", x: (regIni + regFim) / 2, y: 178, tamanho: 12, centro: true },
     { texto: ea || String(new Date().getFullYear()), x: (pcd ? 407.5 : 405.7) - 26.8, y: 179.5, tamanho: 12 },
     { texto: (c.nome ?? "").toLocaleUpperCase("pt-BR"), x: 170, y: (pcd ? 205.5 : 215.1), tamanho: 11 },
-    { texto: ed, x: 230 + dx, y: yData, tamanho: 11, centro: true },
-    { texto: em, x: 254.5 + dx, y: yData, tamanho: 11, centro: true },
-    { texto: ea, x: 271 + dx, y: yData, tamanho: 9.5 },
-    { texto: vd, x: 383.5 + dx, y: yData, tamanho: 11, centro: true },
-    { texto: vm, x: 405.6 + dx, y: yData, tamanho: 11, centro: true },
-    { texto: va, x: 420 + dx, y: yData, tamanho: 9.5 },
+    { texto: ed, x: 230 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
+    { texto: em, x: 254.5 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
+    { texto: ea, x: 270.5 + dx, y: yData, tamanho: TAMANHO_ANO },
+    { texto: vd, x: 383.5 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
+    { texto: vm, x: 405.6 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
+    { texto: va, x: 419.5 + dx, y: yData, tamanho: TAMANHO_ANO },
   ].filter((c) => c.texto);
 }
 
