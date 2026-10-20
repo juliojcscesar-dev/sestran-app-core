@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DatabaseBackup, Upload, Eye, FileDown, FileText, FolderOpen, Plus, Save, Trash2 } from "lucide-react";
+import { DatabaseBackup, Upload, Eye, FileDown, FileText, FolderOpen, Plus, Save, Search, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ import { formatarDataBr } from "@/lib/os";
 import { hojeIso } from "@/lib/veiculos";
 import { exibirDocumento, exibirTelefone, mascararDocumento, mascararTelefone } from "@/lib/mascaras";
 import {
-  camposCredencial, DOCUMENTOS_CONFERENCIA, ehPcd, gerarCredencialDocx, gerarCredencialPdf,
+  camposCredencial, DOCUMENTOS_CONFERENCIA, ehPcd, gerarCredencialDocx, gerarCredencialPdf, proximoNumeroRegistro,
   TIPOS_CREDENCIAL, TIPOS_GRUPO, urlModelo, validadeAutomatica, type TipoCredencial,
 } from "@/lib/credenciais";
 import { RelatorioModulo } from "@/components/relatorio/RelatorioModulo";
@@ -93,6 +93,43 @@ function PaginaCredenciais() {
   const docs = DOCUMENTOS_CONFERENCIA[grupo];
   const conferidos = docs.filter((_, i) => f.checklist[i]).length;
   const completo = conferidos === docs.length;
+
+  // Próximo número de registro, separado para Idoso e PCD.
+  const proximo = useMemo(
+    () => proximoNumeroRegistro((lista.data ?? []).filter((r) => ehPcd(r.tipo) === (grupo === "PCD")).map((r) => r.numero_registro)),
+    [lista.data, grupo],
+  );
+  const sugerido = useRef("");
+  useEffect(() => {
+    if (!podeOperar || f.id || lista.isPending) return;
+    const atual = f.numero_registro.trim();
+    if (atual !== "" && atual !== sugerido.current) return; // número digitado à mão ou de renovação: não substituir
+    sugerido.current = proximo;
+    if (atual !== proximo) setF((a) => ({ ...a, numero_registro: proximo }));
+  }, [podeOperar, f.id, f.numero_registro, proximo, lista.isPending]);
+
+  // Renovação: busca de credencial anterior da mesma modalidade por nome ou nº do registro.
+  const [buscaRenov, setBuscaRenov] = useState("");
+  const anteriores = useMemo(() => {
+    const q = buscaRenov.trim().toLocaleLowerCase("pt-BR");
+    if (!q) return [];
+    return (lista.data ?? [])
+      .filter((r) => ehPcd(r.tipo) === (grupo === "PCD") && `${r.nome} ${r.numero_registro ?? ""}`.toLocaleLowerCase("pt-BR").includes(q))
+      .slice(0, 10);
+  }, [lista.data, buscaRenov, grupo]);
+  function usarParaRenovacao(r: Registro) {
+    const antigo = deRegistro(r);
+    const hoje = hojeIso();
+    setF((a) => ({
+      ...vazio(), tipo: a.tipo,
+      nome: antigo.nome, tipo_documento: antigo.tipo_documento, numero_documento: antigo.numero_documento, nascimento: antigo.nascimento,
+      telefone: antigo.telefone, endereco: antigo.endereco, numero: antigo.numero, bairro: antigo.bairro, observacoes: antigo.observacoes,
+      numero_registro: antigo.numero_registro, tempo_validade: a.tempo_validade,
+      data_emissao: hoje, data_validade: validadeAutomatica(a.tipo, hoje, a.tempo_validade),
+    }));
+    setBuscaRenov("");
+    toast.success(`Dados de ${r.nome} carregados para a renovação.`);
+  }
 
   function alterar(p: Partial<Form>) {
     setF((a) => {
@@ -215,6 +252,24 @@ function PaginaCredenciais() {
                 ))}
               </RadioGroup>
               <p className="mt-2 text-xs text-muted-foreground">A renovação usa o mesmo modelo de credencial correspondente à modalidade.</p>
+              {f.tipo.startsWith("RENOVACAO_") && (
+                <div className="mt-4 space-y-2 rounded-md border bg-muted/40 p-3">
+                  <Label htmlFor="busca-renov" className="flex items-center gap-2"><Search className="h-4 w-4" />Buscar credencial anterior — {grupo === "PCD" ? "PCD" : "Idoso"}</Label>
+                  <Input id="busca-renov" placeholder="Digite o nome ou o nº do registro" value={buscaRenov} onChange={(e) => setBuscaRenov(e.target.value)} />
+                  {buscaRenov.trim() && (
+                    <div className="max-h-60 space-y-1.5 overflow-y-auto">
+                      {anteriores.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma credencial anterior encontrada. Preencha os dados manualmente.</p> :
+                        anteriores.map((r) => (
+                          <div key={r.id} className="flex flex-wrap items-center gap-2 rounded-md border bg-card p-2">
+                            <div className="min-w-0 flex-1"><strong className="block truncate text-sm">{r.nome}</strong><span className="block truncate text-xs text-muted-foreground">Nº {r.numero_registro || "não informado"} · {TIPOS_CREDENCIAL[r.tipo as TipoCredencial] ?? r.tipo} · válida até {r.data_validade ? formatarDataBr(r.data_validade) : "—"}</span></div>
+                            <Button type="button" size="sm" variant="outline" onClick={() => usarParaRenovacao(r)}>Usar dados</Button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">Os dados da credencial antiga preenchem uma nova solicitação de renovação; o cadastro antigo não é alterado.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -236,7 +291,8 @@ function PaginaCredenciais() {
           <Card>
             <CardHeader><CardTitle className="text-base">4. Emissão da credencial</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-1.5"><Label htmlFor="reg">Nº do registro na credencial</Label><Input id="reg" maxLength={20} placeholder="Digite o número manualmente" value={f.numero_registro} onChange={(e) => alterar({ numero_registro: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label htmlFor="reg">Nº do registro na credencial</Label><Input id="reg" maxLength={20} placeholder="Digite o número manualmente" value={f.numero_registro} onChange={(e) => alterar({ numero_registro: e.target.value })} />
+                <p className="text-xs text-muted-foreground" aria-live="polite">{proximo ? <>Próximo número {grupo === "PCD" ? "PCD" : "Idoso"}: <strong className="text-foreground">{proximo}</strong>{f.numero_registro.trim() !== proximo && !leitura && <Button type="button" variant="link" size="sm" className="h-auto px-1.5 py-0 text-xs" onClick={() => alterar({ numero_registro: proximo })}>Usar este número</Button>}</> : `Nenhum número ${grupo === "PCD" ? "PCD" : "Idoso"} digitado ainda.`}</p></div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5"><Label htmlFor="emi">Data de emissão</Label><Input id="emi" type="date" value={f.data_emissao} onChange={(e) => alterar({ data_emissao: e.target.value })} /></div>
                 <div className="space-y-1.5"><Label htmlFor="val">Válido até</Label><Input id="val" type="date" disabled={!f.validade_manual} value={f.data_validade} onChange={(e) => alterar({ data_validade: e.target.value })} /></div>
@@ -302,7 +358,7 @@ function Previa({ f, paginaInteira = false }: { f: Form; paginaInteira?: boolean
       <div className="relative w-full overflow-hidden" style={{ aspectRatio: paginaInteira ? "612 / 792" : "612 / 400", containerType: "inline-size" }}>
         <img src={urlModelo(f.tipo)} alt="Modelo da credencial" className="absolute left-0 top-0 w-full" />
         {campos.map((c, i) => (
-          <span key={i} className="absolute whitespace-nowrap font-bold leading-none text-foreground" style={{ left: `${(c.x / 612) * 100}%`, top: `${(c.y / 612) * 100}cqw`, fontSize: `${(c.tamanho / 612) * 100}cqw`, fontFamily: "Arial, Helvetica, sans-serif", transform: `translate(${c.centro ? "-50%" : "0"}, -80%)` }}>{c.texto}</span>
+          <span key={i} className="absolute whitespace-nowrap font-bold leading-none text-foreground" style={{ left: `${(c.x / 612) * 100}%`, top: `${(c.y / 612) * 100}cqw`, fontSize: `${(c.tamanho / 612) * 100}cqw`, transformOrigin: "left center", fontFamily: "Arial, Helvetica, sans-serif", transform: `translate(${c.centro ? "-50%" : "0"}, -80%)${c.escala ? ` scaleX(${c.escala})` : ""}` }}>{c.texto}</span>
         ))}
       </div>
     </div>
