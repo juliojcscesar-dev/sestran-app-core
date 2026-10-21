@@ -204,8 +204,6 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
         const { w, h } = await tamanhoImagem(s); if (!w) continue;
         const k = Math.min(maxW / w, maxH / h);
         runs.push(new d.ImageRun({ type: s.startsWith("data:image/png") ? "png" : "jpg", data: dataUrlBytes(s), transformation: { width: Math.round(w * k), height: Math.round(h * k) } }));
-        runs.push(new d.ImageRun({ type: "png", data: new Uint8Array(), transformation: { width: 0, height: 0 } }));
-        runs.pop();
       }
       extras.push(new d.Paragraph({ alignment: d.AlignmentType.CENTER, spacing: { before: 120 }, children: runs.flatMap((r, i) => (i ? [new d.TextRun("   "), r] : [r])) }));
     }

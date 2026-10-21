@@ -8,6 +8,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { prepararImagemRecolhido } from "@/lib/recolhidos-imagens";
+import { gerarDocxSinalizacao, gerarPdfSinalizacao, htmlSinalizacao, type DadosSinalizacao } from "@/lib/sinalizacao-documento";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,12 +90,15 @@ function Sinalizacao() {
     catch { toast.error("Não foi possível carregar a imagem."); } finally { setOcupado(false); }
   }
 
+  const doc = (o: Registro): DadosSinalizacao => ({ ...o, imagens: imgs(o.imagens) });
   function ver(o: Registro) {
     const w = window.open("", "_blank"); if (!w) { toast.error("Permita pop-ups para visualizar a ordem."); return; }
-    const campos = [["Pedido", o.pedido], ["Nº da O.S.", o.numero], ["Data", fmt(o.data)], ["Situação", o.status], ["Natureza", o.natureza], ["Endereço", o.endereco], ["Funcionário(s)", o.funcionario || "—"], ["Serviço", o.servico], ["Observações", o.observacao || "—"]];
-    const fotos = imgs(o.imagens).map((s) => `<img src="${s}">`).join("") || "<p>Sem imagens anexadas.</p>";
-    w.document.write(`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Ordem ${esc(o.numero)}</title><style>body{font:14px Arial;color:#182b43;max-width:850px;margin:30px auto;padding:0 20px}header{text-align:center;border-bottom:2px solid #173f75;padding-bottom:14px}header img{max-height:70px}h1{font-size:20px;color:#173f75}h2{font-size:16px;color:#173f75;margin-top:22px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{padding:10px;border:1px solid #ddd;border-radius:6px}.l{font-size:11px;color:#667085;font-weight:bold;text-transform:uppercase}.v{margin-top:5px;white-space:pre-wrap}img{max-width:100%;max-height:280px;margin:8px}button{padding:9px 15px;margin-top:20px}@media print{button{display:none}}</style><header><img src="/assets/logo-header.png" alt=""><div><b>DITRAN - DIRETORIA DE TRÂNSITO</b></div><div>DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA</div><h1>ORDEM DE SERVIÇO — ${esc(o.numero)}</h1></header><div class="grid">${campos.map(([a, b]) => `<div class="box"><div class="l">${esc(a)}</div><div class="v">${esc(b)}</div></div>`).join("")}</div><h2>Imagens / anexos</h2>${fotos}<p style="margin-top:35px">Preenchimento: <b>${esc(o.preenchido || "—")}</b></p>${o.chefe_imediato || o.cargo ? `<div style="text-align:center;margin-top:70px"><div style="border-top:1px solid #182b43;width:300px;margin:0 auto 6px"></div>${o.chefe_imediato ? `<div>${esc(o.chefe_imediato)}</div>` : ""}${o.cargo ? `<div><b>${esc(o.cargo)}</b></div>` : ""}</div>` : ""}<button onclick="window.print()">Imprimir / Salvar PDF</button></html>`);
+    w.document.write(htmlSinalizacao(doc(o)));
     w.document.close();
+  }
+  async function arquivo(o: Registro, tipo: "pdf" | "docx") {
+    try { if (tipo === "pdf") await gerarPdfSinalizacao(doc(o)); else await gerarDocxSinalizacao(doc(o)); }
+    catch { toast.error("Não foi possível gerar o documento."); }
   }
 
   function imprimirRelatorio() {
@@ -171,7 +175,7 @@ function Sinalizacao() {
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-bold text-primary">{o.numero} · {fmt(o.data)}</p><h4 className="break-words text-sm font-semibold">{o.natureza} — {o.endereco}</h4></div><Badge variant="outline" className={COR[o.status]}>{o.status}</Badge></div>
                 <p className="mt-1 text-xs text-muted-foreground">{o.pedido} • Responsável: {o.funcionario || "Não informado"}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{o.servico.length > 110 ? o.servico.slice(0, 110) + "…" : o.servico}{imgs(o.imagens).length ? ` • ${imgs(o.imagens).length} imagem(ns)` : ""}</p>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2"><span className="text-xs text-muted-foreground">Preenchido por {o.preenchido || "—"}</span><div className="flex gap-1.5"><Button size="sm" variant="outline" onClick={() => ver(o)}>Ver</Button>{podeEditar && <Button size="sm" variant="outline" onClick={() => editar(o)}>Editar</Button>}{podeExcluir && <Button size="sm" variant="outline" className="text-destructive" onClick={() => setExcluir(o)}>Excluir</Button>}</div></div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2"><span className="text-xs text-muted-foreground">Preenchido por {o.preenchido || "—"}</span><div className="flex gap-1.5"><Button size="sm" variant="outline" onClick={() => ver(o)}>Ver</Button><Button size="sm" variant="outline" onClick={() => arquivo(o, "pdf")}>PDF</Button><Button size="sm" variant="outline" onClick={() => arquivo(o, "docx")}>DOC</Button>{podeEditar && <Button size="sm" variant="outline" onClick={() => editar(o)}>Editar</Button>}{podeExcluir && <Button size="sm" variant="outline" className="text-destructive" onClick={() => setExcluir(o)}>Excluir</Button>}</div></div>
               </article>)}
           </div>
         </Card>
