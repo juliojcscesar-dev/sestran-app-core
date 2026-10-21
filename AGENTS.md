@@ -29,3 +29,4 @@
 - Educational category catalogs use stable text IDs and joined names; category, school and theme removal deactivates options with module deletion permission, preserving historical action links. The all-activities list reads paginated summaries independently of calendar filters.
 - Educational list actions load full records only on demand and reuse the existing form for edits and unsaved duplication; status totals share the unfiltered summary query to include older activities without fetching report images.
 - Collected-vehicle observation images are bounded, browser-compressed JPEG data stored atomically on the vehicle under existing RLS; a dedicated image editor and shared validator keep attachments separate from legacy observation text and safe in printed sheets.
+- Agenda and vehicle final documents share the institutional sheet pieces in src/components/FolhaDocumento.tsx and the agenda-* CSS; keeps screen and print identical to the generated PDF layout.
