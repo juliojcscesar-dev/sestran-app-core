@@ -95,13 +95,20 @@ export async function gerarPdfAcao(acao: AcaoEducativa) {
   }
   function campos(linhas: { rotulo: string; valor: string }[][]) {
     for (const linha of linhas) {
-      doc.setFontSize(9); doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
       const w = largura / linha.length;
-      const quebradas = linha.map((c) => doc.splitTextToSize(`${c.rotulo}: ${c.valor}`, w - 8) as string[]);
-      const h = Math.max(...quebradas.map((l) => l.length)) * 4.2 + 5; garantir(h);
-      linha.forEach((_, i) => {
+      const partes = linha.map((c) => {
+        const rotulo = `${c.rotulo}: `;
+        doc.setFont("helvetica", "bold"); const lw = doc.getTextWidth(rotulo);
+        doc.setFont("helvetica", "normal");
+        return { rotulo, lw, valor: doc.splitTextToSize(c.valor, w - 8 - lw) as string[] };
+      });
+      const h = Math.max(...partes.map((p) => p.valor.length)) * 4.2 + 5; garantir(h);
+      partes.forEach((p, i) => {
         doc.setFillColor(PALETA.painel); doc.setDrawColor(PALETA.borda); doc.roundedRect(x + i * w, y, w - 1, h, 1, 1, "FD");
-        doc.setTextColor(PALETA.tinta); doc.text(quebradas[i] ?? [], x + i * w + 3, y + 5);
+        doc.setTextColor(PALETA.tinta);
+        doc.setFont("helvetica", "bold"); doc.text(p.rotulo, x + i * w + 3, y + 5);
+        doc.setFont("helvetica", "normal"); doc.text(p.valor, x + i * w + 3 + p.lw, y + 5);
       });
       y += h + 2;
     }
