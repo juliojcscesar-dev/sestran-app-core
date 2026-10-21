@@ -1,27 +1,50 @@
+import type { ReactNode } from 'react';
 import { TextoFormatado } from "@/components/TextoFormatado";
 import type { AcaoEducativa } from '@/lib/educacao-api';
 import { CATEGORIA_ACAO_LABEL, STATUS_ACAO_LABEL, criarDataLocal } from '@/lib/educacao';
 import { larguraImagem } from '@/lib/relatorio-imagens';
 
-function Campo({ nome, valor }: { nome: string; valor?: string | number | null | undefined }) {
-  return valor !== null && valor !== undefined && valor !== '' ? <p className="whitespace-pre-wrap"><strong>{nome}: </strong><TextoFormatado valor={String(valor)} /></p> : null;
+type CampoLinha = { nome: string; valor?: string | null | undefined };
+
+/** Linha de campos no mesmo desenho do PDF: caixas lado a lado, só com o que foi preenchido. */
+function Linha({ campos }: { campos: CampoLinha[] }) {
+  const visiveis = campos.filter((c) => c.valor != null && String(c.valor).trim() !== '');
+  if (!visiveis.length) return null;
+  return <div className={`agenda-linha ${visiveis.length > 1 ? 'agenda-linha-2' : ''}`}>
+    {visiveis.map((c) => <div key={c.nome} className="agenda-campo"><strong>{c.nome}:</strong> <TextoFormatado valor={String(c.valor).trim()} /></div>)}
+  </div>;
+}
+
+function Caixa({ titulo, children }: { titulo: string; children: ReactNode }) {
+  return <div className="agenda-caixa"><strong>{titulo}</strong><div className="agenda-caixa-corpo">{children}</div></div>;
 }
 
 export function DocumentoAcao({ acao }: { acao: AcaoEducativa }) {
+  const temRelatorio = Boolean(acao.relatorio_texto) || acao.relatorio_imagens.length > 0;
   return <article className="final-paper agenda-paper" aria-label="Documento final da ação educativa">
-    <img src="/assets/logo-header.png" alt="Prefeitura Municipal de Paranavaí — SESTRAN" className="mx-auto mb-6 h-auto w-full max-w-sm" />
-    <div className="agenda-row"><Campo nome="DATA DO EVENTO" valor={criarDataLocal(acao.data_acao).toLocaleDateString('pt-BR')} /><Campo nome="TIPO" valor={acao.tipo_atividade || acao.categorias_educativas?.nome || CATEGORIA_ACAO_LABEL[acao.categoria] || acao.categoria} /></div>
-    <h1>AGENDA ELETRÔNICA - EDUCAÇÃO NO TRÂNSITO</h1>
-    <section><Campo nome="TEMA" valor={acao.temas_educativos?.nome} /><Campo nome="EVENTO" valor={acao.titulo} /><Campo nome="LOCAL" valor={acao.local || acao.escolas?.nome} />
-      <div className="agenda-address"><Campo nome="ENDEREÇO" valor={acao.endereco} /><Campo nome="Nº" valor={acao.numero_endereco} /><Campo nome="BAIRRO" valor={acao.bairro} /></div>
-    </section>
-    <div className="agenda-row"><Campo nome="INÍCIO" valor={acao.horario_inicio?.slice(0,5)} /><Campo nome="TÉRMINO" valor={acao.horario_fim?.slice(0,5)} /></div>
-    {acao.descricao && <section><strong>ATIVIDADE:</strong><p className="whitespace-pre-wrap"><TextoFormatado valor={acao.descricao} /></p></section>}
-    {(acao.equipe || acao.orientadores?.nome) && <section><strong>EQUIPE:</strong><p className="whitespace-pre-wrap">{[acao.equipe, acao.orientadores?.nome].filter(Boolean).join(' · ')}</p></section>}
-    {(acao.relatorio_texto || acao.relatorio_imagens.length > 0) && <section><strong>RELATÓRIO:</strong><div className="agenda-report">
-      {acao.relatorio_texto && <p className="whitespace-pre-wrap"><TextoFormatado valor={acao.relatorio_texto} /></p>}
-      {acao.relatorio_imagens.map((imagem, i) => <figure key={imagem.id} className={`${larguraImagem[imagem.largura] ?? 'w-full'} mx-auto my-4 break-inside-avoid`}><img src={imagem.src} alt={imagem.legenda || `Imagem ${i + 1} do relatório`} className="h-auto w-full" />{imagem.legenda && <figcaption className="mt-1 text-center text-xs">{imagem.legenda}</figcaption>}</figure>)}
-    </div></section>}
-    <section><Campo nome="SITUAÇÃO" valor={STATUS_ACAO_LABEL[acao.status]} /><Campo nome="PÚBLICO-ALVO" valor={acao.publico_alvo} /><Campo nome="PARTICIPANTES" valor={acao.participantes} /><Campo nome="OBSERVAÇÕES" valor={acao.observacoes} /></section>
+    <header className="agenda-cabecalho">
+      <img src="/assets/logo-header.png" alt="Prefeitura Municipal de Paranavaí — Secretaria Municipal de Segurança e Trânsito" />
+      <div className="agenda-datas">
+        <div><strong>Data:</strong><span>{criarDataLocal(acao.data_acao).toLocaleDateString('pt-BR')}</span></div>
+        <div><strong>Situação:</strong><span>{STATUS_ACAO_LABEL[acao.status]}</span></div>
+      </div>
+    </header>
+    <h1 className="agenda-titulo">AGENDA ELETRÔNICA - EDUCAÇÃO NO TRÂNSITO</h1>
+    <Linha campos={[{ nome: 'Título da Ação', valor: acao.titulo }]} />
+    <Linha campos={[{ nome: 'Tipo', valor: acao.tipo_atividade || acao.categorias_educativas?.nome || CATEGORIA_ACAO_LABEL[acao.categoria] || acao.categoria }, { nome: 'Tema', valor: acao.temas_educativos?.nome }]} />
+    <Linha campos={[{ nome: 'Local', valor: acao.local || acao.escolas?.nome }]} />
+    <Linha campos={[{ nome: 'Endereço', valor: [acao.endereco, acao.numero_endereco].filter(Boolean).join(', ') || null }, { nome: 'Bairro', valor: acao.bairro }]} />
+    <Linha campos={[{ nome: 'Início', valor: acao.horario_inicio?.slice(0, 5) }, { nome: 'Término', valor: acao.horario_fim?.slice(0, 5) }]} />
+    <Linha campos={[{ nome: 'Equipe', valor: [acao.equipe, acao.orientadores?.nome].filter(Boolean).join(' · ') || null }]} />
+    <Linha campos={[{ nome: 'Público-alvo', valor: acao.publico_alvo }, { nome: 'Participantes', valor: acao.participantes != null ? String(acao.participantes) : null }]} />
+    {acao.descricao && <Caixa titulo="Atividade"><p className="whitespace-pre-wrap"><TextoFormatado valor={acao.descricao} /></p></Caixa>}
+    {acao.observacoes && <Caixa titulo="Observações"><p className="whitespace-pre-wrap"><TextoFormatado valor={acao.observacoes} /></p></Caixa>}
+    {temRelatorio && <>
+      {acao.relatorio_texto && <Caixa titulo="Relatório"><p className="whitespace-pre-wrap"><TextoFormatado valor={acao.relatorio_texto} /></p></Caixa>}
+      {acao.relatorio_imagens.map((imagem, i) => <figure key={imagem.id} className={`agenda-foto ${larguraImagem[imagem.largura] ?? 'w-full'}`}>
+        <img src={imagem.src} alt={imagem.legenda || `Imagem ${i + 1} do relatório`} />
+        {imagem.legenda && <figcaption>{imagem.legenda}</figcaption>}
+      </figure>)}
+    </>}
   </article>;
 }
