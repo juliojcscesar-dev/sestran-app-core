@@ -128,7 +128,7 @@ export async function gerarPdfSinalizacao(o: DadosSinalizacao) {
     const total = dims.reduce((s, d) => s + d.w, 0) + (n - 1) * 8;
     let xi = X + (LARG - total) / 2;
     o.imagens.forEach((s, i) => {
-      const d = dims[i]; if (!d.w) return;
+      const d = dims[i]; if (!d?.w) return;
       try { doc.addImage(s, s.startsWith("data:image/png") ? "PNG" : "JPEG", xi, yImg, d.w, d.h); } catch { /* imagem inválida */ }
       xi += d.w + 8;
     });
@@ -167,20 +167,20 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
   const comBorda = { top: B, bottom: B, left: B, right: B };
   const semBorda = { top: N, bottom: N, left: N, right: N };
   const t = (text: string, o2: { bold?: boolean; size?: number; color?: string } = {}) =>
-    new d.TextRun({ text, font: "Arial", bold: o2.bold, size: Math.round((o2.size ?? 11) * 2), color: o2.color });
+    new d.TextRun({ text, font: "Arial", size: Math.round((o2.size ?? 11) * 2), ...(o2.bold ? { bold: true } : {}), ...(o2.color ? { color: o2.color } : {}) });
   const p = (runs: InstanceType<typeof d.TextRun>[] | InstanceType<typeof d.ImageRun>[], al: (typeof d.AlignmentType)[keyof typeof d.AlignmentType] = d.AlignmentType.LEFT, after = 0) =>
     new d.Paragraph({ alignment: al, spacing: { before: 0, after }, children: runs });
   const multilinha = (texto: string, centro = false) =>
     (texto || " ").split("\n").map((l) => p([t(l || " ")], centro ? d.AlignmentType.CENTER : d.AlignmentType.LEFT));
-  const celula = (rotulo: string, valor: string, largura: number, centro = false, extras: d.Paragraph[] = []) =>
+  const celula = (rotulo: string, valor: string, largura: number, centro = false, extras: InstanceType<typeof d.Paragraph>[] = []) =>
     new d.TableCell({ width: { size: largura, type: d.WidthType.DXA }, borders: comBorda, margins: { top: 60, bottom: 100, left: 140, right: 140 },
       children: [p([t(rotulo, { bold: true, size: 7 })]), ...multilinha(valor, centro), ...extras] });
   const vazio = (largura: number) => new d.TableCell({ width: { size: largura, type: d.WidthType.DXA }, borders: semBorda, children: [p([t("")])] });
-  const tabela = (celulas: d.TableCell[]) => new d.Table({ width: { size: 10600, type: d.WidthType.DXA }, borders: { ...semBorda, insideHorizontal: N, insideVertical: N },
+  const tabela = (celulas: InstanceType<typeof d.TableCell>[]) => new d.Table({ width: { size: 10600, type: d.WidthType.DXA }, borders: { ...semBorda, insideHorizontal: N, insideVertical: N },
     layout: d.TableLayoutType.FIXED, rows: [new d.TableRow({ children: celulas })] });
   const espaco = (pt: number) => new d.Paragraph({ spacing: { before: 0, after: 0, line: pt * 20, lineRule: d.LineRuleType.EXACT }, children: [] });
 
-  const filhos: (d.Paragraph | d.Table)[] = [];
+  const filhos: (InstanceType<typeof d.Paragraph> | InstanceType<typeof d.Table>)[] = [];
   try {
     const logo = await bytes(LOGO);
     filhos.push(p([new d.ImageRun({ type: "png", data: logo, transformation: { width: 560, height: Math.round(560 * 152 / 1001) } })], d.AlignmentType.CENTER, 80));
@@ -195,7 +195,7 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
   filhos.push(tabela([celula("SERVIÇO:", o.servico, 10600)]), espaco(14));
 
   if (temObservacoes(o)) {
-    const extras: d.Paragraph[] = [];
+    const extras: InstanceType<typeof d.Paragraph>[] = [];
     const n = o.imagens.length;
     if (n) {
       const maxW = n === 1 ? 420 : n === 2 ? 320 : 155, maxH = n === 1 ? 300 : n === 2 ? 240 : 185;
