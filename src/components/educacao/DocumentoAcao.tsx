@@ -4,7 +4,7 @@ import type { AcaoEducativa } from '@/lib/educacao-api';
 import { CATEGORIA_ACAO_LABEL, STATUS_ACAO_LABEL, criarDataLocal } from '@/lib/educacao';
 import { larguraImagem } from '@/lib/relatorio-imagens';
 
-type CampoLinha = { nome: string; valor?: string | null };
+type CampoLinha = { nome: string; valor?: string | null | undefined };
 
 /** Linha de campos no mesmo desenho do PDF: caixas lado a lado, só com o que foi preenchido. */
 function Linha({ campos }: { campos: CampoLinha[] }) {
