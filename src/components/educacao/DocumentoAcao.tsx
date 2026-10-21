@@ -1,23 +1,8 @@
-import type { ReactNode } from 'react';
 import { TextoFormatado } from "@/components/TextoFormatado";
 import type { AcaoEducativa } from '@/lib/educacao-api';
 import { CATEGORIA_ACAO_LABEL, STATUS_ACAO_LABEL, criarDataLocal } from '@/lib/educacao';
 import { larguraImagem } from '@/lib/relatorio-imagens';
-
-type CampoLinha = { nome: string; valor?: string | null | undefined };
-
-/** Linha de campos no mesmo desenho do PDF: caixas lado a lado, só com o que foi preenchido. */
-function Linha({ campos }: { campos: CampoLinha[] }) {
-  const visiveis = campos.filter((c) => c.valor != null && String(c.valor).trim() !== '');
-  if (!visiveis.length) return null;
-  return <div className={`agenda-linha ${visiveis.length > 1 ? 'agenda-linha-2' : ''}`}>
-    {visiveis.map((c) => <div key={c.nome} className="agenda-campo"><strong>{c.nome}:</strong> <TextoFormatado valor={String(c.valor).trim()} /></div>)}
-  </div>;
-}
-
-function Caixa({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return <div className="agenda-caixa"><strong>{titulo}</strong><div className="agenda-caixa-corpo">{children}</div></div>;
-}
+import { CaixaFolha as Caixa, LinhaFolha as Linha } from '@/components/FolhaDocumento';
 
 export function DocumentoAcao({ acao }: { acao: AcaoEducativa }) {
   const temRelatorio = Boolean(acao.relatorio_texto) || acao.relatorio_imagens.length > 0;
