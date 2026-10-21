@@ -310,6 +310,7 @@
   .final-paper, .final-paper * { visibility: visible; }
   .final-paper { position: absolute; inset: 0; width: 194mm; min-height: auto; border: 0; margin: 0; padding: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .final-paper figure { break-inside: avoid; }
+  .final-paper.agenda-paper { min-height: 258mm; padding: 8mm 4mm 6mm; border: 2px solid var(--agenda-azul); border-radius: 8px; }
   .os-paper { position: absolute; inset: 0; width: 194mm; min-height: auto; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
   .os-doc-header { break-inside: avoid; }
   .os-doc-header { display: grid; grid-template-columns: minmax(0, 1fr) 55mm; }
