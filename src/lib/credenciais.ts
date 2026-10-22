@@ -67,14 +67,26 @@ export function validadeAutomatica(tipo: string, emissao: string, tempo: string)
 
 export type DadosCredencial = { tipo: string; nome: string; numero_registro: string | null; data_emissao: string; data_validade: string | null };
 
-/** `escala` = largura horizontal das letras (1 = normal); a altura e o tamanho da fonte não mudam. */
-type Campo = { texto: string; x: number; y: number; tamanho: number; centro?: boolean; escala?: number };
+/** `largura` = largura (pt) reservada ao campo no documento Word. */
+type Campo = { texto: string; x: number; y: number; tamanho: number; centro?: boolean; largura: number };
 
-/** Tamanho (pt) das datas de emissão e validade — dia, mês e ano iguais. */
-export const TAMANHO_DIA_MES = 13.5;
-export const TAMANHO_ANO = TAMANHO_DIA_MES;
-/** O ano da emissão fica entre a barra e "VÁLIDO ATÉ" (≈27,7 pt livres): algarismos levemente mais estreitos. */
-const ESCALA_ANO_EMISSAO = 0.78;
+/** Tamanho (pt) dos textos do modelo (Arial 12 negrito). */
+export const TAMANHO_ROTULO = 12;
+/** Datas de emissão e validade: 4 pt maiores que os textos do modelo (Arial 12 → 16). */
+export const TAMANHO_DATA = TAMANHO_ROTULO + 4;
+/** Espaço livre para o nome, do fim de "NOME:" até a borda do quadro. */
+const LARGURA_NOME = 385;
+
+function dataBr(iso: string | null | undefined) {
+  const [a = "", m = "", d = ""] = (iso ?? "").split("-");
+  return a && m && d ? `${d}/${m}/${a}` : "";
+}
+/** Reduz a letra do nome somente quando ele não cabe na linha (largura média de maiúsculas em negrito). */
+export function tamanhoNome(nome: string) {
+  const n = nome.trim().length;
+  if (!n) return TAMANHO_ROTULO;
+  return Math.max(8, Math.min(TAMANHO_ROTULO, Math.floor((LARGURA_NOME / (n * 0.72)) * 2) / 2));
+}
 
 /** Próximo número de registro a partir dos números já digitados (mantém zeros à esquerda). */
 export function proximoNumeroRegistro(numeros: (string | null | undefined)[]) {
@@ -88,25 +100,20 @@ export function proximoNumeroRegistro(numeros: (string | null | undefined)[]) {
   return maior < 0 ? "" : String(maior + 1).padStart(largura, "0");
 }
 
-/** Campos variáveis em pontos (origem no canto superior esquerdo; y = linha de base). */
+/** Campos variáveis em pontos (origem no canto superior esquerdo; y = linha de base), medidos nos modelos de 2026. */
 export function camposCredencial(c: DadosCredencial): Campo[] {
   const pcd = ehPcd(c.tipo);
-  const dy = pcd ? 0 : 9.6; // o modelo do idoso tem as datas e o nome 9,6 pt mais abaixo
-  const dx = pcd ? 0 : 0.4;
-  const [ea = "", em = "", ed = ""] = (c.data_emissao ?? "").split("-");
-  const [va = "", vm = "", vd = ""] = (c.data_validade ?? "").split("-");
-  const regIni = pcd ? 337.5 : 322.4, regFim = pcd ? 383.5 : 381.7;
-  const yData = 242.6 + dy;
+  const ano = (c.data_emissao ?? "").split("-")[0] || String(new Date().getFullYear());
+  const nome = (c.nome ?? "").toLocaleUpperCase("pt-BR");
+  const p = pcd
+    ? { reg: 357.8, ano: 379.4, yNome: 218.3, xNome: 164.5, yData: 252.0, xEmissao: 242.5, xValidade: 413.7 }
+    : { reg: 349.3, ano: 379.3, yNome: 218.9, xNome: 164.9, yData: 252.6, xEmissao: 242.8, xValidade: 414.0 };
   return [
-    { texto: c.numero_registro ?? "", x: (regIni + regFim) / 2, y: 178, tamanho: 12, centro: true },
-    { texto: ea || String(new Date().getFullYear()), x: (pcd ? 407.5 : 405.7) - 26.8, y: 179.5, tamanho: 12 },
-    { texto: (c.nome ?? "").toLocaleUpperCase("pt-BR"), x: 170, y: (pcd ? 205.5 : 215.1), tamanho: 11 },
-    { texto: ed, x: 230 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
-    { texto: em, x: 254.5 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
-    { texto: ea, x: 268.6 + dx, y: yData, tamanho: TAMANHO_ANO, escala: ESCALA_ANO_EMISSAO },
-    { texto: vd, x: 383.5 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
-    { texto: vm, x: 405.6 + dx, y: yData, tamanho: TAMANHO_DIA_MES, centro: true },
-    { texto: va, x: 419.5 + dx, y: yData, tamanho: TAMANHO_ANO },
+    { texto: c.numero_registro ?? "", x: p.reg, y: 179.6, tamanho: TAMANHO_ROTULO, centro: true, largura: 46 },
+    { texto: ano, x: p.ano, y: 179.6, tamanho: TAMANHO_ROTULO, largura: 32 },
+    { texto: nome, x: p.xNome, y: p.yNome, tamanho: tamanhoNome(nome), largura: LARGURA_NOME },
+    { texto: dataBr(c.data_emissao), x: p.xEmissao, y: p.yData, tamanho: TAMANHO_DATA, largura: 86 },
+    { texto: dataBr(c.data_validade), x: p.xValidade, y: p.yData, tamanho: TAMANHO_DATA, largura: 100 },
   ].filter((c) => c.texto);
 }
 
@@ -130,7 +137,7 @@ export async function gerarCredencialPdf(c: DadosCredencial) {
   doc.setFont("helvetica", "bold");
   for (const f of camposCredencial(c)) {
     doc.setFontSize(f.tamanho);
-    doc.text(f.texto, f.x, f.y, { align: f.centro ? "center" : "left", ...(f.escala ? { horizontalScale: f.escala } : {}) });
+    doc.text(f.texto, f.x, f.y, { align: f.centro ? "center" : "left" });
   }
   doc.save(`${nomeArquivo(c)}.pdf`);
 }
@@ -146,13 +153,13 @@ export async function gerarCredencialDocx(c: DadosCredencial) {
     })],
   });
   const campos = camposCredencial(c).map((f) => {
-    const largura = f.centro ? 60 : f.texto.length > 5 ? 330 : 40;
+    const largura = f.largura;
     const x = f.centro ? f.x - largura / 2 : f.x;
     return new d.Paragraph({
       frame: { type: "absolute", position: { x: tw(x), y: tw(f.y - f.tamanho * 0.95) }, width: tw(largura), height: tw(f.tamanho * 1.25), anchor: { horizontal: d.FrameAnchorType.PAGE, vertical: d.FrameAnchorType.PAGE } },
       alignment: f.centro ? d.AlignmentType.CENTER : d.AlignmentType.LEFT,
       spacing: { before: 0, after: 0, line: tw(f.tamanho * 1.2), lineRule: d.LineRuleType.EXACT },
-      children: [new d.TextRun({ text: f.texto, bold: true, font: "Arial", size: Math.round(f.tamanho * 2), ...(f.escala ? { scale: Math.round(f.escala * 100) } : {}) })],
+      children: [new d.TextRun({ text: f.texto, bold: true, font: "Arial", size: Math.round(f.tamanho * 2) })],
     });
   });
   const documento = new d.Document({
