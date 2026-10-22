@@ -17,7 +17,7 @@ describe("credenciais", () => {
   it("número, ano e nome mantêm o tamanho 12 do modelo", () => {
     const campos = camposCredencial({ tipo: "PCD", nome: "Maria", numero_registro: "669", data_emissao: "2027-01-05", data_validade: "2032-01-05" });
     assert.equal(campos.find((c) => c.texto === "669")?.tamanho, 12);
-    assert.equal(campos.find((c) => c.texto === "2027")?.tamanho, 12);
+    assert.equal(campos.find((c) => c.texto === "/2027")?.tamanho, 12);
     assert.equal(campos.find((c) => c.texto === "MARIA")?.tamanho, 12);
   });
 
