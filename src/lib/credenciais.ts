@@ -110,7 +110,7 @@ export function camposCredencial(c: DadosCredencial): Campo[] {
     : { reg: 349.3, ano: 379.3, yNome: 218.9, xNome: 164.9, yData: 252.6, xEmissao: 242.8, xValidade: 414.0 };
   return [
     { texto: c.numero_registro ?? "", x: p.reg, y: 179.6, tamanho: TAMANHO_ROTULO, centro: true, largura: 46 },
-    { texto: ano, x: p.ano, y: 179.6, tamanho: TAMANHO_ROTULO, largura: 32 },
+    { texto: pcd ? `/${ano}` : ano, x: pcd ? p.ano - 3.34 : p.ano, y: 179.6, tamanho: TAMANHO_ROTULO, largura: 36 },
     { texto: nome, x: p.xNome, y: p.yNome, tamanho: tamanhoNome(nome), largura: LARGURA_NOME },
     { texto: dataBr(c.data_emissao), x: p.xEmissao, y: p.yData, tamanho: TAMANHO_DATA, largura: 86 },
     { texto: dataBr(c.data_validade), x: p.xValidade, y: p.yData, tamanho: TAMANHO_DATA, largura: 100 },
