@@ -211,6 +211,13 @@
       "when": 1792465132900,
       "tag": "0029_modulo_sinalizacao",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792759387404,
+      "tag": "0030_os_cadastros_editaveis",
+      "breakpoints": true
     }
   ]
 }
