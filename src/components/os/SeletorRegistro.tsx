@@ -76,7 +76,10 @@ export function SeletorRegistro({
   const [excluindo, setExcluindo] = useState<OpcaoSeletor | null>(null);
   const [processandoExclusao, setProcessandoExclusao] = useState(false);
 
-  const todasOpcoes = [...opcoes, ...criados.filter((item) => !opcoes.some((o) => o.id === item.id))];
+  const todasOpcoes = [
+    ...opcoes,
+    ...criados.filter((item) => !opcoes.some((o) => o.id === item.id)),
+  ];
   const selecionado = todasOpcoes.find((o) => o.id === valor) ?? null;
   const opcaoEditando = todasOpcoes.find((o) => o.id === editando) ?? null;
   const textoBotao = selecionado?.rotulo ?? (valor && rotuloAtual ? rotuloAtual : null);
@@ -155,13 +158,19 @@ export function SeletorRegistro({
             role="combobox"
             aria-expanded={aberto}
             disabled={disabled}
-            className={cn("w-full justify-between font-normal", !textoBotao && "text-muted-foreground")}
+            className={cn(
+              "w-full justify-between font-normal",
+              !textoBotao && "text-muted-foreground",
+            )}
           >
             <span className="truncate">{textoBotao ?? placeholder}</span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[18rem] p-0" align="start">
+        <PopoverContent
+          className="w-[--radix-popover-trigger-width] min-w-[18rem] p-0"
+          align="start"
+        >
           {opcaoEditando ? (
             <div className="space-y-1 p-2">
               <p className="text-xs font-medium text-muted-foreground">Editar nome salvo</p>
@@ -214,43 +223,42 @@ export function SeletorRegistro({
               </div>
             </div>
           ) : (
-          <Command>
-            <CommandInput placeholder="Pesquisar..." value={busca} onValueChange={setBusca} />
-            <CommandList>
-              <CommandEmpty>
-                {podeCriar && termo ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    disabled={criando}
-                    onClick={criar}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
-                  >
-                    {criando ? (
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                    )}
-                    Cadastrar “{termo}”
-                  </Button>
-                ) : (
-                  <p className="px-3 py-4 text-sm text-muted-foreground">{vazio}</p>
-                )}
-              </CommandEmpty>
-              <CommandGroup>
-                {permiteLimpar && (
-                  <CommandItem
-                    value="__limpar__"
-                    onSelect={() => {
-                      onChange(null);
-                      setAberto(false);
-                    }}
-                  >
-                    <span className="text-muted-foreground">Não informar</span>
-                  </CommandItem>
-                )}
-                {todasOpcoes.map((opcao) =>
-                  (
+            <Command>
+              <CommandInput placeholder="Pesquisar..." value={busca} onValueChange={setBusca} />
+              <CommandList>
+                <CommandEmpty>
+                  {podeCriar && termo ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled={criando}
+                      onClick={criar}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
+                    >
+                      {criando ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Plus className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      Cadastrar “{termo}”
+                    </Button>
+                  ) : (
+                    <p className="px-3 py-4 text-sm text-muted-foreground">{vazio}</p>
+                  )}
+                </CommandEmpty>
+                <CommandGroup>
+                  {permiteLimpar && (
+                    <CommandItem
+                      value="__limpar__"
+                      onSelect={() => {
+                        onChange(null);
+                        setAberto(false);
+                      }}
+                    >
+                      <span className="text-muted-foreground">Não informar</span>
+                    </CommandItem>
+                  )}
+                  {todasOpcoes.map((opcao) => (
                     <CommandItem
                       key={opcao.id}
                       value={`${opcao.rotulo} ${opcao.detalhe ?? ""}`}
@@ -261,13 +269,18 @@ export function SeletorRegistro({
                       className="group"
                     >
                       <Check
-                        className={cn("mr-2 h-4 w-4 shrink-0", valor === opcao.id ? "opacity-100" : "opacity-0")}
+                        className={cn(
+                          "mr-2 h-4 w-4 shrink-0",
+                          valor === opcao.id ? "opacity-100" : "opacity-0",
+                        )}
                         aria-hidden="true"
                       />
                       <span className="min-w-0 flex-1 truncate">
                         {opcao.rotulo}
                         {opcao.detalhe ? (
-                          <span className="ml-2 text-xs text-muted-foreground">{opcao.detalhe}</span>
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {opcao.detalhe}
+                          </span>
                         ) : null}
                       </span>
                       {onEditar && (
@@ -305,23 +318,22 @@ export function SeletorRegistro({
                         </button>
                       )}
                     </CommandItem>
-                  ),
-                )}
-              </CommandGroup>
-              {podeCriar && termo && !existeIgual && opcoes.length > 0 && (
-                <CommandGroup>
-                  <CommandItem value={`criar-${termo}`} onSelect={criar}>
-                    {criando ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-                    )}
-                    Cadastrar “{termo}”
-                  </CommandItem>
+                  ))}
                 </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
+                {podeCriar && termo && !existeIgual && opcoes.length > 0 && (
+                  <CommandGroup>
+                    <CommandItem value={`criar-${termo}`} onSelect={criar}>
+                      {criando ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                      )}
+                      Cadastrar “{termo}”
+                    </CommandItem>
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
           )}
         </PopoverContent>
       </Popover>
@@ -335,7 +347,8 @@ export function SeletorRegistro({
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir nome da lista</AlertDialogTitle>
             <AlertDialogDescription>
-              Retirar “{excluindo?.rotulo}” da lista? As ordens de serviço já emitidas continuam com esse nome.
+              Retirar “{excluindo?.rotulo}” da lista? As ordens de serviço já emitidas continuam com
+              esse nome.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -348,7 +361,9 @@ export function SeletorRegistro({
                 void confirmarExclusao();
               }}
             >
-              {processandoExclusao && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+              {processandoExclusao && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              )}
               Confirmar exclusão
             </AlertDialogAction>
           </AlertDialogFooter>
