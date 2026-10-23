@@ -696,12 +696,18 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                   )
                 }
                 placeholder="Agente"
+                rotuloAtual={nomeAgente(linha.agente_id)}
                 podeCriar
                 onCriar={async (nome) => {
                   const novo = await criarAgente(nome);
                   await queryClient.invalidateQueries({ queryKey: ["agentes"] });
                   return { id: novo.id, rotulo: novo.nome };
                 }}
+                onEditar={gestor ? (op, nome) => renomear("agentes", op.id, nome) : undefined}
+                onExcluir={podeExcluirNomes ? async (op) => {
+                  await retirar("agentes", op.id);
+                  setAgentes((atual) => atual.map((l) => (l.agente_id === op.id ? { ...l, agente_id: null } : l)));
+                } : undefined}
               />
               <Input
                 placeholder="Função"
@@ -779,12 +785,18 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                   )
                 }
                 placeholder="Orientador"
+                rotuloAtual={nomeOrientador(linha.orientador_id)}
                 podeCriar
                 onCriar={async (nome) => {
                   const novo = await criarOrientador(nome);
                   await queryClient.invalidateQueries({ queryKey: ["orientadores"] });
                   return { id: novo.id, rotulo: novo.nome };
                 }}
+                onEditar={gestor ? (op, nome) => renomear("orientadores", op.id, nome) : undefined}
+                onExcluir={podeExcluirNomes ? async (op) => {
+                  await retirar("orientadores", op.id);
+                  setOrientadores((atual) => atual.map((l) => (l.orientador_id === op.id ? { ...l, orientador_id: null } : l)));
+                } : undefined}
               />
               <Input
                 placeholder="Observação"
