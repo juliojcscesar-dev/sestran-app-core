@@ -35,11 +35,11 @@ type Props = {
   podeCriar?: boolean;
   onCriar?: (nome: string) => Promise<OpcaoSeletor>;
   /** Renomeia um nome salvo; só é exibido quando o usuário pode preencher o módulo. */
-  onEditar?: (opcao: OpcaoSeletor, nome: string) => Promise<void>;
+  onEditar?: ((opcao: OpcaoSeletor, nome: string) => Promise<void>) | undefined;
   /** Retira um nome salvo da lista; só é exibido com permissão de exclusão. */
-  onExcluir?: (opcao: OpcaoSeletor) => Promise<void>;
+  onExcluir?: ((opcao: OpcaoSeletor) => Promise<void>) | undefined;
   /** Nome exibido quando o registro escolhido não está mais na lista ativa. */
-  rotuloAtual?: string | null;
+  rotuloAtual?: string | null | undefined;
   permiteLimpar?: boolean;
   disabled?: boolean;
   id?: string;
