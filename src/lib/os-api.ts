@@ -382,14 +382,10 @@ export async function listarOrientadores() {
   );
 }
 
-export async function listarEventos() {
-  return checar(
-    await supabase
-      .from("eventos")
-      .select("id, titulo, data_inicio, local")
-      .order("data_inicio", { ascending: false })
-      .limit(300),
-  );
+export async function listarEventos(somenteAtivos = false) {
+  let consulta = supabase.from("eventos").select("id, titulo, data_inicio, local");
+  if (somenteAtivos) consulta = consulta.eq("ativo", true);
+  return checar(await consulta.order("data_inicio", { ascending: false }).limit(300));
 }
 
 export async function listarLocais() {
@@ -452,6 +448,23 @@ export async function editarTipoServico(id: string, nome: string) {
 export async function excluirTipoServico(id: string) {
   return checarUnico(await supabase.from("tipos_servico").update({ ativo: false })
     .eq("id", id).select("id").single());
+}
+
+export type CadastroOS = "solicitantes" | "eventos" | "locais" | "agentes" | "orientadores";
+
+/** Renomeia um nome salvo usado nas listas da O.S. */
+export async function editarCadastroOS(tabela: CadastroOS, id: string, nome: string) {
+  const valor = nome.trim();
+  if (valor.length < 2) throw new Error("Informe um nome com pelo menos 2 letras.");
+  const resposta = tabela === "eventos"
+    ? await supabase.from("eventos").update({ titulo: valor }).eq("id", id).select("id").single()
+    : await supabase.from(tabela).update({ nome: valor }).eq("id", id).select("id").single();
+  return checarUnico(resposta);
+}
+
+/** Retira o nome das listas sem apagar o vínculo das ordens já emitidas. */
+export async function excluirCadastroOS(tabela: CadastroOS, id: string) {
+  return checarUnico(await supabase.from(tabela).update({ ativo: false }).eq("id", id).select("id").single());
 }
 
 export async function obterConfiguracoes() {
