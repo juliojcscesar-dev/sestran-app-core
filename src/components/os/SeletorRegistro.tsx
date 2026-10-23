@@ -108,7 +108,7 @@ export function SeletorRegistro({
     setSalvandoEdicao(true);
     try {
       await onEditar(opcao, nome);
-      setCriados((atuais) => atuais.map((c) => (c.id === opcao.id ? { ...c, rotulo: nome } : c)));
+      setCriados((atuais) => atuais.filter((c) => c.id !== opcao.id));
       setEditando(null);
       toast.success("Nome alterado.");
     } catch (erro) {
