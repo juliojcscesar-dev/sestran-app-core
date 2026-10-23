@@ -161,6 +161,58 @@ export function SeletorRegistro({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[18rem] p-0" align="start">
+          {opcaoEditando ? (
+            <div className="space-y-1 p-2">
+              <p className="text-xs font-medium text-muted-foreground">Editar nome salvo</p>
+              <div className="flex items-center gap-1">
+                <Input
+                  autoFocus
+                  aria-label="Novo nome"
+                  value={nomeEditado}
+                  onChange={(e) => setNomeEditado(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void salvarEdicao(opcaoEditando);
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setEditando(null);
+                    }
+                  }}
+                  className="h-8"
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 shrink-0"
+                  aria-label="Salvar nome"
+                  title="Salvar nome"
+                  disabled={salvandoEdicao}
+                  onClick={() => void salvarEdicao(opcaoEditando)}
+                >
+                  {salvandoEdicao ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0"
+                  aria-label="Cancelar edição"
+                  title="Cancelar"
+                  onClick={() => setEditando(null)}
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+          ) : (
           <Command>
             <CommandInput placeholder="Pesquisar..." value={busca} onValueChange={setBusca} />
             <CommandList>
@@ -197,59 +249,7 @@ export function SeletorRegistro({
                   </CommandItem>
                 )}
                 {todasOpcoes.map((opcao) =>
-                  editando === opcao.id ? (
-                    <div
-                      key={opcao.id}
-                      className="flex items-center gap-1 px-2 py-1"
-                      onKeyDown={parar}
-                    >
-                      <Input
-                        autoFocus
-                        aria-label="Novo nome"
-                        value={nomeEditado}
-                        onChange={(e) => setNomeEditado(e.target.value)}
-                        onKeyDown={(e) => {
-                          e.stopPropagation();
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            void salvarEdicao(opcao);
-                          }
-                          if (e.key === "Escape") {
-                            e.preventDefault();
-                            setEditando(null);
-                          }
-                        }}
-                        className="h-8"
-                      />
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="outline"
-                        className="h-8 w-8 shrink-0"
-                        aria-label="Salvar nome"
-                        title="Salvar nome"
-                        disabled={salvandoEdicao}
-                        onClick={() => void salvarEdicao(opcao)}
-                      >
-                        {salvandoEdicao ? (
-                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                          <Check className="h-4 w-4" aria-hidden="true" />
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 shrink-0"
-                        aria-label="Cancelar edição"
-                        title="Cancelar"
-                        onClick={() => setEditando(null)}
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </Button>
-                    </div>
-                  ) : (
+                  (
                     <CommandItem
                       key={opcao.id}
                       value={`${opcao.rotulo} ${opcao.detalhe ?? ""}`}
