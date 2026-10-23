@@ -167,7 +167,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const solicitantesQ = useQuery({ queryKey: ["solicitantes"], queryFn: listarSolicitantes });
   const agentesQ = useQuery({ queryKey: ["agentes"], queryFn: listarAgentes });
   const orientadoresQ = useQuery({ queryKey: ["orientadores"], queryFn: listarOrientadores });
-  const eventosQ = useQuery({ queryKey: ["eventos"], queryFn: listarEventos });
+  const eventosQ = useQuery({ queryKey: ["eventos", "ativos"], queryFn: () => listarEventos(true) });
   const locaisQ = useQuery({ queryKey: ["locais"], queryFn: listarLocais });
   const tiposQ = useQuery({ queryKey: ["tipos-servico"], queryFn: listarTiposServico });
   const anoEmissao = Number(dataEmissao.slice(0, 4));
