@@ -112,7 +112,7 @@ function ListaOS() {
     queryKey: ["ordens-servico", filtros],
     queryFn: () => listarOrdens(filtros),
   });
-  const eventosQ = useQuery({ queryKey: ["eventos"], queryFn: listarEventos });
+  const eventosQ = useQuery({ queryKey: ["eventos"], queryFn: () => listarEventos() });
   const solicitantesQ = useQuery({ queryKey: ["solicitantes"], queryFn: listarSolicitantes });
 
   const arquivar = useMutation({

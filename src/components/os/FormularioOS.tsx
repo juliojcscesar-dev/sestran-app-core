@@ -47,6 +47,9 @@ import {
   criarEvento,
   editarTipoServico,
   excluirTipoServico,
+  editarCadastroOS,
+  excluirCadastroOS,
+  type CadastroOS,
   listarAgentes,
   listarEventos,
   listarLocais,
@@ -167,7 +170,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const solicitantesQ = useQuery({ queryKey: ["solicitantes"], queryFn: listarSolicitantes });
   const agentesQ = useQuery({ queryKey: ["agentes"], queryFn: listarAgentes });
   const orientadoresQ = useQuery({ queryKey: ["orientadores"], queryFn: listarOrientadores });
-  const eventosQ = useQuery({ queryKey: ["eventos"], queryFn: listarEventos });
+  const eventosQ = useQuery({ queryKey: ["eventos", "ativos"], queryFn: () => listarEventos(true) });
   const locaisQ = useQuery({ queryKey: ["locais"], queryFn: listarLocais });
   const tiposQ = useQuery({ queryKey: ["tipos-servico"], queryFn: listarTiposServico });
   const anoEmissao = Number(dataEmissao.slice(0, 4));
@@ -187,6 +190,26 @@ export function FormularioOS({ modo, inicial, id }: Props) {
     () => (locaisQ.data ?? []).map((l) => ({ id: l.nome, rotulo: l.nome, detalhe: l.endereco ?? undefined })),
     [locaisQ.data],
   );
+
+  // Edição e exclusão dos nomes salvos (exclusão só retira da lista; O.S. emitidas preservam o vínculo).
+  const podeExcluirNomes = temAcesso(sessao, "OS", "EXCLUIR");
+  async function renomear(tabela: CadastroOS, idRegistro: string, nome: string) {
+    await editarCadastroOS(tabela, idRegistro, nome);
+    await queryClient.invalidateQueries({ queryKey: [tabela] });
+  }
+  async function retirar(tabela: CadastroOS, idRegistro: string) {
+    await excluirCadastroOS(tabela, idRegistro);
+    await queryClient.invalidateQueries({ queryKey: [tabela] });
+  }
+  const idLocal = (nome: string) => (locaisQ.data ?? []).find((l) => l.nome === nome)?.id;
+  const ordemJoin = o as (Record<string, unknown> & {
+    solicitantes?: { nome?: string } | null;
+    eventos?: { titulo?: string } | null;
+  }) | undefined;
+  const nomeAgente = (idAgente: string | null) =>
+    (inicial?.agentes ?? []).find((a) => a.agente_id === idAgente)?.agentes?.nome ?? null;
+  const nomeOrientador = (idOrientador: string | null) =>
+    (inicial?.orientadores ?? []).find((r) => r.orientador_id === idOrientador)?.orientadores?.nome ?? null;
 
   const temInterdicao = useMemo(
     () =>
@@ -447,6 +470,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
               opcoes={(solicitantesQ.data ?? []).map((s) => ({ id: s.id, rotulo: s.nome }))}
               valor={solicitanteId}
               onChange={setSolicitanteId}
+              rotuloAtual={ordemJoin?.solicitantes?.nome ?? null}
               placeholder="Pesquisar solicitante"
               podeCriar
               onCriar={async (nome) => {
@@ -454,6 +478,11 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                 await queryClient.invalidateQueries({ queryKey: ["solicitantes"] });
                 return { id: novo.id, rotulo: novo.nome };
               }}
+              onEditar={gestor ? (op, nome) => renomear("solicitantes", op.id, nome) : undefined}
+              onExcluir={podeExcluirNomes ? async (op) => {
+                await retirar("solicitantes", op.id);
+                if (solicitanteId === op.id) setSolicitanteId(null);
+              } : undefined}
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -476,6 +505,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
               }))}
               valor={eventoId}
               onChange={setEventoId}
+              rotuloAtual={ordemJoin?.eventos?.titulo ?? null}
               placeholder="Pesquisar evento"
               podeCriar
               onCriar={async (titulo) => {
@@ -483,6 +513,11 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                 await queryClient.invalidateQueries({ queryKey: ["eventos"] });
                 return { id: novo.id, rotulo: novo.titulo };
               }}
+              onEditar={gestor ? (op, nome) => renomear("eventos", op.id, nome) : undefined}
+              onExcluir={podeExcluirNomes ? async (op) => {
+                await retirar("eventos", op.id);
+                if (eventoId === op.id) setEventoId(null);
+              } : undefined}
             />
           </div>
           <div>
@@ -491,6 +526,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
               opcoes={opcoesLocal}
               valor={local || null}
               onChange={(v) => setLocal(v ?? "")}
+              rotuloAtual={local || null}
               placeholder="Pesquisar local"
               podeCriar
               onCriar={async (nome) => {
@@ -498,6 +534,18 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                 await queryClient.invalidateQueries({ queryKey: ["locais"] });
                 return { id: novo.nome, rotulo: novo.nome };
               }}
+              onEditar={gestor ? async (op, nome) => {
+                const idRegistro = idLocal(op.id);
+                if (!idRegistro) throw new Error("Local não encontrado. Atualize a página.");
+                await renomear("locais", idRegistro, nome);
+                if (local === op.id) setLocal(nome);
+              } : undefined}
+              onExcluir={podeExcluirNomes ? async (op) => {
+                const idRegistro = idLocal(op.id);
+                if (!idRegistro) throw new Error("Local não encontrado. Atualize a página.");
+                await retirar("locais", idRegistro);
+                if (local === op.id) setLocal("");
+              } : undefined}
             />
             {erroTexto("local")}
           </div>
@@ -648,12 +696,18 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                   )
                 }
                 placeholder="Agente"
+                rotuloAtual={nomeAgente(linha.agente_id)}
                 podeCriar
                 onCriar={async (nome) => {
                   const novo = await criarAgente(nome);
                   await queryClient.invalidateQueries({ queryKey: ["agentes"] });
                   return { id: novo.id, rotulo: novo.nome };
                 }}
+                onEditar={gestor ? (op, nome) => renomear("agentes", op.id, nome) : undefined}
+                onExcluir={podeExcluirNomes ? async (op) => {
+                  await retirar("agentes", op.id);
+                  setAgentes((atual) => atual.map((l) => (l.agente_id === op.id ? { ...l, agente_id: null } : l)));
+                } : undefined}
               />
               <Input
                 placeholder="Função"
@@ -731,12 +785,18 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                   )
                 }
                 placeholder="Orientador"
+                rotuloAtual={nomeOrientador(linha.orientador_id)}
                 podeCriar
                 onCriar={async (nome) => {
                   const novo = await criarOrientador(nome);
                   await queryClient.invalidateQueries({ queryKey: ["orientadores"] });
                   return { id: novo.id, rotulo: novo.nome };
                 }}
+                onEditar={gestor ? (op, nome) => renomear("orientadores", op.id, nome) : undefined}
+                onExcluir={podeExcluirNomes ? async (op) => {
+                  await retirar("orientadores", op.id);
+                  setOrientadores((atual) => atual.map((l) => (l.orientador_id === op.id ? { ...l, orientador_id: null } : l)));
+                } : undefined}
               />
               <Input
                 placeholder="Observação"

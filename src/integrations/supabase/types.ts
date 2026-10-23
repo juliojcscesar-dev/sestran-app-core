@@ -401,6 +401,7 @@ export type Database = {
       }
       eventos: {
         Row: {
+          ativo: boolean
           created_at: string
           criado_por: string | null
           data_fim: string | null
@@ -417,6 +418,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ativo?: boolean
           created_at?: string
           criado_por?: string | null
           data_fim?: string | null
@@ -433,6 +435,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ativo?: boolean
           created_at?: string
           criado_por?: string | null
           data_fim?: string | null
