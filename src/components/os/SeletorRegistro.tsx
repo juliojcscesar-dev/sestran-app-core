@@ -252,7 +252,7 @@ export function SeletorRegistro({
                   ) : (
                     <CommandItem
                       key={opcao.id}
-                      value={`${opcao.rotulo} ${opcao.detalhe ?? ""} ${opcao.id}`}
+                      value={`${opcao.rotulo} ${opcao.detalhe ?? ""}`}
                       onSelect={() => {
                         onChange(opcao.id);
                         setAberto(false);
