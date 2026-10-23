@@ -188,6 +188,26 @@ export function FormularioOS({ modo, inicial, id }: Props) {
     [locaisQ.data],
   );
 
+  // Edição e exclusão dos nomes salvos (exclusão só retira da lista; O.S. emitidas preservam o vínculo).
+  const podeExcluirNomes = temAcesso(sessao, "OS", "EXCLUIR");
+  async function renomear(tabela: CadastroOS, idRegistro: string, nome: string) {
+    await editarCadastroOS(tabela, idRegistro, nome);
+    await queryClient.invalidateQueries({ queryKey: [tabela] });
+  }
+  async function retirar(tabela: CadastroOS, idRegistro: string) {
+    await excluirCadastroOS(tabela, idRegistro);
+    await queryClient.invalidateQueries({ queryKey: [tabela] });
+  }
+  const idLocal = (nome: string) => (locaisQ.data ?? []).find((l) => l.nome === nome)?.id;
+  const ordemJoin = o as (Record<string, unknown> & {
+    solicitantes?: { nome?: string } | null;
+    eventos?: { titulo?: string } | null;
+  }) | undefined;
+  const nomeAgente = (idAgente: string | null) =>
+    (inicial?.agentes ?? []).find((a) => a.agente_id === idAgente)?.agentes?.nome ?? null;
+  const nomeOrientador = (idOrientador: string | null) =>
+    (inicial?.orientadores ?? []).find((r) => r.orientador_id === idOrientador)?.orientadores?.nome ?? null;
+
   const temInterdicao = useMemo(
     () =>
       (tiposQ.data ?? []).some(
