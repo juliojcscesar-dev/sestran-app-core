@@ -78,6 +78,7 @@ export function SeletorRegistro({
 
   const todasOpcoes = [...opcoes, ...criados.filter((item) => !opcoes.some((o) => o.id === item.id))];
   const selecionado = todasOpcoes.find((o) => o.id === valor) ?? null;
+  const opcaoEditando = todasOpcoes.find((o) => o.id === editando) ?? null;
   const textoBotao = selecionado?.rotulo ?? (valor && rotuloAtual ? rotuloAtual : null);
   const termo = busca.trim();
   const existeIgual = opcoes.some((o) => o.rotulo.toLowerCase() === termo.toLowerCase());
@@ -321,6 +322,7 @@ export function SeletorRegistro({
               )}
             </CommandList>
           </Command>
+          )}
         </PopoverContent>
       </Popover>
       <AlertDialog
