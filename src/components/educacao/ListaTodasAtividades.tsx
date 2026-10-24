@@ -23,7 +23,7 @@ export function ListaTodasAtividades({ onAcao, carregandoId }: { onAcao: (acao: 
   const podeRelatorio = temAcesso(sessao, "EDUCACAO", "RELATORIO");
   return <section aria-labelledby="todas-atividades-titulo" className="min-w-0 space-y-2">
     <h2 id="todas-atividades-titulo" className="font-display text-base font-semibold">Todas as atividades <span className="font-normal text-muted-foreground">({acoes.data?.length ?? 0})</span></h2>
-    <ScrollArea type="always" className="h-28 border border-border bg-background">
+    <ScrollArea type="always" className="h-[10cm] border border-border bg-background">
       {acoes.isPending ? <p className="p-3 text-sm text-muted-foreground">Carregando atividades…</p> : acoes.isError ? <div className="p-2 text-sm text-destructive">Não foi possível carregar as atividades. <Button variant="link" onClick={() => acoes.refetch()}>Tentar novamente</Button></div> : !acoes.data.length ? <p className="p-3 text-sm text-muted-foreground">Nenhuma atividade cadastrada.</p> : <ul className="divide-y divide-border pr-3">
         {acoes.data.map(acao => <li key={acao.id} className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1 text-sm">
           <span className="shrink-0 tabular-nums text-muted-foreground">{formatarData(acao.data_acao)}{acao.horario_inicio ? ` · ${acao.horario_inicio.slice(0, 5)}` : ""}</span>
