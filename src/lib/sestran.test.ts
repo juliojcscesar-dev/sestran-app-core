@@ -15,3 +15,12 @@ describe("datas de calendário das atividades", () => {
     assert.equal(formatarData("invalida"), "—");
   });
 });
+import { etapaDe, registrarSituacoes, STATUS_VEICULO_CLASSE } from "./veiculos";
+describe("situação Retorno no cronograma", () => {
+  it("veículo com situação Retorno vai para a coluna Retorno em azul", () => {
+    registrarSituacoes([{ id: "abc", nome: "Rotorno", ativo: true, ordem: 9 }]);
+    const v = { status: "X", situacao: "abc", data_verificacao: null, data_notificacao: null, data_recolhimento: null, data_retirada: null, prazo_recolhimento: null };
+    expect(etapaDe(v)).toBe("AGUARDANDO_VERIFICACAO");
+    expect(STATUS_VEICULO_CLASSE.abc).toContain("blue");
+  });
+});

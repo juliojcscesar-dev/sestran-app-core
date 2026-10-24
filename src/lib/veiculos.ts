@@ -39,9 +39,17 @@ export type SituacaoVeiculo = string;
 export type OpcaoSituacao = { id: string; nome: string; ativo: boolean; ordem: number };
 
 /** Atualiza os nomes exibidos com os do catálogo editável (inclui situações novas). */
+/** Situações cadastradas cujo nome é "Retorno" (aceita a grafia "Rotorno"). */
+export const SITUACOES_RETORNO = new Set<string>(["RETORNO"]);
+const CLASSE_RETORNO = "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-400";
+export function ehNomeRetorno(nome: string) {
+  return /^r[eo]torno$/.test(nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase());
+}
+
 export function registrarSituacoes(opcoes: OpcaoSituacao[]) {
   for (const o of opcoes) {
     STATUS_VEICULO_LABEL[o.id] = o.nome;
+    if (ehNomeRetorno(o.nome)) { SITUACOES_RETORNO.add(o.id); STATUS_VEICULO_CLASSE[o.id] = CLASSE_RETORNO; }
     if (!STATUS_VEICULO_CLASSE[o.id]) STATUS_VEICULO_CLASSE[o.id] = "bg-muted text-muted-foreground border-border";
   }
 }
@@ -152,7 +160,7 @@ export function etapaDe(v: VeiculoBase): EtapaCronograma {
   if (status === "RETIRADO") return "RETIRADOS";
   if (status === "RECOLHIDO") return "RECOLHIDOS";
   if (status === "RECOLHER" || status === "NOTIFICADO") return "A_RECOLHER";
-  if (status === "DENUNCIADO") return "AGUARDANDO_VERIFICACAO";
+  if (status === "DENUNCIADO" || SITUACOES_RETORNO.has(status)) return "AGUARDANDO_VERIFICACAO";
   return "OUTRAS_SITUACOES";
 }
 
