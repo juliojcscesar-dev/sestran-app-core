@@ -1,6 +1,7 @@
 import { describe, test } from "node:test";
 import { strict as assert } from "node:assert";
 import { formatarData } from "./sestran";
+import { etapaDe, registrarSituacoes, STATUS_VEICULO_CLASSE } from "./veiculos";
 
 describe("datas de calendário das atividades", () => {
   test("preserva o dia da ação, inclusive concluídas e antigas", () => {
@@ -14,4 +15,10 @@ describe("datas de calendário das atividades", () => {
     assert.equal(formatarData("2026-02-30"), "—");
     assert.equal(formatarData("invalida"), "—");
   });
+});
+test("veículo com situação Retorno vai para a coluna Retorno em azul", () => {
+  registrarSituacoes([{ id: "abc", nome: "Rotorno", ativo: true, ordem: 9 }]);
+  const v = { status: "X", situacao: "abc", data_verificacao: null, data_notificacao: null, data_recolhimento: null, data_retirada: null, prazo_recolhimento: null };
+  assert.equal(etapaDe(v), "AGUARDANDO_VERIFICACAO");
+  assert.ok((STATUS_VEICULO_CLASSE["abc"] ?? "").includes("blue"));
 });
