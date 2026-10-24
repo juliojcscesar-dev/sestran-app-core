@@ -20,5 +20,5 @@ test("veículo com situação Retorno vai para a coluna Retorno em azul", () => 
   registrarSituacoes([{ id: "abc", nome: "Rotorno", ativo: true, ordem: 9 }]);
   const v = { status: "X", situacao: "abc", data_verificacao: null, data_notificacao: null, data_recolhimento: null, data_retirada: null, prazo_recolhimento: null };
   assert.equal(etapaDe(v), "AGUARDANDO_VERIFICACAO");
-  assert.ok(STATUS_VEICULO_CLASSE.abc.includes("blue"));
+  assert.ok((STATUS_VEICULO_CLASSE["abc"] ?? "").includes("blue"));
 });
