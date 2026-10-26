@@ -48,7 +48,7 @@ function inicioDoDia(d: Date) {
 export function statusValidade(r: Pick<CredencialHistorica, "validade" | "validade_indeterminada">, hoje: Date): StatusValidade {
   if (r.validade_indeterminada) return "indet";
   if (!r.validade) return "none";
-  const [a, m, d] = r.validade.split("-").map(Number);
+  const [a = 0, m = 1, d = 1] = r.validade.split("-").map(Number);
   const val = new Date(a, m - 1, d);
   const base = inicioDoDia(hoje);
   const em90 = new Date(base.getFullYear(), base.getMonth(), base.getDate() + 90);
@@ -105,7 +105,7 @@ export function filtrarHistorico(lista: CredencialHistorica[], f: FiltrosHistori
 
 export function idade(nascimento: string | null, hoje: Date) {
   if (!nascimento) return null;
-  const [a, m, d] = nascimento.split("-").map(Number);
+  const [a = 0, m = 1, d = 1] = nascimento.split("-").map(Number);
   let anos = hoje.getFullYear() - a;
   if (hoje.getMonth() + 1 < m || (hoje.getMonth() + 1 === m && hoje.getDate() < d)) anos--;
   return anos;
