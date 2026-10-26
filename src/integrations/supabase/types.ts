@@ -279,6 +279,57 @@ export type Database = {
         }
         Relationships: []
       }
+      credenciais_historico: {
+        Row: {
+          cid: string | null
+          criado_em: string
+          determinacao: string | null
+          documento: string | null
+          grupo: string
+          id: number
+          nascimento: string | null
+          nome: string | null
+          numero: number
+          observacoes: string | null
+          situacao: string | null
+          telefone: string | null
+          validade: string | null
+          validade_indeterminada: boolean
+        }
+        Insert: {
+          cid?: string | null
+          criado_em?: string
+          determinacao?: string | null
+          documento?: string | null
+          grupo: string
+          id?: never
+          nascimento?: string | null
+          nome?: string | null
+          numero: number
+          observacoes?: string | null
+          situacao?: string | null
+          telefone?: string | null
+          validade?: string | null
+          validade_indeterminada?: boolean
+        }
+        Update: {
+          cid?: string | null
+          criado_em?: string
+          determinacao?: string | null
+          documento?: string | null
+          grupo?: string
+          id?: never
+          nascimento?: string | null
+          nome?: string | null
+          numero?: number
+          observacoes?: string | null
+          situacao?: string | null
+          telefone?: string | null
+          validade?: string | null
+          validade_indeterminada?: boolean
+        }
+        Relationships: []
+      }
       credenciais_vagas: {
         Row: {
           atualizado_em: string

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatabaseBackup, Upload, Eye, FileDown, FileText, FolderOpen, Plus, Save, Search, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -216,6 +216,7 @@ function PaginaCredenciais() {
           <p className="text-sm text-muted-foreground">Solicitação e emissão de credencial para pessoa idosa e pessoa com deficiência (PCD).</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild><Link to="/credenciais-consulta"><Search className="mr-2 h-4 w-4" />Consultar credenciais existentes</Link></Button>
           <RelatorioModulo modulo="CREDENCIAIS" rotulo="Relatório Idoso" titulo="Credenciais de Idoso" colunas={colunasRel} buscar={buscarRelatorio(TIPOS_GRUPO.IDOSO)} arquivo="relatorio_credenciais_idoso" />
           <RelatorioModulo modulo="CREDENCIAIS" rotulo="Relatório PCD" titulo="Credenciais PCD" colunas={colunasRel} buscar={buscarRelatorio(TIPOS_GRUPO.PCD)} arquivo="relatorio_credenciais_pcd" />
           {podeBackup && <Button variant="outline" onClick={baixarBackup}><DatabaseBackup className="mr-2 h-4 w-4" />Backup</Button>}

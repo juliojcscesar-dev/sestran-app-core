@@ -218,6 +218,13 @@
       "when": 1792759387404,
       "tag": "0030_os_cadastros_editaveis",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792982705483,
+      "tag": "0031_credenciais_historico",
+      "breakpoints": true
     }
   ]
 }
