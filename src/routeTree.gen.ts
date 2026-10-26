@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DefinirSenhaRouteImport } from './routes/definir-senha'
 import { Route as AuthenticatedAgentesRouteImport } from './routes/_authenticated/agentes'
 import { Route as AuthenticatedCredenciaisRouteImport } from './routes/_authenticated/credenciais'
+import { Route as AuthenticatedCredenciaisConsultaRouteImport } from './routes/_authenticated/credenciais-consulta'
 import { Route as AuthenticatedEducacaoTransitoRouteImport } from './routes/_authenticated/educacao-transito'
 import { Route as AuthenticatedEscolasRouteImport } from './routes/_authenticated/escolas'
 import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
@@ -63,6 +64,12 @@ const AuthenticatedCredenciaisRoute =
   AuthenticatedCredenciaisRouteImport.update({
     id: '/credenciais',
     path: '/credenciais',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCredenciaisConsultaRoute =
+  AuthenticatedCredenciaisConsultaRouteImport.update({
+    id: '/credenciais-consulta',
+    path: '/credenciais-consulta',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedEducacaoTransitoRoute =
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/definir-senha': typeof DefinirSenhaRoute
   '/agentes': typeof AuthenticatedAgentesRoute
   '/credenciais': typeof AuthenticatedCredenciaisRoute
+  '/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
   '/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
   '/escolas': typeof AuthenticatedEscolasRoute
   '/eventos': typeof AuthenticatedEventosRoute
@@ -206,6 +214,7 @@ export interface FileRoutesByTo {
   '/definir-senha': typeof DefinirSenhaRoute
   '/agentes': typeof AuthenticatedAgentesRoute
   '/credenciais': typeof AuthenticatedCredenciaisRoute
+  '/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
   '/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
   '/escolas': typeof AuthenticatedEscolasRoute
   '/eventos': typeof AuthenticatedEventosRoute
@@ -234,6 +243,7 @@ export interface FileRoutesById {
   '/definir-senha': typeof DefinirSenhaRoute
   '/_authenticated/agentes': typeof AuthenticatedAgentesRoute
   '/_authenticated/credenciais': typeof AuthenticatedCredenciaisRoute
+  '/_authenticated/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
   '/_authenticated/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
   '/_authenticated/escolas': typeof AuthenticatedEscolasRoute
   '/_authenticated/eventos': typeof AuthenticatedEventosRoute
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/definir-senha'
     | '/agentes'
     | '/credenciais'
+    | '/credenciais-consulta'
     | '/educacao-transito'
     | '/escolas'
     | '/eventos'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/definir-senha'
     | '/agentes'
     | '/credenciais'
+    | '/credenciais-consulta'
     | '/educacao-transito'
     | '/escolas'
     | '/eventos'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/definir-senha'
     | '/_authenticated/agentes'
     | '/_authenticated/credenciais'
+    | '/_authenticated/credenciais-consulta'
     | '/_authenticated/educacao-transito'
     | '/_authenticated/escolas'
     | '/_authenticated/eventos'
@@ -385,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/credenciais'
       fullPath: '/credenciais'
       preLoaderRoute: typeof AuthenticatedCredenciaisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/credenciais-consulta': {
+      id: '/_authenticated/credenciais-consulta'
+      path: '/credenciais-consulta'
+      fullPath: '/credenciais-consulta'
+      preLoaderRoute: typeof AuthenticatedCredenciaisConsultaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/educacao-transito': {
@@ -526,6 +546,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgentesRoute: typeof AuthenticatedAgentesRoute
   AuthenticatedCredenciaisRoute: typeof AuthenticatedCredenciaisRoute
+  AuthenticatedCredenciaisConsultaRoute: typeof AuthenticatedCredenciaisConsultaRoute
   AuthenticatedEducacaoTransitoRoute: typeof AuthenticatedEducacaoTransitoRoute
   AuthenticatedEscolasRoute: typeof AuthenticatedEscolasRoute
   AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
@@ -550,6 +571,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgentesRoute: AuthenticatedAgentesRoute,
   AuthenticatedCredenciaisRoute: AuthenticatedCredenciaisRoute,
+  AuthenticatedCredenciaisConsultaRoute: AuthenticatedCredenciaisConsultaRoute,
   AuthenticatedEducacaoTransitoRoute: AuthenticatedEducacaoTransitoRoute,
   AuthenticatedEscolasRoute: AuthenticatedEscolasRoute,
   AuthenticatedEventosRoute: AuthenticatedEventosRoute,
