@@ -190,8 +190,8 @@ function ConsultaCredenciais() {
                   <td className="px-3 py-2"><span className={cn("rounded px-2 py-0.5 text-xs font-semibold", COR_GRUPO[r.grupo as GrupoHistorico])}>{ROTULO_GRUPO[r.grupo as GrupoHistorico] ?? r.grupo}</span></td>
                   <td className="px-3 py-2 font-mono">{r.numero}</td>
                   <td className="px-3 py-2 font-medium">{r.nome ?? <i className="font-normal text-muted-foreground">sem nome cadastrado</i>}</td>
-                  <td className="px-3 py-2 font-mono">{r.documento || "—"}</td>
-                  <td className="px-3 py-2 font-mono">{r.telefone ? exibirTelefone(r.telefone) : "—"}</td>
+                  <td className="whitespace-nowrap px-3 py-2 font-mono">{r.documento || "—"}</td>
+                  <td className="whitespace-nowrap px-3 py-2 font-mono">{r.telefone ? exibirTelefone(r.telefone) : "—"}</td>
                   <td className="px-3 py-2"><span className={cn("whitespace-nowrap rounded px-2 py-0.5 text-xs font-semibold", COR_VALIDADE[st])}>{r.validade_indeterminada ? "Indeterminada" : br(r.validade) || "Sem data"}</span></td>
                   <td className="px-3 py-2 text-xs">{r.situacao}</td>
                 </tr>
