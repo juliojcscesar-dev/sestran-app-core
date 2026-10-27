@@ -3,13 +3,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronLeft, ChevronRight, Copy, FileDown, Search, X } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { credenciaisHistoricoQuery, credenciaisSistemaQuery } from "@/lib/credenciais-consulta";
+import { TIPOS_CREDENCIAL, type TipoCredencial } from "@/lib/credenciais";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { exibirTelefone } from "@/lib/mascaras";
 import {
-  FILTROS_INICIAIS, ROTULO_GRUPO, ROTULO_VALIDADE, atendeSituacao, csvHistorico, filtrarHistorico, idade, statusValidade,
-  type ColunaOrdem, type CredencialHistorica, type FiltrosHistorico, type GrupoHistorico, type StatusValidade,
+  FILTROS_INICIAIS, ROTULO_GRUPO, ROTULO_VALIDADE, atendeSituacao, csvHistorico, filtrarHistorico, idade, mesclarConsulta, statusValidade,
+  type ColunaOrdem, type CredencialConsulta, type FiltrosHistorico, type GrupoHistorico, type StatusValidade,
 } from "@/lib/credenciais-historico";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -49,24 +50,17 @@ const COR_GRUPO: Record<GrupoHistorico, string> = {
 
 const br = (iso: string | null) => (iso ? iso.split("-").reverse().join("/") : "");
 
-async function carregarTudo(): Promise<CredencialHistorica[]> {
-  const todos: CredencialHistorica[] = [];
-  for (let inicio = 0; ; inicio += 1000) {
-    const { data, error } = await supabase.from("credenciais_historico").select("*").order("id").range(inicio, inicio + 999);
-    if (error) throw error;
-    todos.push(...data);
-    if (data.length < 1000) return todos;
-  }
-}
 
 function ConsultaCredenciais() {
   const { data: sessao } = useSessao();
   const podeExportar = temAcesso(sessao, "CREDENCIAIS", "RELATORIO");
-  const consulta = useQuery({ queryKey: ["credenciais-historico"], queryFn: carregarTudo, staleTime: Infinity });
+  const historico = useQuery(credenciaisHistoricoQuery);
+  const sistema = useQuery(credenciaisSistemaQuery);
+  const consulta = { isPending: historico.isPending || sistema.isPending, isError: historico.isError || sistema.isError };
   const [f, setF] = useState<FiltrosHistorico>(FILTROS_INICIAIS);
   const [texto, setTexto] = useState("");
   const [pagina, setPagina] = useState(0);
-  const [aberto, setAberto] = useState<CredencialHistorica | null>(null);
+  const [aberto, setAberto] = useState<CredencialConsulta | null>(null);
   const hoje = useMemo(() => new Date(), []);
 
   useEffect(() => {
@@ -74,14 +68,14 @@ function ConsultaCredenciais() {
     return () => clearTimeout(t);
   }, [texto]);
 
-  const dados = consulta.data ?? [];
+  const dados = useMemo(() => mesclarConsulta(historico.data ?? [], sistema.data ?? []), [historico.data, sistema.data]);
   const lista = useMemo(() => filtrarHistorico(dados, f, hoje), [dados, f, hoje]);
   const paginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
   const pag = Math.min(pagina, paginas - 1);
   const fatia = lista.slice(pag * POR_PAGINA, pag * POR_PAGINA + POR_PAGINA);
 
   const kpis = useMemo(() => {
-    const c = (fn: (r: CredencialHistorica) => boolean) => dados.filter(fn).length;
+    const c = (fn: (r: CredencialConsulta) => boolean) => dados.filter(fn).length;
     const k: { rotulo: string; valor: number; aplicar: Partial<FiltrosHistorico>; ativo: boolean }[] = [
       { rotulo: "Total de cadastros", valor: dados.length, aplicar: { grupo: "", validade: "", situacao: "" }, ativo: !f.grupo && !f.validade && !f.situacao },
       { rotulo: "Idosos", valor: c((r) => r.grupo === "IDOSO"), aplicar: { grupo: "IDOSO", validade: "", situacao: "" }, ativo: f.grupo === "IDOSO" && !f.validade && !f.situacao },
@@ -113,7 +107,7 @@ function ConsultaCredenciais() {
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="font-display text-2xl font-semibold">Credenciais de Estacionamento – Idoso e PcD</h1>
-          <p className="text-sm text-muted-foreground">Consulta das credenciais já existentes por nome, número da credencial, CPF, RG ou CNPJ.</p>
+          <p className="text-sm text-muted-foreground">Consulta das credenciais já existentes e das emitidas no sistema por nome, número da credencial, CPF, RG ou CNPJ.</p>
         </div>
         <Button variant="outline" asChild><Link to="/credenciais"><ArrowLeft className="mr-2 h-4 w-4" />Voltar às Credenciais</Link></Button>
       </div>
@@ -186,9 +180,9 @@ function ConsultaCredenciais() {
             {fatia.map((r) => {
               const st = statusValidade(r, hoje);
               return (
-                <tr key={r.id} className="cursor-pointer border-b last:border-0 hover:bg-muted/40" onClick={() => setAberto(r)}>
-                  <td className="px-3 py-2"><span className={cn("rounded px-2 py-0.5 text-xs font-semibold", COR_GRUPO[r.grupo as GrupoHistorico])}>{ROTULO_GRUPO[r.grupo as GrupoHistorico] ?? r.grupo}</span></td>
-                  <td className="px-3 py-2 font-mono">{r.numero}</td>
+                <tr key={r.chave} className="cursor-pointer border-b last:border-0 hover:bg-muted/40" onClick={() => setAberto(r)}>
+                  <td className="px-3 py-2"><span className={cn("rounded px-2 py-0.5 text-xs font-semibold", COR_GRUPO[r.grupo as GrupoHistorico])}>{ROTULO_GRUPO[r.grupo as GrupoHistorico] ?? r.grupo}</span>{r.origem === "SISTEMA" && <span className="ml-1 rounded bg-success/15 px-1.5 py-0.5 text-[0.65rem] font-semibold text-success" title="Emitida no sistema">Sistema</span>}</td>
+                  <td className="px-3 py-2 font-mono">{r.numero ?? "—"}</td>
                   <td className="px-3 py-2 font-medium">{r.nome ?? <i className="font-normal text-muted-foreground">sem nome cadastrado</i>}</td>
                   <td className="whitespace-nowrap px-3 py-2 font-mono">{r.documento || "—"}</td>
                   <td className="whitespace-nowrap px-3 py-2 font-mono">{r.telefone ? exibirTelefone(r.telefone) : "—"}</td>
@@ -207,7 +201,7 @@ function ConsultaCredenciais() {
   );
 }
 
-function Detalhe({ r, hoje, onClose }: { r: CredencialHistorica | null; hoje: Date; onClose: () => void }) {
+function Detalhe({ r, hoje, onClose }: { r: CredencialConsulta | null; hoje: Date; onClose: () => void }) {
   if (!r) return null;
   const st = statusValidade(r, hoje);
   const anos = idade(r.nascimento, hoje);
@@ -230,15 +224,15 @@ function Detalhe({ r, hoje, onClose }: { r: CredencialHistorica | null; hoje: Da
             <span className={cn("rounded px-2 py-0.5 text-xs font-semibold", COR_VALIDADE[st])}>{ROTULO_VALIDADE[st]}</span>
           </div>
           <DialogTitle>{r.nome ?? "Sem nome cadastrado"}</DialogTitle>
-          <DialogDescription>Credencial registrada na base de credenciais já existentes.</DialogDescription>
+          <DialogDescription>{r.origem === "SISTEMA" ? `${r.tipoSistema?.startsWith("RENOVACAO_") ? "Renovada" : "Emitida"} no sistema em ${br(r.emissao)} — ${TIPOS_CREDENCIAL[r.tipoSistema as TipoCredencial] ?? r.tipoSistema}.` : "Credencial registrada na base de credenciais já existentes."}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-2 sm:grid-cols-2">
-          {campo("Nº da credencial", String(r.numero), true)}
+          {campo("Nº da credencial", r.numero === null ? null : String(r.numero), true)}
           {campo("CPF / RG", r.documento, true)}
           {campo("Nascimento", r.nascimento ? `${br(r.nascimento)}${anos !== null ? ` (${anos} anos)` : ""}` : null)}
           {campo("Validade", r.validade_indeterminada ? "Indeterminada" : br(r.validade))}
           {campo("Telefone", r.telefone ? exibirTelefone(r.telefone) : null, true)}
-          {campo("Situação", r.situacao)}
+          {r.origem === "SISTEMA" ? campo("Situação na base anterior", r.situacaoAnterior) : campo("Situação", r.situacao)}
           {r.grupo === "PCD" && campo("CID", r.cid)}
           {r.grupo === "PCD" && campo("Determinação", r.determinacao)}
           {r.observacoes && campo("Observações", r.observacoes, false, true)}
