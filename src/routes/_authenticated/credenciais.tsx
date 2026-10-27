@@ -16,6 +16,8 @@ import {
   TIPOS_CREDENCIAL, TIPOS_GRUPO, urlModelo, validadeAutomatica, type TipoCredencial,
 } from "@/lib/credenciais";
 import { RelatorioModulo } from "@/components/relatorio/RelatorioModulo";
+import { credenciaisHistoricoQuery, credenciaisSistemaQuery } from "@/lib/credenciais-consulta";
+import { FILTROS_INICIAIS, filtrarHistorico, mesclarConsulta, type CredencialConsulta } from "@/lib/credenciais-historico";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +48,16 @@ function vazio(): Form {
 }
 function deRegistro(r: Registro): Form {
   return { id: r.id, tipo: r.tipo as TipoCredencial, nome: r.nome, tipo_documento: r.tipo_documento, numero_documento: exibirDocumento(r.tipo_documento, r.numero_documento), nascimento: r.nascimento ?? "", telefone: exibirTelefone(r.telefone), endereco: r.endereco ?? "", numero: r.numero ?? "", bairro: r.bairro ?? "", observacoes: r.observacoes ?? "", numero_registro: r.numero_registro ?? "", checklist: Array.isArray(r.checklist) ? (r.checklist as unknown[]).map(Boolean) : [], conferente: r.conferente ?? "", data_conferencia: r.data_conferencia ?? "", data_emissao: r.data_emissao, data_validade: r.data_validade ?? "", tempo_validade: r.tempo_validade ?? "", validade_manual: r.validade_manual, permitir_sem_checklist: r.permitir_sem_checklist };
+}
+
+/** Dados de uma credencial da base existente convertidos para o formulário (renovação). */
+function daConsulta(c: CredencialConsulta): Form {
+  const doc = (c.documento ?? "").trim();
+  const cpf = doc.replace(/\D/g, "").length === 11 && /^[\d.\-\s]+$/.test(doc);
+  return {
+    ...vazio(), nome: c.nome ?? "", tipo_documento: cpf ? "CPF" : "RG", numero_documento: cpf ? mascararDocumento("CPF", doc) : doc,
+    nascimento: c.nascimento ?? "", telefone: exibirTelefone(c.telefone), numero_registro: c.numero === null ? "" : String(c.numero),
+  };
 }
 
 function PaginaCredenciais() {
@@ -80,14 +92,7 @@ function PaginaCredenciais() {
   const [excluir, setExcluir] = useState<Registro | null>(null);
   const [gerando, setGerando] = useState<"pdf" | "docx" | null>(null);
 
-  const lista = useQuery({
-    queryKey: ["credenciais"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("credenciais_vagas").select("*").order("atualizado_em", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
+  const lista = useQuery(credenciaisSistemaQuery);
 
   const grupo = ehPcd(f.tipo) ? "PCD" : "IDOSO";
   const docs = DOCUMENTOS_CONFERENCIA[grupo];
@@ -108,17 +113,19 @@ function PaginaCredenciais() {
     if (atual !== proximo) setF((a) => ({ ...a, numero_registro: proximo }));
   }, [podeOperar, f.id, f.numero_registro, proximo, lista.isPending]);
 
-  // Renovação: busca de credencial anterior da mesma modalidade por nome ou nº do registro.
+  // Renovação: busca da credencial anterior da mesma modalidade, por nome ou nº, na Consulta de Credenciais
+  // (base existente + credenciais emitidas no sistema).
   const [buscaRenov, setBuscaRenov] = useState("");
+  const renovando = f.tipo.startsWith("RENOVACAO_");
+  const historico = useQuery({ ...credenciaisHistoricoQuery, enabled: renovando });
+  const consulta = useMemo(() => mesclarConsulta(historico.data ?? [], lista.data ?? []), [historico.data, lista.data]);
   const anteriores = useMemo(() => {
-    const q = buscaRenov.trim().toLocaleLowerCase("pt-BR");
-    if (!q) return [];
-    return (lista.data ?? [])
-      .filter((r) => ehPcd(r.tipo) === (grupo === "PCD") && `${r.nome} ${r.numero_registro ?? ""}`.toLocaleLowerCase("pt-BR").includes(q))
-      .slice(0, 10);
-  }, [lista.data, buscaRenov, grupo]);
-  function usarParaRenovacao(r: Registro) {
-    const antigo = deRegistro(r);
+    if (!buscaRenov.trim()) return [];
+    return filtrarHistorico(consulta, { ...FILTROS_INICIAIS, busca: buscaRenov, grupo }, new Date()).slice(0, 10);
+  }, [consulta, buscaRenov, grupo]);
+  function usarParaRenovacao(c: CredencialConsulta) {
+    const r = c.sistemaId ? lista.data?.find((x) => x.id === c.sistemaId) : undefined;
+    const antigo = r ? deRegistro(r) : daConsulta(c);
     const hoje = hojeIso();
     setF((a) => ({
       ...vazio(), tipo: a.tipo,
@@ -128,7 +135,7 @@ function PaginaCredenciais() {
       data_emissao: hoje, data_validade: validadeAutomatica(a.tipo, hoje, a.tempo_validade),
     }));
     setBuscaRenov("");
-    toast.success(`Dados de ${r.nome} carregados para a renovação.`);
+    toast.success(`Dados de ${antigo.nome || `nº ${antigo.numero_registro}`} carregados para a renovação.`);
   }
 
   function alterar(p: Partial<Form>) {
@@ -166,7 +173,7 @@ function PaginaCredenciais() {
       if (error) throw new Error("Não foi possível salvar. Verifique sua permissão.");
       return data;
     },
-    onSuccess: (r) => { setF(deRegistro(r)); qc.invalidateQueries({ queryKey: ["credenciais"] }); toast.success("Solicitação salva."); },
+    onSuccess: (r) => { setF(deRegistro(r)); void qc.invalidateQueries({ queryKey: ["credenciais"] }); toast.success("Solicitação salva."); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -256,19 +263,19 @@ function PaginaCredenciais() {
               {f.tipo.startsWith("RENOVACAO_") && (
                 <div className="mt-4 space-y-2 rounded-md border bg-muted/40 p-3">
                   <Label htmlFor="busca-renov" className="flex items-center gap-2"><Search className="h-4 w-4" />Buscar credencial anterior — {grupo === "PCD" ? "PCD" : "Idoso"}</Label>
-                  <Input id="busca-renov" placeholder="Digite o nome ou o nº do registro" value={buscaRenov} onChange={(e) => setBuscaRenov(e.target.value)} />
+                  <Input id="busca-renov" placeholder="Digite o nome ou o nº da credencial" value={buscaRenov} onChange={(e) => setBuscaRenov(e.target.value)} />
                   {buscaRenov.trim() && (
                     <div className="max-h-60 space-y-1.5 overflow-y-auto">
-                      {anteriores.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma credencial anterior encontrada. Preencha os dados manualmente.</p> :
+                      {historico.isPending ? <p className="text-xs text-muted-foreground">Carregando a Consulta de Credenciais…</p> : anteriores.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma credencial anterior encontrada. Preencha os dados manualmente.</p> :
                         anteriores.map((r) => (
-                          <div key={r.id} className="flex flex-wrap items-center gap-2 rounded-md border bg-card p-2">
-                            <div className="min-w-0 flex-1"><strong className="block truncate text-sm">{r.nome}</strong><span className="block truncate text-xs text-muted-foreground">Nº {r.numero_registro || "não informado"} · {TIPOS_CREDENCIAL[r.tipo as TipoCredencial] ?? r.tipo} · válida até {r.data_validade ? formatarDataBr(r.data_validade) : "—"}</span></div>
+                          <div key={r.chave} className="flex flex-wrap items-center gap-2 rounded-md border bg-card p-2">
+                            <div className="min-w-0 flex-1"><strong className="block truncate text-sm">{r.nome || "Sem nome cadastrado"}</strong><span className="block truncate text-xs text-muted-foreground">Nº {r.numero ?? "não informado"} · {r.origem === "SISTEMA" ? TIPOS_CREDENCIAL[r.tipoSistema as TipoCredencial] ?? r.tipoSistema : "Base de credenciais existentes"} · válida até {r.validade_indeterminada ? "indeterminada" : r.validade ? formatarDataBr(r.validade) : "—"}</span></div>
                             <Button type="button" size="sm" variant="outline" onClick={() => usarParaRenovacao(r)}>Usar dados</Button>
                           </div>
                         ))}
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground">Os dados da credencial antiga preenchem uma nova solicitação de renovação; o cadastro antigo não é alterado.</p>
+                  <p className="text-xs text-muted-foreground">A busca usa a Consulta de Credenciais. Os dados da credencial antiga preenchem uma nova solicitação de renovação; o cadastro antigo não é alterado.</p>
                 </div>
               )}
             </CardContent>
