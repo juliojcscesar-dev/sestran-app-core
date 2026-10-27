@@ -135,7 +135,10 @@ export function atendeSituacao(r: Pick<CredencialHistorica, "nome" | "situacao">
 }
 
 /** Busca por nome, nº da credencial, CPF, RG ou CNPJ (números com ou sem pontos/traços). */
-export function filtrarHistorico(lista: CredencialHistorica[], f: FiltrosHistorico, hoje: Date) {
+/** Linha aceita pela busca: credencial da base ou a consulta já mesclada com o sistema. */
+export type LinhaConsulta = Omit<CredencialHistorica, "id" | "numero"> & { numero: number | null };
+
+export function filtrarHistorico<T extends LinhaConsulta>(lista: T[], f: FiltrosHistorico, hoje: Date): T[] {
   const q = f.busca.trim();
   const digitos = q.replace(/\D/g, "");
   const numerica = q !== "" && /^[\d.\-/\s]+$/.test(q) && digitos.length > 0;
@@ -158,8 +161,8 @@ export function filtrarHistorico(lista: CredencialHistorica[], f: FiltrosHistori
   }
   const d = f.direcao;
   return res.sort((a, b) => {
-    if (f.ordem === "numero") return (a.numero - b.numero) * d;
-    const valor = (r: CredencialHistorica) => {
+    if (f.ordem === "numero") return ((a.numero ?? Number.MAX_SAFE_INTEGER) - (b.numero ?? Number.MAX_SAFE_INTEGER)) * d;
+    const valor = (r: T) => {
       if (f.ordem === "validade") return r.validade_indeterminada ? "9999" : r.validade ?? "";
       return (r[f.ordem] ?? "") as string;
     };
@@ -178,12 +181,12 @@ export function idade(nascimento: string | null, hoje: Date) {
   return anos;
 }
 
-export function csvHistorico(lista: CredencialHistorica[], hoje: Date) {
+export function csvHistorico(lista: LinhaConsulta[], hoje: Date) {
   const cab = ["Tipo", "Nº", "Nome", "Nascimento", "Validade", "Status", "CPF/RG", "Telefone", "CID", "Determinação", "Situação", "Observações"];
   const br = (iso: string | null) => (iso ? iso.split("-").reverse().join("/") : "");
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const linhas = lista.map((r) => [
-    ROTULO_GRUPO[r.grupo as GrupoHistorico] ?? r.grupo, String(r.numero), r.nome ?? "", br(r.nascimento),
+    ROTULO_GRUPO[r.grupo as GrupoHistorico] ?? r.grupo, r.numero === null ? "" : String(r.numero), r.nome ?? "", br(r.nascimento),
     r.validade_indeterminada ? "Indeterminada" : br(r.validade), ROTULO_VALIDADE[statusValidade(r, hoje)],
     r.documento ?? "", r.telefone ?? "", r.cid ?? "", r.determinacao ?? "", r.situacao ?? "", r.observacoes ?? "",
   ].map(esc).join(";"));
