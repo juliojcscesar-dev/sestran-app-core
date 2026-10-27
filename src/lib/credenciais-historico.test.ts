@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import { strict as assert } from "node:assert";
-import { FILTROS_INICIAIS, filtrarHistorico, statusValidade, type CredencialHistorica } from "./credenciais-historico";
+import { FILTROS_INICIAIS, filtrarHistorico, mesclarConsulta, statusValidade, type CredencialHistorica, type RegistroSistema } from "./credenciais-historico";
 
 const base = (p: Partial<CredencialHistorica>): CredencialHistorica => ({
   id: 1, grupo: "IDOSO", numero: 1, nome: "A", nascimento: null, validade: null, validade_indeterminada: false,
@@ -31,8 +31,6 @@ describe("consulta de credenciais antigas", () => {
     assert.deepEqual(filtrarHistorico(lista, { ...FILTROS_INICIAIS, grupo: "PCD" }, hoje).map((r) => r.id), [2]);
   });
 });
-
-import { mesclarConsulta, type RegistroSistema } from "./credenciais-historico";
 
 const sist = (p: Partial<RegistroSistema>): RegistroSistema => ({
   id: "s1", tipo: "IDOSO", nome: "Novo", tipo_documento: "CPF", numero_documento: "04665309949", nascimento: null, telefone: null,
