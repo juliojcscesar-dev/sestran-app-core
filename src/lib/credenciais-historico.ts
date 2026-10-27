@@ -1,5 +1,6 @@
-// Consulta da base histórica de credenciais (Idoso e PcD) já emitidas antes do sistema.
-// Somente leitura: não interfere na emissão nem na numeração das novas credenciais.
+// Consulta das credenciais (Idoso e PcD): base histórica anterior ao sistema (somente leitura)
+// somada às credenciais emitidas no sistema. Não interfere na emissão nem na numeração.
+import { exibirDocumento } from "./mascaras";
 
 export type GrupoHistorico = "IDOSO" | "PCD";
 export type StatusValidade = "ok" | "soon" | "exp" | "indet" | "none";
@@ -21,6 +22,72 @@ export type CredencialHistorica = {
   situacao: string | null;
   observacoes: string | null;
 };
+
+/** Campos da credencial emitida no sistema usados na consulta. */
+export type RegistroSistema = {
+  id: string; tipo: string; nome: string; tipo_documento: string; numero_documento: string;
+  nascimento: string | null; telefone: string | null; observacoes: string | null; numero_registro: string | null;
+  data_emissao: string; data_validade: string | null; criado_em: string;
+};
+
+/** Linha da consulta: credencial da base existente ou emitida no sistema (que substitui a da base com o mesmo nº). */
+export type CredencialConsulta = Omit<CredencialHistorica, "id" | "numero"> & {
+  chave: string;
+  numero: number | null;
+  origem: "BASE" | "SISTEMA";
+  historicoId: number | null;
+  sistemaId: string | null;
+  tipoSistema: string | null;
+  emissao: string | null;
+  situacaoAnterior: string | null;
+};
+
+const TIPOS_PCD = ["PCD", "RENOVACAO_PCD", "TEMPORARIA_PCD"];
+export const grupoDoTipo = (tipo: string): GrupoHistorico => (TIPOS_PCD.includes(tipo) ? "PCD" : "IDOSO");
+/** Nº da credencial a partir do registro digitado ("0167" → 167); null quando não há número. */
+export function numeroDoRegistro(reg: string | null | undefined) {
+  const m = (reg ?? "").trim().match(/^\d+/);
+  return m ? Number(m[0]) : null;
+}
+
+function daBase(h: CredencialHistorica): CredencialConsulta {
+  const { id, ...resto } = h;
+  return { ...resto, chave: `b-${id}`, origem: "BASE", historicoId: id, sistemaId: null, tipoSistema: null, emissao: null, situacaoAnterior: null };
+}
+function doSistema(s: RegistroSistema, h?: CredencialHistorica): CredencialConsulta {
+  return {
+    chave: `s-${s.id}`, origem: "SISTEMA", historicoId: h?.id ?? null, sistemaId: s.id, tipoSistema: s.tipo, emissao: s.data_emissao,
+    grupo: grupoDoTipo(s.tipo), numero: numeroDoRegistro(s.numero_registro), nome: s.nome,
+    nascimento: s.nascimento ?? h?.nascimento ?? null, validade: s.data_validade, validade_indeterminada: false,
+    documento: exibirDocumento(s.tipo_documento, s.numero_documento) || h?.documento || null,
+    telefone: s.telefone ?? h?.telefone ?? null, cid: h?.cid ?? null, determinacao: h?.determinacao ?? null,
+    situacao: null, situacaoAnterior: h?.situacao ?? null, observacoes: s.observacoes ?? h?.observacoes ?? null,
+  };
+}
+
+/** Junta a base existente com as credenciais do sistema: para cada Tipo + Nº vale a emissão mais recente do sistema,
+    então a mesma credencial nunca aparece repetida e uma correção feita no sistema aparece na consulta. */
+export function mesclarConsulta(historico: CredencialHistorica[], sistema: RegistroSistema[]): CredencialConsulta[] {
+  const recentes = new Map<string, RegistroSistema>();
+  const semNumero: RegistroSistema[] = [];
+  for (const s of sistema) {
+    const n = numeroDoRegistro(s.numero_registro);
+    if (n === null) { semNumero.push(s); continue; }
+    const k = `${grupoDoTipo(s.tipo)}-${n}`;
+    const a = recentes.get(k);
+    if (!a || `${s.data_emissao}|${s.criado_em}` > `${a.data_emissao}|${a.criado_em}`) recentes.set(k, s);
+  }
+  const res = historico.map((h) => {
+    const k = `${h.grupo}-${h.numero}`;
+    const s = recentes.get(k);
+    if (!s) return daBase(h);
+    recentes.delete(k);
+    return doSistema(s, h);
+  });
+  for (const s of recentes.values()) res.push(doSistema(s));
+  for (const s of semNumero) res.push(doSistema(s));
+  return res;
+}
 
 export type FiltrosHistorico = {
   busca: string;
