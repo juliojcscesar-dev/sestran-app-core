@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { criarDataLocal, dataLocalIso } from "@/lib/educacao";
 import { cn } from "@/lib/utils";
 
-export function CalendarioPainel({ nome, mes, selecionada, datas, onMes, onSelecionar, educativo = false }: {
+export function CalendarioPainel({ nome, mes, selecionada, datas, onMes, onSelecionar, educativo = false, compacto = false }: {
   nome: string; mes: Date; selecionada: Date | undefined; datas: string[];
-  onMes: (data: Date) => void; onSelecionar: (data: Date | undefined) => void; educativo?: boolean;
+  onMes: (data: Date) => void; onSelecionar: (data: Date | undefined) => void; educativo?: boolean; compacto?: boolean;
 }) {
-  return <div aria-label={`Calendário de ${nome}`} className={cn("painel-calendario bg-muted/60 p-3", educativo && "painel-calendario-educacao")}>
+  return <div aria-label={`Calendário de ${nome}`} className={cn("painel-calendario bg-muted/60", compacto ? "painel-calendario-compacto rounded-md p-2" : "p-3", educativo && "painel-calendario-educacao")}>
     <Calendar locale={ptBR} mode="single" month={mes} onMonthChange={onMes} selected={selecionada} onSelect={onSelecionar} fixedWeeks
       className="w-full bg-transparent p-0" classNames={{ root: "w-full", month: "flex w-full flex-col gap-3" }}
       modifiers={{ atividade: [...new Set(datas)].map(criarDataLocal) }} modifiersClassNames={{ atividade: "painel-dia-atividade" }}

@@ -174,6 +174,10 @@
   border-radius: 50%; background: var(--warning);
 }
 .painel-calendario-educacao .painel-dia-atividade button::after { background: var(--primary); }
+.painel-calendario.painel-calendario-compacto { min-height: 0; }
+.painel-calendario-compacto .rdp-week { margin-top: 1px; }
+.painel-calendario-compacto .rdp-day,
+.painel-calendario-compacto .rdp-day button { height: 26px; font-size: 0.75rem; }
 
 @layer base {
   * {
