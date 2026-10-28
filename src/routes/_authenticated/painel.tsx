@@ -70,9 +70,9 @@ function Lista({ titulo, quantidade, carregando, erro, onTentar, altura, childre
   </div>;
 }
 function Contador({ valor, rotulo, carregando, className }: { valor: ReactNode; rotulo: string; carregando?: boolean; className?: string }) {
-  return <div className={cn("min-w-0 rounded-md bg-muted/60 px-2 py-2 text-center", className)}>
+  return <div className={cn("min-w-0 rounded-md bg-muted/60 px-1 py-2 text-center", className)}>
     {carregando ? <Skeleton className="mx-auto h-6 w-8" /> : <p className="font-display text-xl font-semibold leading-tight">{valor}</p>}
-    <p className="truncate text-[10px] text-muted-foreground">{rotulo}</p>
+    <p className="break-words text-[10px] leading-tight text-muted-foreground">{rotulo}</p>
   </div>;
 }
 function Visualizar({ titulo, children }: { titulo: string; children: ReactNode }) {
@@ -158,7 +158,7 @@ function Painel() {
 
   return <div className="space-y-5">
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:gap-6">
-      <h1 className="col-span-2 min-w-0 break-words font-display text-2xl font-bold text-primary sm:text-3xl lg:col-span-1 lg:text-5xl">Central de Sistema - SESTRAN</h1>
+      <h1 className="col-span-2 min-w-0 break-words font-display text-2xl font-bold text-primary sm:text-3xl lg:col-span-1 lg:text-4xl 2xl:text-5xl">Central de Sistema - SESTRAN</h1>
       <p className="min-w-0 rounded-md bg-muted px-3 py-1.5 text-sm font-semibold text-foreground lg:text-base">{dataPorExtenso(new Date())}</p>
       <Button variant="outline" size="icon" className="shrink-0" title="Atualizar painel" aria-label="Atualizar painel" onClick={atualizar}><RefreshCw className="h-4 w-4" /></Button>
     </div>
