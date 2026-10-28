@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Novo Painel (28/10)
+- [x] Seis quadros: O.S., Veículos, Educação, Sinalização, Credenciais e Secretaria em Destaque
+- [x] Conferido no navegador em computador e celular
+
+
 ## Central de Sistema e acesso (17/10)
 - [x] Aplicar imagem enviada e cabeçalho na página pública inicial
 - [x] Atualizar nome e logos na página de acesso sem alterar funções
