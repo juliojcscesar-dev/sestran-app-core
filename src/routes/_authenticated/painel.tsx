@@ -20,7 +20,7 @@ import { CalendarioPainel, periodoCalendario } from "@/components/painel/Calenda
 import noticiaAsset from "@/assets/noticia-educacao-transito.png.asset.json";
 
 const NOTICIA = {
-  url: "https://www.paranavai.pr.gov.br/cidadao/noticia/alunos-de-paraiso-do-norte-participam-de-atividade-de-educacao-no-transito-em-paranavai",
+  url: "https://paranavai.atende.net",
   titulo: "Alunos de Paraíso do Norte participam de atividade de educação no trânsito em Paranavaí",
   resumo: "Ação na minicidade do Detran combina orientações teóricas e simulações práticas para ensinar regras de segurança viária.",
 };
