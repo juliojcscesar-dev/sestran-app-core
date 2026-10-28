@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, CalendarDays, Car, ClipboardList, Eye, Pencil, RefreshCw, X } from "lucide-react";
+import { ExternalLink, Eye, Pencil, RefreshCw, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
@@ -9,19 +9,28 @@ import { dataLocalIso, STATUS_ACAO_LABEL } from "@/lib/educacao";
 import { STATUS_OS_LABEL, periodoHorario } from "@/lib/os";
 import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase, type SituacaoVeiculo } from "@/lib/veiculos";
 import { formatarData } from "@/lib/sestran";
+import { credenciaisHistoricoQuery, credenciaisSistemaQuery } from "@/lib/credenciais-consulta";
+import { atendeSituacao, mesclarConsulta, statusValidade } from "@/lib/credenciais-historico";
 import { cn } from "@/lib/utils";
 import { TextoFormatado } from "@/components/TextoFormatado";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarioPainel, periodoCalendario } from "@/components/painel/CalendarioPainel";
+import noticiaAsset from "@/assets/noticia-educacao-transito.png.asset.json";
+
+const NOTICIA = {
+  url: "https://www.paranavai.pr.gov.br/cidadao/noticia/alunos-de-paraiso-do-norte-participam-de-atividade-de-educacao-no-transito-em-paranavai",
+  titulo: "Alunos de Paraíso do Norte participam de atividade de educação no trânsito em Paranavaí",
+  resumo: "Ação na minicidade do Detran combina orientações teóricas e simulações práticas para ensinar regras de segurança viária.",
+};
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({ meta: [
     { title: "Painel integrado | SESTRAN Paranavaí" },
-    { name: "description", content: "Calendários de ordens de serviço e ações educativas e acompanhamento de veículos de Paranavaí." },
+    { name: "description", content: "Painel da Central de Sistema: ordens de serviço, veículos, educação no trânsito, sinalização viária e credenciais." },
     { property: "og:title", content: "Painel integrado | SESTRAN Paranavaí" },
-    { property: "og:description", content: "Agenda operacional, educação no trânsito e situações dos veículos cadastrados." },
+    { property: "og:description", content: "Resumo dos módulos da Central de Sistema da SESTRAN Paranavaí." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }), component: Painel,
 });
@@ -29,17 +38,45 @@ export const Route = createFileRoute("/_authenticated/painel")({
 function checar<T>(res: { data: T; error: unknown }) { if (res.error) throw res.error; return res.data; }
 function total(res: { count: number | null; error: unknown }) { if (res.error) throw res.error; return res.count ?? 0; }
 function classeStatus(status: string) {
-  if (["EXECUTADA", "REALIZADA", "RETIRADO", "RECOLHIDO"].includes(status)) return "border-success/25 bg-success/10 text-success";
-  if (["CANCELADA", "RECOLHER"].includes(status)) return "border-destructive/25 bg-destructive/10 text-destructive";
-  if (["EM_ANDAMENTO", "NOTIFICADO"].includes(status)) return "border-warning/30 bg-warning/15 text-warning-foreground";
+  if (["EXECUTADA", "REALIZADA", "RETIRADO", "RECOLHIDO", "Concluída"].includes(status)) return "border-success/25 bg-success/10 text-success";
+  if (["CANCELADA", "RECOLHER", "Cancelada"].includes(status)) return "border-destructive/25 bg-destructive/10 text-destructive";
+  if (["EM_ANDAMENTO", "NOTIFICADO", "Aguardando"].includes(status)) return "border-warning/30 bg-warning/15 text-warning-foreground";
   return "border-primary/20 bg-primary/5 text-primary";
 }
 function Situacao({ status, label }: { status: string; label: string }) { return <Badge variant="outline" className={cn("max-w-full whitespace-normal text-[10px]", classeStatus(status))}>{label}</Badge>; }
-function ListaPainel({ titulo, quantidade, carregando, erro, onTentar, children }: { titulo: string; quantidade: number; carregando: boolean; erro: boolean; onTentar: () => void; children: ReactNode }) {
-  return <section className="mt-5 overflow-hidden rounded-lg border bg-card">
-    <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b px-4 py-3"><h3 className="min-w-0 text-sm font-semibold">{titulo}</h3><Badge variant="secondary">{quantidade}</Badge></header>
-    <div className="h-[340px] overflow-y-auto px-4" tabIndex={0} aria-label={titulo}>{carregando ? <div className="space-y-4 py-4"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div> : erro ? <div className="py-8 text-center"><p className="text-sm text-destructive">Não foi possível carregar os registros.</p><Button variant="outline" size="sm" className="mt-3" onClick={onTentar}><RefreshCw className="h-3 w-3" />Tentar novamente</Button></div> : quantidade === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">Nenhum registro neste período.</p> : children}</div>
+const numero = (n: number | undefined) => n === undefined ? "—" : n.toLocaleString("pt-BR");
+function dataPorExtenso(d: Date) {
+  return d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+    .replace(/(^|[\s-])(\p{L})(?=\p{L}{2,})/gu, (_m, a: string, b: string) => a + b.toUpperCase()).replace(/ De /g, " de ");
+}
+
+function Cartao({ titulo, link, children }: { titulo: string; link?: ReactNode; children: ReactNode }) {
+  return <section aria-label={titulo} className="flex h-full min-w-0 flex-col rounded-lg border bg-card p-4 shadow-sm">
+    <header className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+      <h2 className="min-w-0 break-words font-display text-sm font-semibold">{titulo}</h2>
+      {link && <Button variant="outline" size="sm" className="h-8 shrink-0 text-xs font-semibold" asChild>{link}</Button>}
+    </header>
+    {children}
   </section>;
+}
+function Lista({ titulo, quantidade, carregando, erro, onTentar, altura, children }: { titulo?: string; quantidade: number; carregando: boolean; erro: boolean; onTentar: () => void; altura: string; children: ReactNode }) {
+  return <div className="mt-3 min-w-0 border-t pt-2">
+    {titulo && <p className="mb-1 text-xs font-semibold">{titulo}</p>}
+    <div className={cn("overflow-y-auto pr-1", altura)} tabIndex={0} aria-label={titulo ?? "Registros"}>
+      {carregando ? <div className="space-y-2 py-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
+        : erro ? <div className="py-4 text-center"><p className="text-xs text-destructive">Não foi possível carregar os registros.</p><Button variant="outline" size="sm" className="mt-2" onClick={onTentar}><RefreshCw className="h-3 w-3" />Tentar novamente</Button></div>
+        : quantidade === 0 ? <p className="py-6 text-center text-xs text-muted-foreground">Nenhum registro neste período.</p> : children}
+    </div>
+  </div>;
+}
+function Contador({ valor, rotulo, carregando, className }: { valor: ReactNode; rotulo: string; carregando?: boolean; className?: string }) {
+  return <div className={cn("min-w-0 rounded-md bg-muted/60 px-2 py-2 text-center", className)}>
+    {carregando ? <Skeleton className="mx-auto h-6 w-8" /> : <p className="font-display text-xl font-semibold leading-tight">{valor}</p>}
+    <p className="truncate text-[10px] text-muted-foreground">{rotulo}</p>
+  </div>;
+}
+function Visualizar({ titulo, children }: { titulo: string; children: ReactNode }) {
+  return <Button variant="ghost" size="icon" className="h-7 w-7" title={titulo} aria-label={titulo} asChild>{children}</Button>;
 }
 
 function Painel() {
@@ -48,6 +85,7 @@ function Painel() {
   const [mesEducacao, setMesEducacao] = useState(new Date()); const [diaEducacao, setDiaEducacao] = useState<Date>();
   const [situacaoVeiculo, setSituacaoVeiculo] = useState<string>();
   const osLiberada = temAcesso(sessao, "OS"), educacaoLiberada = temAcesso(sessao, "EDUCACAO"), veiculosLiberados = temAcesso(sessao, "VEICULOS");
+  const sinalizacaoLiberada = temAcesso(sessao, "SINALIZACAO"), credenciaisLiberadas = temAcesso(sessao, "CREDENCIAIS");
   const periodoOS = periodoCalendario(mesOS), periodoEducacao = periodoCalendario(mesEducacao);
   const hoje = dataLocalIso(new Date());
   const ordens = useQuery({
@@ -88,46 +126,116 @@ function Painel() {
       return linhas;
     },
   });
+  const sinalizacao = useQuery({ queryKey: ["sinalizacao_os"], enabled: sinalizacaoLiberada, queryFn: async () => {
+    const { data, error } = await supabase.from("sinalizacao_os").select("*").order("criado_em", { ascending: false });
+    if (error) throw error; return data;
+  } });
+  const credHistorico = useQuery({ ...credenciaisHistoricoQuery, enabled: credenciaisLiberadas });
+  const credSistema = useQuery({ ...credenciaisSistemaQuery, enabled: credenciaisLiberadas });
+  const credenciais = useMemo(() => {
+    if (!credHistorico.data || !credSistema.data) return undefined;
+    const dados = mesclarConsulta(credHistorico.data, credSistema.data); const agora = new Date();
+    const c = (fn: (r: (typeof dados)[number]) => boolean) => dados.filter(fn).length;
+    return { total: dados.length, validas: c(r => statusValidade(r, agora) === "ok"), idosos: c(r => r.grupo === "IDOSO"), pcd: c(r => r.grupo === "PCD"), vencidas: c(r => statusValidade(r, agora) === "exp"), ocorrencia: c(r => atendeSituacao(r, "com")) };
+  }, [credHistorico.data, credSistema.data]);
+  const credCarregando = credHistorico.isFetching || credSistema.isFetching, credErro = credHistorico.isError || credSistema.isError;
+
   const itensOS = diaOS ? (ordens.data?.mes ?? []).filter(o => o.data_servico === dataLocalIso(diaOS)) : ordens.data?.proximas ?? [];
   const itensEducacao = diaEducacao ? (educacao.data?.mes ?? []).filter(a => a.data_acao === dataLocalIso(diaEducacao)) : educacao.data?.proximas ?? [];
   const itensVeiculos = (veiculos.data ?? []).filter(v => !situacaoVeiculo || statusEfetivo(v) === situacaoVeiculo);
+  const itensSinalizacao = sinalizacao.data ?? [];
   const blocos = [
     { label: "Total de registros", status: undefined, cor: "border-primary" },
     { label: "Retirados", status: "RETIRADO", cor: "border-success" },
     { label: "Notificados", status: "NOTIFICADO", cor: "border-warning" },
     { label: "A recolher", status: "RECOLHER", cor: "border-destructive" },
   ];
+  const nenhum = !osLiberada && !educacaoLiberada && !veiculosLiberados && !sinalizacaoLiberada && !credenciaisLiberadas;
+  function atualizar() {
+    if (osLiberada) void ordens.refetch(); if (educacaoLiberada) void educacao.refetch(); if (veiculosLiberados) void veiculos.refetch();
+    if (sinalizacaoLiberada) void sinalizacao.refetch(); if (credenciaisLiberadas) void credSistema.refetch();
+  }
+
   return <div className="space-y-5">
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"><div className="min-w-0"><h1 className="font-display text-xl font-semibold">Painel</h1><p className="mt-1 text-xs text-muted-foreground">{new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p></div><Button variant="outline" size="icon" title="Atualizar painel" aria-label="Atualizar painel" onClick={() => { if (osLiberada) void ordens.refetch(); if (educacaoLiberada) void educacao.refetch(); if (veiculosLiberados) void veiculos.refetch(); }}><RefreshCw className="h-4 w-4" /></Button></div>
-    {!osLiberada && !educacaoLiberada && !veiculosLiberados && <p className="border-l-2 border-warning py-3 pl-4 text-sm text-muted-foreground">Bem-vindo, {sessao?.nome}. Aguardando liberação de acesso aos módulos pelo administrador.</p>}
-    <div className="grid items-start gap-6 xl:grid-cols-3">
-      {osLiberada && <section className="min-w-0" aria-label="Módulo 01 Ordem de Serviço">
-        <Cabecalho numero="01" titulo="Ordem de Serviço" icone={<ClipboardList className="h-5 w-5" />} link={<Link to="/ordens-servico">Abrir módulo<ArrowUpRight className="h-3 w-3" /></Link>} />
-        <CalendarioPainel nome="Ordem de Serviço" mes={mesOS} selecionada={diaOS} datas={(ordens.data?.mes ?? []).map(o => o.data_servico)} onMes={d => { setMesOS(d); setDiaOS(undefined); }} onSelecionar={setDiaOS} />
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"><span><strong className="text-foreground">{ordens.data?.agendadas ?? "—"}</strong> agendadas</span><span><strong className="text-success">{ordens.data?.executadas ?? "—"}</strong> executadas</span>{diaOS && <Button variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => setDiaOS(undefined)}><X className="h-3 w-3" />Limpar data</Button>}</div>
-        <ListaPainel titulo={diaOS ? `O.S. de ${formatarData(dataLocalIso(diaOS))}` : "Próximas atividades"} quantidade={itensOS.length} carregando={ordens.isFetching} erro={ordens.isError} onTentar={() => void ordens.refetch()}>
-          <ul className="divide-y">{itensOS.map(o => <li key={o.id} className="py-4"><p className="break-words text-sm font-medium">{o.numero} — <TextoFormatado valor={o.titulo ?? ""} /></p><p className="mt-1 truncate text-xs text-muted-foreground">{o.local || "Serviço programado"}</p><div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"><div className="min-w-0 space-y-1"><p className="text-xs">{formatarData(o.data_servico)} · {periodoHorario(o.hora_inicio, o.hora_fim)}</p><Situacao status={o.status ?? "AGENDADA"} label={STATUS_OS_LABEL[o.status as keyof typeof STATUS_OS_LABEL] ?? o.status ?? "Agendada"} /></div><div className="flex shrink-0"><Button variant="ghost" size="icon" className="h-8 w-8" title="Visualizar O.S." aria-label={`Visualizar O.S. ${o.numero}`} asChild><Link to="/ordens-servico/visualizar/$id" params={{ id: o.id }}><Eye className="h-4 w-4" /></Link></Button>{temAcesso(sessao, "OS", "OPERADOR") && <Button variant="ghost" size="icon" className="h-8 w-8" title="Editar O.S." aria-label={`Editar O.S. ${o.numero}`} asChild><Link to="/ordens-servico/editar/$id" params={{ id: o.id }}><Pencil className="h-4 w-4" /></Link></Button>}</div></div></li>)}</ul>
-        </ListaPainel>
-      </section>}
-      {veiculosLiberados && <section className="min-w-0" aria-label="Módulo 02 Veículos Abandonados">
-        <Cabecalho numero="02" titulo="Veículos Abandonados" icone={<Car className="h-5 w-5" />} link={<Link to="/veiculos-abandonados">Abrir módulo<ArrowUpRight className="h-3 w-3" /></Link>} />
-        <div className="flex min-h-[326px] flex-col justify-center"><div className="grid grid-cols-2 gap-3">{blocos.map(b => <Button key={b.label} variant="ghost" aria-pressed={situacaoVeiculo === b.status} className={cn("h-24 min-w-0 justify-start whitespace-normal rounded-lg border-l-[3px] bg-card p-4 text-left", b.cor, situacaoVeiculo === b.status && "ring-1 ring-border")} onClick={() => setSituacaoVeiculo(b.status)}><span className="min-w-0"><span className="block text-xs text-muted-foreground">{b.label}</span>{veiculos.isFetching ? <Skeleton className="mt-2 h-7 w-12" /> : <span className="mt-1 block font-display text-3xl font-semibold">{veiculos.isError ? "—" : b.status ? (veiculos.data ?? []).filter(v => statusEfetivo(v) === b.status).length : veiculos.data?.length ?? 0}</span>}</span></Button>)}</div></div>
-        <div className="mt-3 min-h-5 text-xs text-muted-foreground">{situacaoVeiculo ? <Button variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => setSituacaoVeiculo(undefined)}><X className="h-3 w-3" />Todas as situações</Button> : "Registros ativos"}</div>
-        <ListaPainel titulo={situacaoVeiculo ? (STATUS_VEICULO_LABEL[situacaoVeiculo as keyof typeof STATUS_VEICULO_LABEL] ?? String(situacaoVeiculo as keyof typeof STATUS_VEICULO_LABEL)) : "Veículos cadastrados"} quantidade={itensVeiculos.length} carregando={veiculos.isFetching} erro={veiculos.isError} onTentar={() => void veiculos.refetch()}>
-          <ul className="divide-y">{itensVeiculos.map(v => <li key={v.id} className="py-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><div className="min-w-0"><p className="break-words text-sm font-medium">{[v.marca, v.modelo, v.placa].filter(Boolean).join(" · ") || "Veículo sem identificação"}</p><Situacao status={statusEfetivo(v)} label={(STATUS_VEICULO_LABEL[statusEfetivo(v)] ?? String(statusEfetivo(v)))} /></div><Button variant="ghost" size="icon" className="h-8 w-8" title="Visualizar veículo" aria-label={`Visualizar veículo ${v.placa ?? "sem placa"}`} asChild><Link to="/documento-veiculo/$id" params={{ id: v.id }}><Eye className="h-4 w-4" /></Link></Button></div><p className="mt-2 break-words text-xs text-muted-foreground">{v.endereco}{v.bairro ? ` · ${v.bairro}` : ""}</p><div className="mt-3 grid grid-cols-3 gap-2 text-[10px] text-muted-foreground">{[["Verificação", v.data_verificacao], ["Notificação", v.data_notificacao], ["Recolhimento", v.data_recolhimento]].map(([label, data]) => <p key={label}>{label}<span className="block text-foreground">{data ? formatarData(data) : "—"}</span></p>)}</div></li>)}</ul>
-        </ListaPainel>
-      </section>}
-      {educacaoLiberada && <section className="min-w-0" aria-label="Módulo 03 Agenda Educação no Trânsito">
-        <Cabecalho numero="03" titulo="Agenda Educação no Trânsito" icone={<CalendarDays className="h-5 w-5" />} link={<Link to="/educacao-transito">Abrir módulo<ArrowUpRight className="h-3 w-3" /></Link>} />
-        <CalendarioPainel nome="Educação no Trânsito" mes={mesEducacao} selecionada={diaEducacao} datas={(educacao.data?.mes ?? []).map(a => a.data_acao)} onMes={d => { setMesEducacao(d); setDiaEducacao(undefined); }} onSelecionar={setDiaEducacao} educativo />
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"><span><strong className="text-foreground">{educacao.data?.agendadas ?? "—"}</strong> agendadas</span><span><strong className="text-success">{educacao.data?.realizadas ?? "—"}</strong> realizadas</span>{diaEducacao && <Button variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => setDiaEducacao(undefined)}><X className="h-3 w-3" />Limpar data</Button>}</div>
-        <ListaPainel titulo={diaEducacao ? `Atividades de ${formatarData(dataLocalIso(diaEducacao))}` : "Agendamentos"} quantidade={itensEducacao.length} carregando={educacao.isFetching} erro={educacao.isError} onTentar={() => void educacao.refetch()}>
-          <ul className="divide-y">{itensEducacao.map(a => <li key={a.id} className="py-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><div className="min-w-0"><p className="break-words text-sm font-medium"><TextoFormatado valor={a.titulo} /></p><p className="mt-1 break-words text-xs text-muted-foreground">{a.local || "Local não informado"}</p></div><Button variant="ghost" size="icon" className="h-8 w-8" title="Visualizar ação educativa" aria-label="Visualizar ação educativa" asChild><Link to="/agenda-educativa/$id" params={{ id: a.id }}><Eye className="h-4 w-4" /></Link></Button></div><p className="mb-1 mt-2 text-xs">{formatarData(a.data_acao)} · {periodoHorario(a.horario_inicio, a.horario_fim)}</p><Situacao status={a.status} label={STATUS_ACAO_LABEL[a.status as keyof typeof STATUS_ACAO_LABEL] ?? a.status} /></li>)}</ul>
-        </ListaPainel>
-      </section>}
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:gap-6">
+      <h1 className="col-span-2 min-w-0 break-words font-display text-2xl font-bold text-primary sm:text-3xl lg:col-span-1 lg:text-5xl">Central de Sistema - SESTRAN</h1>
+      <p className="min-w-0 rounded-md bg-muted px-3 py-1.5 text-sm font-semibold text-foreground lg:text-base">{dataPorExtenso(new Date())}</p>
+      <Button variant="outline" size="icon" className="shrink-0" title="Atualizar painel" aria-label="Atualizar painel" onClick={atualizar}><RefreshCw className="h-4 w-4" /></Button>
+    </div>
+    {nenhum && <p className="border-l-2 border-warning py-3 pl-4 text-sm text-muted-foreground">Bem-vindo, {sessao?.nome}. Aguardando liberação de acesso aos módulos pelo administrador.</p>}
+    <div className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {osLiberada && <Cartao titulo="Ordem de Serviço" link={<Link to="/ordens-servico">Abrir módulo</Link>}>
+        <CalendarioPainel compacto nome="Ordem de Serviço" mes={mesOS} selecionada={diaOS} datas={(ordens.data?.mes ?? []).map(o => o.data_servico)} onMes={d => { setMesOS(d); setDiaOS(undefined); }} onSelecionar={setDiaOS} />
+        <div className="mt-2 grid grid-cols-2 gap-2"><Contador valor={ordens.data?.agendadas ?? "—"} rotulo="agendadas" /><Contador valor={ordens.data?.executadas ?? "—"} rotulo="executadas" /></div>
+        {diaOS && <Button variant="ghost" size="sm" className="mt-1 h-5 self-start px-1 text-xs" onClick={() => setDiaOS(undefined)}><X className="h-3 w-3" />Limpar data</Button>}
+        <Lista titulo={diaOS ? `O.S. de ${formatarData(dataLocalIso(diaOS))}` : "Próximas atividades"} altura="h-36" quantidade={itensOS.length} carregando={ordens.isFetching} erro={ordens.isError} onTentar={() => void ordens.refetch()}>
+          <ul className="divide-y">{itensOS.map(o => <li key={o.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-2">
+            <div className="min-w-0"><p className="break-words text-xs font-medium">{o.numero} — <TextoFormatado valor={o.titulo ?? ""} /></p><p className="truncate text-[11px] text-muted-foreground">{o.local || "Serviço programado"} · {formatarData(o.data_servico)} · {periodoHorario(o.hora_inicio, o.hora_fim)}</p></div>
+            <div className="flex shrink-0 items-center gap-1"><Visualizar titulo={`Visualizar O.S. ${o.numero}`}><Link to="/ordens-servico/visualizar/$id" params={{ id: o.id }}><Eye className="h-4 w-4" /></Link></Visualizar>{temAcesso(sessao, "OS", "OPERADOR") && <Visualizar titulo={`Editar O.S. ${o.numero}`}><Link to="/ordens-servico/editar/$id" params={{ id: o.id }}><Pencil className="h-3.5 w-3.5" /></Link></Visualizar>}<Situacao status={o.status ?? "AGENDADA"} label={STATUS_OS_LABEL[o.status as keyof typeof STATUS_OS_LABEL] ?? o.status ?? "Agendada"} /></div>
+          </li>)}</ul>
+        </Lista>
+      </Cartao>}
+
+      {veiculosLiberados && <Cartao titulo="Veículos Abandonados" link={<Link to="/veiculos-abandonados">Abrir módulo</Link>}>
+        <div className="grid grid-cols-2 gap-2">{blocos.map(b => <Button key={b.label} variant="ghost" aria-pressed={situacaoVeiculo === b.status} className={cn("h-20 min-w-0 justify-start whitespace-normal rounded-md border border-l-[3px] bg-card p-3 text-left", b.cor, situacaoVeiculo === b.status && "ring-1 ring-ring")} onClick={() => setSituacaoVeiculo(b.status)}><span className="min-w-0"><span className="block text-[11px] text-muted-foreground">{b.label}</span>{veiculos.isFetching ? <Skeleton className="mt-2 h-7 w-12" /> : <span className="mt-1 block font-display text-2xl font-semibold">{veiculos.isError ? "—" : b.status ? (veiculos.data ?? []).filter(v => statusEfetivo(v) === b.status).length : veiculos.data?.length ?? 0}</span>}</span></Button>)}</div>
+        <div className="mt-1 min-h-5 text-xs text-muted-foreground">{situacaoVeiculo ? <Button variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => setSituacaoVeiculo(undefined)}><X className="h-3 w-3" />Todas as situações</Button> : null}</div>
+        <Lista titulo={situacaoVeiculo ? (STATUS_VEICULO_LABEL[situacaoVeiculo as keyof typeof STATUS_VEICULO_LABEL] ?? situacaoVeiculo) : "Veículos cadastrados"} altura="h-60" quantidade={itensVeiculos.length} carregando={veiculos.isFetching} erro={veiculos.isError} onTentar={() => void veiculos.refetch()}>
+          <ul className="divide-y">{itensVeiculos.map(v => <li key={v.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-2">
+            <div className="min-w-0"><p className="break-words text-xs font-medium">{[v.marca, v.modelo, v.placa].filter(Boolean).join(" · ") || "Veículo sem identificação"}</p><p className="break-words text-[11px] text-muted-foreground">{v.endereco}{v.bairro ? ` · ${v.bairro}` : ""}{v.data_notificacao ? ` · ${formatarData(v.data_notificacao)}` : ""}</p></div>
+            <div className="flex shrink-0 items-center gap-1"><Visualizar titulo={`Visualizar veículo ${v.placa ?? "sem placa"}`}><Link to="/documento-veiculo/$id" params={{ id: v.id }}><Eye className="h-4 w-4" /></Link></Visualizar><Situacao status={statusEfetivo(v)} label={STATUS_VEICULO_LABEL[statusEfetivo(v)] ?? String(statusEfetivo(v))} /></div>
+          </li>)}</ul>
+        </Lista>
+      </Cartao>}
+
+      {educacaoLiberada && <Cartao titulo="Educação no Trânsito" link={<Link to="/educacao-transito">Abrir módulo</Link>}>
+        <CalendarioPainel compacto educativo nome="Educação no Trânsito" mes={mesEducacao} selecionada={diaEducacao} datas={(educacao.data?.mes ?? []).map(a => a.data_acao)} onMes={d => { setMesEducacao(d); setDiaEducacao(undefined); }} onSelecionar={setDiaEducacao} />
+        <div className="mt-2 grid grid-cols-2 gap-2"><Contador valor={educacao.data?.agendadas ?? "—"} rotulo="agendadas" /><Contador valor={educacao.data?.realizadas ?? "—"} rotulo="realizadas" /></div>
+        {diaEducacao && <Button variant="ghost" size="sm" className="mt-1 h-5 self-start px-1 text-xs" onClick={() => setDiaEducacao(undefined)}><X className="h-3 w-3" />Limpar data</Button>}
+        <Lista titulo={diaEducacao ? `Atividades de ${formatarData(dataLocalIso(diaEducacao))}` : "Agendamentos"} altura="h-36" quantidade={itensEducacao.length} carregando={educacao.isFetching} erro={educacao.isError} onTentar={() => void educacao.refetch()}>
+          <ul className="divide-y">{itensEducacao.map(a => <li key={a.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-2">
+            <div className="min-w-0"><p className="break-words text-xs font-medium"><TextoFormatado valor={a.titulo} /></p><p className="break-words text-[11px] text-muted-foreground">{a.local || "Local não informado"} · {formatarData(a.data_acao)} · {periodoHorario(a.horario_inicio, a.horario_fim)}</p></div>
+            <div className="flex shrink-0 items-center gap-1"><Visualizar titulo="Visualizar ação educativa"><Link to="/agenda-educativa/$id" params={{ id: a.id }}><Eye className="h-4 w-4" /></Link></Visualizar><Situacao status={a.status} label={STATUS_ACAO_LABEL[a.status as keyof typeof STATUS_ACAO_LABEL] ?? a.status} /></div>
+          </li>)}</ul>
+        </Lista>
+      </Cartao>}
+
+      {sinalizacaoLiberada && <Cartao titulo="Sinalização Viária - O.S." link={<Link to="/sinalizacao-viaria">Abrir módulo</Link>}>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Contador carregando={sinalizacao.isFetching} valor={sinalizacao.isError ? "—" : itensSinalizacao.length} rotulo="Total de O.S." />
+          <Contador carregando={sinalizacao.isFetching} valor={sinalizacao.isError ? "—" : itensSinalizacao.filter(o => o.status === "Aguardando").length} rotulo="Aguardando" />
+          <Contador carregando={sinalizacao.isFetching} valor={sinalizacao.isError ? "—" : itensSinalizacao.filter(o => o.status === "Em Execução").length} rotulo="Em Execução" />
+          <Contador carregando={sinalizacao.isFetching} valor={sinalizacao.isError ? "—" : itensSinalizacao.filter(o => o.status === "Concluída").length} rotulo="Concluídas" />
+        </div>
+        <Lista altura="h-56" quantidade={itensSinalizacao.length} carregando={sinalizacao.isFetching} erro={sinalizacao.isError} onTentar={() => void sinalizacao.refetch()}>
+          <ul className="divide-y">{itensSinalizacao.map(o => <li key={o.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-2">
+            <div className="min-w-0"><p className="text-[11px] font-bold text-primary">{o.numero} · {formatarData(o.data)}</p><p className="break-words text-xs font-medium">{o.natureza} — {o.endereco}</p><p className="break-words text-[11px] text-muted-foreground">{o.pedido}{o.funcionario ? ` · Responsável: ${o.funcionario}` : ""}</p></div>
+            <div className="flex shrink-0 items-center gap-1"><Visualizar titulo={`Abrir O.S. ${o.numero} no módulo`}><Link to="/sinalizacao-viaria"><Eye className="h-4 w-4" /></Link></Visualizar><Situacao status={o.status} label={o.status} /></div>
+          </li>)}</ul>
+        </Lista>
+      </Cartao>}
+
+      {credenciaisLiberadas && <Cartao titulo="Credenciais de Estacionamento - Idoso / PCD" link={<Link to="/credenciais">Abrir módulo</Link>}>
+        {credErro ? <div className="py-6 text-center"><p className="text-xs text-destructive">Não foi possível carregar as credenciais.</p><Button variant="outline" size="sm" className="mt-2" onClick={() => { void credHistorico.refetch(); void credSistema.refetch(); }}><RefreshCw className="h-3 w-3" />Tentar novamente</Button></div>
+          : <div className="grid flex-1 grid-cols-2 content-center gap-3">
+            {([["Total de cadastros", credenciais?.total], ["Válidas", credenciais?.validas], ["Idosos", credenciais?.idosos], ["PcD", credenciais?.pcd], ["Vencidas", credenciais?.vencidas], ["Com ocorrência", credenciais?.ocorrencia]] as const).map(([rotulo, valor], i) =>
+              <Link key={rotulo} to="/credenciais-consulta" title={`Consultar credenciais — ${rotulo}`} className={cn("min-w-0 rounded-md border bg-card px-3 py-3 shadow-sm transition-colors hover:bg-muted/60", i === 0 && "border-primary/40 bg-primary/5")}>
+                {credCarregando && valor === undefined ? <Skeleton className="h-7 w-16" /> : <p className="font-display text-xl font-semibold">{numero(valor)}</p>}
+                <p className="truncate text-[11px] text-muted-foreground">{rotulo}</p>
+              </Link>)}
+          </div>}
+      </Cartao>}
+
+      <section aria-label="Secretaria em Destaque" className="flex h-full min-w-0 flex-col rounded-lg border bg-card p-4 shadow-sm">
+        <h2 className="border-b pb-2 text-center font-display text-xl font-bold">Secretaria em Destaque</h2>
+        <a href={NOTICIA.url} target="_blank" rel="noopener noreferrer" className="mt-3 block overflow-hidden rounded-md">
+          <img src={noticiaAsset.url} alt={NOTICIA.titulo} loading="lazy" className="aspect-[400/211] w-full object-cover" />
+        </a>
+        <p className="mt-3 text-center text-xs font-semibold">{NOTICIA.titulo}</p>
+        <p className="mt-1 text-center text-[11px] italic text-muted-foreground">{NOTICIA.resumo}</p>
+        <div className="mt-auto flex justify-end pt-3">
+          <Button size="sm" asChild><a href={NOTICIA.url} target="_blank" rel="noopener noreferrer">Acessar<ExternalLink className="h-3.5 w-3.5" /></a></Button>
+        </div>
+      </section>
     </div>
   </div>;
-}
-function Cabecalho({ numero, titulo, icone, link }: { numero: string; titulo: string; icone: ReactNode; link: ReactNode }) {
-  return <header className="mb-4 grid min-h-20 grid-cols-[minmax(0,1fr)_auto] items-start gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Módulo {numero}</p><h2 className="mt-1 break-words font-display text-lg font-semibold leading-tight">{titulo}</h2><Button variant="link" size="sm" className="h-6 p-0 text-xs" asChild>{link}</Button></div><span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-sidebar text-sidebar-primary">{icone}</span></header>;
 }
