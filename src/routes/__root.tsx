@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { isChunkLoadError, recoverChunkLoad } from "@/lib/chunk-recovery";
+import "@/lib/instalacao";
 
 function NotFoundComponent() {
   return (
@@ -101,6 +102,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#102a45" },
+      { name: "application-name", content: "SESTRAN" },
+      { name: "apple-mobile-web-app-title", content: "SESTRAN" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       {
@@ -118,6 +124,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
 
     ],
   }),

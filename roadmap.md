@@ -1,5 +1,11 @@
 # Roadmap — SESTRAN
 
+## Painel para todos e aplicativo instalável (29/10)
+- [x] Painel completo para todo usuário com algum módulo liberado; abrir módulos só quando liberado
+- [x] Totais conferidos com os cálculos anteriores (credenciais idênticas)
+- [ ] Conferir o Painel com um usuário de acesso só a Credenciais (teste com essa conta não autorizado)
+- [x] Manifesto, ícones e botão "Instalar aplicativo" para Chrome e Edge
+
 ## Novo Painel (28/10)
 - [x] Seis quadros: O.S., Veículos, Educação, Sinalização, Credenciais e Secretaria em Destaque
 - [x] Conferido no navegador em computador e celular

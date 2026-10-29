@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { administrador, moduloDoCaminho, temAcesso } from "@/lib/permissoes";
 import { LogosInstitucionais } from "@/components/layout/LogosInstitucionais";
+import { BotaoInstalar } from "@/components/layout/BotaoInstalar";
 
 function Icone({ nome, className }: { nome: string; className: string }) {
   const Componente = (
@@ -135,6 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <BotaoInstalar />
             {papeis.map((papel) => (
               <Badge key={papel} variant="secondary" className="hidden sm:inline-flex">
                 {PAPEL_LABEL[papel]}
