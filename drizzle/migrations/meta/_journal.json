@@ -225,6 +225,13 @@
       "when": 1792982705483,
       "tag": "0031_credenciais_historico",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793277886885,
+      "tag": "0032_painel_dados_todos_modulos",
+      "breakpoints": true
     }
   ]
 }
