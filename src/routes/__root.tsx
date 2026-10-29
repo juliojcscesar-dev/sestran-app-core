@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { isChunkLoadError, recoverChunkLoad } from "@/lib/chunk-recovery";
+import "@/lib/instalacao";
 
 function NotFoundComponent() {
   return (
