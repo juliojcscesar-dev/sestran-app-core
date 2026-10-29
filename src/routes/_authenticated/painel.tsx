@@ -7,7 +7,7 @@ import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { dataLocalIso, STATUS_ACAO_LABEL } from "@/lib/educacao";
 import { STATUS_OS_LABEL, periodoHorario } from "@/lib/os";
-import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase, type SituacaoVeiculo } from "@/lib/veiculos";
+import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase } from "@/lib/veiculos";
 import { formatarData } from "@/lib/sestran";
 import { cn } from "@/lib/utils";
 import { TextoFormatado } from "@/components/TextoFormatado";
