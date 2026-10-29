@@ -1,16 +1,14 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, Eye, Pencil, RefreshCw, X } from "lucide-react";
+import { ExternalLink, Eye, Lock, Pencil, RefreshCw, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
 import { dataLocalIso, STATUS_ACAO_LABEL } from "@/lib/educacao";
 import { STATUS_OS_LABEL, periodoHorario } from "@/lib/os";
-import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase, type SituacaoVeiculo } from "@/lib/veiculos";
+import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase } from "@/lib/veiculos";
 import { formatarData } from "@/lib/sestran";
-import { credenciaisHistoricoQuery, credenciaisSistemaQuery } from "@/lib/credenciais-consulta";
-import { atendeSituacao, mesclarConsulta, statusValidade } from "@/lib/credenciais-historico";
 import { cn } from "@/lib/utils";
 import { TextoFormatado } from "@/components/TextoFormatado";
 import { Button } from "@/components/ui/button";
@@ -35,8 +33,17 @@ export const Route = createFileRoute("/_authenticated/painel")({
   ] }), component: Painel,
 });
 
-function checar<T>(res: { data: T; error: unknown }) { if (res.error) throw res.error; return res.data; }
-function total(res: { count: number | null; error: unknown }) { if (res.error) throw res.error; return res.count ?? 0; }
+type ItemOS = { id: string; numero: string; titulo: string | null; data_servico: string; hora_inicio: string | null; hora_fim: string | null; status: string | null; local: string | null };
+type ItemEducacao = { id: string; titulo: string; data_acao: string; horario_inicio: string | null; horario_fim: string | null; status: string; local: string | null };
+type ItemVeiculo = VeiculoBase & { id: string; marca: string | null; modelo: string | null; placa: string | null; endereco: string; bairro: string | null };
+type ItemSinalizacao = { id: string; numero: string; data: string; natureza: string; endereco: string; pedido: string; funcionario: string | null; status: string };
+type DadosPainel = {
+  os: { mes: ItemOS[]; proximas: ItemOS[]; agendadas: number; executadas: number };
+  educacao: { mes: ItemEducacao[]; proximas: ItemEducacao[]; agendadas: number; realizadas: number };
+  veiculos: ItemVeiculo[];
+  sinalizacao: ItemSinalizacao[];
+  credenciais: { total: number; validas: number; idosos: number; pcd: number; vencidas: number; ocorrencia: number };
+};
 function classeStatus(status: string) {
   if (["EXECUTADA", "REALIZADA", "RETIRADO", "RECOLHIDO", "Concluída"].includes(status)) return "border-success/25 bg-success/10 text-success";
   if (["CANCELADA", "RECOLHER", "Cancelada"].includes(status)) return "border-destructive/25 bg-destructive/10 text-destructive";
@@ -50,11 +57,12 @@ function dataPorExtenso(d: Date) {
     .replace(/(^|[\s-])(\p{L})(?=\p{L}{2,})/gu, (_m, a: string, b: string) => a + b.toUpperCase()).replace(/ De /g, " de ");
 }
 
-function Cartao({ titulo, link, children }: { titulo: string; link?: ReactNode; children: ReactNode }) {
+function Cartao({ titulo, link, liberado = true, children }: { titulo: string; link?: ReactNode; liberado?: boolean; children: ReactNode }) {
   return <section aria-label={titulo} className="flex h-full min-w-0 flex-col rounded-lg border bg-card p-4 shadow-sm">
     <header className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
       <h2 className="min-w-0 break-words font-display text-sm font-semibold">{titulo}</h2>
-      {link && <Button variant="outline" size="sm" className="h-8 shrink-0 text-xs font-semibold" asChild>{link}</Button>}
+      {liberado ? link && <Button variant="outline" size="sm" className="h-8 shrink-0 text-xs font-semibold" asChild>{link}</Button>
+        : <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-dashed px-2 py-1 text-[11px] text-muted-foreground" title="Solicite a liberação deste módulo ao administrador"><Lock className="h-3 w-3" aria-hidden="true" />Sem acesso</span>}
     </header>
     {children}
   </section>;
@@ -88,57 +96,25 @@ function Painel() {
   const sinalizacaoLiberada = temAcesso(sessao, "SINALIZACAO"), credenciaisLiberadas = temAcesso(sessao, "CREDENCIAIS");
   const periodoOS = periodoCalendario(mesOS), periodoEducacao = periodoCalendario(mesEducacao);
   const hoje = dataLocalIso(new Date());
-  const ordens = useQuery({
-    queryKey: ["painel", "os", sessao?.userId, osLiberada, periodoOS, hoje], enabled: osLiberada,
+  const nenhum = !osLiberada && !educacaoLiberada && !veiculosLiberados && !sinalizacaoLiberada && !credenciaisLiberadas;
+  // Resumo de todos os módulos para qualquer usuário com algum módulo liberado; abrir cada módulo continua dependendo da liberação.
+  const painel = useQuery({
+    queryKey: ["painel", "dados", sessao?.userId, periodoOS, periodoEducacao, hoje], enabled: Boolean(sessao) && !nenhum,
+    placeholderData: (anterior) => anterior,
     queryFn: async () => {
-      const campos = "id,numero,titulo,data_servico,hora_inicio,hora_fim,status,local";
-      const [mes, proximas, agendadas, executadas] = await Promise.all([
-        supabase.from("ordens_servico").select(campos).eq("arquivada", false).gte("data_servico", periodoOS.inicio).lte("data_servico", periodoOS.fim).order("data_servico").order("hora_inicio"),
-        supabase.from("ordens_servico").select(campos).eq("arquivada", false).gte("data_servico", hoje).in("status", ["AGENDADA", "EM_ANDAMENTO"]).order("data_servico").order("hora_inicio").limit(20),
-        supabase.from("ordens_servico").select("id", { count: "exact", head: true }).eq("arquivada", false).eq("status", "AGENDADA"),
-        supabase.from("ordens_servico").select("id", { count: "exact", head: true }).eq("arquivada", false).eq("status", "EXECUTADA"),
-      ]);
-      return { mes: checar(mes) ?? [], proximas: checar(proximas) ?? [], agendadas: total(agendadas), executadas: total(executadas) };
+      const { data, error } = await supabase.rpc("painel_dados", { _os_inicio: periodoOS.inicio, _os_fim: periodoOS.fim, _edu_inicio: periodoEducacao.inicio, _edu_fim: periodoEducacao.fim, _hoje: hoje });
+      if (error) throw error;
+      return data as unknown as DadosPainel;
     },
   });
-  const educacao = useQuery({
-    queryKey: ["painel", "educacao", sessao?.userId, educacaoLiberada, periodoEducacao, hoje], enabled: educacaoLiberada,
-    queryFn: async () => {
-      const campos = "id,titulo,data_acao,horario_inicio,horario_fim,status,local";
-      const [mes, proximas, agendadas, realizadas] = await Promise.all([
-        supabase.from("acoes_educativas").select(campos).eq("arquivada", false).gte("data_acao", periodoEducacao.inicio).lte("data_acao", periodoEducacao.fim).order("data_acao").order("horario_inicio"),
-        supabase.from("acoes_educativas").select(campos).eq("arquivada", false).gte("data_acao", hoje).in("status", ["AGENDADA", "PLANEJADA", "EM_ANDAMENTO"]).order("data_acao").order("horario_inicio").limit(20),
-        supabase.from("acoes_educativas").select("id", { count: "exact", head: true }).eq("arquivada", false).in("status", ["AGENDADA", "PLANEJADA"]),
-        supabase.from("acoes_educativas").select("id", { count: "exact", head: true }).eq("arquivada", false).eq("status", "REALIZADA"),
-      ]);
-      return { mes: checar(mes) ?? [], proximas: checar(proximas) ?? [], agendadas: total(agendadas), realizadas: total(realizadas) };
-    },
-  });
-  const veiculos = useQuery({ queryKey: ["painel", "veiculos", sessao?.userId, veiculosLiberados, hoje], enabled: veiculosLiberados,
-    queryFn: async () => {
-      const linhas: Array<VeiculoBase & { id: string; marca: string | null; modelo: string | null; placa: string | null; endereco: string; bairro: string | null }> = [];
-      for (let inicio = 0; ; inicio += 1000) {
-        const res = await supabase.from("veiculos_abandonados").select("id,marca,modelo,placa,endereco,bairro,status,situacao,data_verificacao,data_notificacao,data_recolhimento,data_retirada,prazo_recolhimento").eq("arquivado", false).order("created_at", { ascending: false }).order("id").range(inicio, inicio + 999);
-        const dados = checar(res) ?? [];
-        linhas.push(...dados.map(v => ({ ...v, situacao: v.situacao as SituacaoVeiculo | null })));
-        if (dados.length < 1000) break;
-      }
-      return linhas;
-    },
-  });
-  const sinalizacao = useQuery({ queryKey: ["sinalizacao_os"], enabled: sinalizacaoLiberada, queryFn: async () => {
-    const { data, error } = await supabase.from("sinalizacao_os").select("*").order("criado_em", { ascending: false });
-    if (error) throw error; return data;
-  } });
-  const credHistorico = useQuery({ ...credenciaisHistoricoQuery, enabled: credenciaisLiberadas });
-  const credSistema = useQuery({ ...credenciaisSistemaQuery, enabled: credenciaisLiberadas });
-  const credenciais = useMemo(() => {
-    if (!credHistorico.data || !credSistema.data) return undefined;
-    const dados = mesclarConsulta(credHistorico.data, credSistema.data); const agora = new Date();
-    const c = (fn: (r: (typeof dados)[number]) => boolean) => dados.filter(fn).length;
-    return { total: dados.length, validas: c(r => statusValidade(r, agora) === "ok"), idosos: c(r => r.grupo === "IDOSO"), pcd: c(r => r.grupo === "PCD"), vencidas: c(r => statusValidade(r, agora) === "exp"), ocorrencia: c(r => atendeSituacao(r, "com")) };
-  }, [credHistorico.data, credSistema.data]);
-  const credCarregando = credHistorico.isFetching || credSistema.isFetching, credErro = credHistorico.isError || credSistema.isError;
+  const carregando = painel.isFetching && !painel.data, erro = painel.isError && !painel.data;
+  const recarregar = () => void painel.refetch();
+  const ordens = { data: painel.data?.os, isFetching: carregando, isError: erro, refetch: recarregar };
+  const educacao = { data: painel.data?.educacao, isFetching: carregando, isError: erro, refetch: recarregar };
+  const veiculos = { data: painel.data?.veiculos, isFetching: carregando, isError: erro, refetch: recarregar };
+  const sinalizacao = { data: painel.data?.sinalizacao, isFetching: carregando, isError: erro, refetch: recarregar };
+  const credenciais = painel.data?.credenciais;
+  const credCarregando = carregando, credErro = erro;
 
   const itensOS = diaOS ? (ordens.data?.mes ?? []).filter(o => o.data_servico === dataLocalIso(diaOS)) : ordens.data?.proximas ?? [];
   const itensEducacao = diaEducacao ? (educacao.data?.mes ?? []).filter(a => a.data_acao === dataLocalIso(diaEducacao)) : educacao.data?.proximas ?? [];
@@ -150,11 +126,7 @@ function Painel() {
     { label: "Notificados", status: "NOTIFICADO", cor: "border-warning" },
     { label: "A recolher", status: "RECOLHER", cor: "border-destructive" },
   ];
-  const nenhum = !osLiberada && !educacaoLiberada && !veiculosLiberados && !sinalizacaoLiberada && !credenciaisLiberadas;
-  function atualizar() {
-    if (osLiberada) void ordens.refetch(); if (educacaoLiberada) void educacao.refetch(); if (veiculosLiberados) void veiculos.refetch();
-    if (sinalizacaoLiberada) void sinalizacao.refetch(); if (credenciaisLiberadas) void credSistema.refetch();
-  }
+  function atualizar() { if (!nenhum) recarregar(); }
 
   return <div className="space-y-5">
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:gap-6">
@@ -164,42 +136,42 @@ function Painel() {
     </div>
     {nenhum && <p className="border-l-2 border-warning py-3 pl-4 text-sm text-muted-foreground">Bem-vindo, {sessao?.nome}. Aguardando liberação de acesso aos módulos pelo administrador.</p>}
     <div className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {osLiberada && <Cartao titulo="Ordem de Serviço" link={<Link to="/ordens-servico">Abrir módulo</Link>}>
+      {!nenhum && <Cartao titulo="Ordem de Serviço" liberado={osLiberada} link={<Link to="/ordens-servico">Abrir módulo</Link>}>
         <CalendarioPainel compacto nome="Ordem de Serviço" mes={mesOS} selecionada={diaOS} datas={(ordens.data?.mes ?? []).map(o => o.data_servico)} onMes={d => { setMesOS(d); setDiaOS(undefined); }} onSelecionar={setDiaOS} />
         <div className="mt-2 grid grid-cols-2 gap-2"><Contador valor={ordens.data?.agendadas ?? "—"} rotulo="agendadas" /><Contador valor={ordens.data?.executadas ?? "—"} rotulo="executadas" /></div>
         {diaOS && <Button variant="ghost" size="sm" className="mt-1 h-5 self-start px-1 text-xs" onClick={() => setDiaOS(undefined)}><X className="h-3 w-3" />Limpar data</Button>}
         <Lista titulo={diaOS ? `O.S. de ${formatarData(dataLocalIso(diaOS))}` : "Próximas atividades"} altura="h-36" quantidade={itensOS.length} carregando={ordens.isFetching} erro={ordens.isError} onTentar={() => void ordens.refetch()}>
           <ul className="divide-y">{itensOS.map(o => <li key={o.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-2">
             <div className="min-w-0"><p className="break-words text-xs font-medium">{o.numero} — <TextoFormatado valor={o.titulo ?? ""} /></p><p className="truncate text-[11px] text-muted-foreground">{o.local || "Serviço programado"} · {formatarData(o.data_servico)} · {periodoHorario(o.hora_inicio, o.hora_fim)}</p></div>
-            <div className="flex shrink-0 items-center gap-1"><Visualizar titulo={`Visualizar O.S. ${o.numero}`}><Link to="/ordens-servico/visualizar/$id" params={{ id: o.id }}><Eye className="h-4 w-4" /></Link></Visualizar>{temAcesso(sessao, "OS", "OPERADOR") && <Visualizar titulo={`Editar O.S. ${o.numero}`}><Link to="/ordens-servico/editar/$id" params={{ id: o.id }}><Pencil className="h-3.5 w-3.5" /></Link></Visualizar>}<Situacao status={o.status ?? "AGENDADA"} label={STATUS_OS_LABEL[o.status as keyof typeof STATUS_OS_LABEL] ?? o.status ?? "Agendada"} /></div>
+            <div className="flex shrink-0 items-center gap-1">{osLiberada && <Visualizar titulo={`Visualizar O.S. ${o.numero}`}><Link to="/ordens-servico/visualizar/$id" params={{ id: o.id }}><Eye className="h-4 w-4" /></Link></Visualizar>}{temAcesso(sessao, "OS", "OPERADOR") && <Visualizar titulo={`Editar O.S. ${o.numero}`}><Link to="/ordens-servico/editar/$id" params={{ id: o.id }}><Pencil className="h-3.5 w-3.5" /></Link></Visualizar>}<Situacao status={o.status ?? "AGENDADA"} label={STATUS_OS_LABEL[o.status as keyof typeof STATUS_OS_LABEL] ?? o.status ?? "Agendada"} /></div>
           </li>)}</ul>
         </Lista>
       </Cartao>}
 
-      {veiculosLiberados && <Cartao titulo="Veículos Abandonados" link={<Link to="/veiculos-abandonados">Abrir módulo</Link>}>
+      {!nenhum && <Cartao titulo="Veículos Abandonados" liberado={veiculosLiberados} link={<Link to="/veiculos-abandonados">Abrir módulo</Link>}>
         <div className="grid grid-cols-2 gap-2">{blocos.map(b => <Button key={b.label} variant="ghost" aria-pressed={situacaoVeiculo === b.status} className={cn("h-20 min-w-0 justify-start whitespace-normal rounded-md border border-l-[3px] bg-card p-3 text-left", b.cor, situacaoVeiculo === b.status && "ring-1 ring-ring")} onClick={() => setSituacaoVeiculo(b.status)}><span className="min-w-0"><span className="block text-[11px] text-muted-foreground">{b.label}</span>{veiculos.isFetching ? <Skeleton className="mt-2 h-7 w-12" /> : <span className="mt-1 block font-display text-2xl font-semibold">{veiculos.isError ? "—" : b.status ? (veiculos.data ?? []).filter(v => statusEfetivo(v) === b.status).length : veiculos.data?.length ?? 0}</span>}</span></Button>)}</div>
         <div className="mt-1 min-h-5 text-xs text-muted-foreground">{situacaoVeiculo ? <Button variant="ghost" size="sm" className="h-5 px-1 text-xs" onClick={() => setSituacaoVeiculo(undefined)}><X className="h-3 w-3" />Todas as situações</Button> : null}</div>
         <Lista titulo={situacaoVeiculo ? (STATUS_VEICULO_LABEL[situacaoVeiculo as keyof typeof STATUS_VEICULO_LABEL] ?? situacaoVeiculo) : "Veículos cadastrados"} altura="h-60" quantidade={itensVeiculos.length} carregando={veiculos.isFetching} erro={veiculos.isError} onTentar={() => void veiculos.refetch()}>
           <ul className="divide-y">{itensVeiculos.map(v => <li key={v.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-2">
             <div className="min-w-0"><p className="break-words text-xs font-medium">{[v.marca, v.modelo, v.placa].filter(Boolean).join(" · ") || "Veículo sem identificação"}</p><p className="break-words text-[11px] text-muted-foreground">{v.endereco}{v.bairro ? ` · ${v.bairro}` : ""}{v.data_notificacao ? ` · ${formatarData(v.data_notificacao)}` : ""}</p></div>
-            <div className="flex shrink-0 items-center gap-1"><Visualizar titulo={`Visualizar veículo ${v.placa ?? "sem placa"}`}><Link to="/documento-veiculo/$id" params={{ id: v.id }}><Eye className="h-4 w-4" /></Link></Visualizar><Situacao status={statusEfetivo(v)} label={STATUS_VEICULO_LABEL[statusEfetivo(v)] ?? String(statusEfetivo(v))} /></div>
+            <div className="flex shrink-0 items-center gap-1">{veiculosLiberados && <Visualizar titulo={`Visualizar veículo ${v.placa ?? "sem placa"}`}><Link to="/documento-veiculo/$id" params={{ id: v.id }}><Eye className="h-4 w-4" /></Link></Visualizar>}<Situacao status={statusEfetivo(v)} label={STATUS_VEICULO_LABEL[statusEfetivo(v)] ?? String(statusEfetivo(v))} /></div>
           </li>)}</ul>
         </Lista>
       </Cartao>}
 
-      {educacaoLiberada && <Cartao titulo="Educação no Trânsito" link={<Link to="/educacao-transito">Abrir módulo</Link>}>
+      {!nenhum && <Cartao titulo="Educação no Trânsito" liberado={educacaoLiberada} link={<Link to="/educacao-transito">Abrir módulo</Link>}>
         <CalendarioPainel compacto educativo nome="Educação no Trânsito" mes={mesEducacao} selecionada={diaEducacao} datas={(educacao.data?.mes ?? []).map(a => a.data_acao)} onMes={d => { setMesEducacao(d); setDiaEducacao(undefined); }} onSelecionar={setDiaEducacao} />
         <div className="mt-2 grid grid-cols-2 gap-2"><Contador valor={educacao.data?.agendadas ?? "—"} rotulo="agendadas" /><Contador valor={educacao.data?.realizadas ?? "—"} rotulo="realizadas" /></div>
         {diaEducacao && <Button variant="ghost" size="sm" className="mt-1 h-5 self-start px-1 text-xs" onClick={() => setDiaEducacao(undefined)}><X className="h-3 w-3" />Limpar data</Button>}
         <Lista titulo={diaEducacao ? `Atividades de ${formatarData(dataLocalIso(diaEducacao))}` : "Agendamentos"} altura="h-36" quantidade={itensEducacao.length} carregando={educacao.isFetching} erro={educacao.isError} onTentar={() => void educacao.refetch()}>
           <ul className="divide-y">{itensEducacao.map(a => <li key={a.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-2">
             <div className="min-w-0"><p className="break-words text-xs font-medium"><TextoFormatado valor={a.titulo} /></p><p className="break-words text-[11px] text-muted-foreground">{a.local || "Local não informado"} · {formatarData(a.data_acao)} · {periodoHorario(a.horario_inicio, a.horario_fim)}</p></div>
-            <div className="flex shrink-0 items-center gap-1"><Visualizar titulo="Visualizar ação educativa"><Link to="/agenda-educativa/$id" params={{ id: a.id }}><Eye className="h-4 w-4" /></Link></Visualizar><Situacao status={a.status} label={STATUS_ACAO_LABEL[a.status as keyof typeof STATUS_ACAO_LABEL] ?? a.status} /></div>
+            <div className="flex shrink-0 items-center gap-1">{educacaoLiberada && <Visualizar titulo="Visualizar ação educativa"><Link to="/agenda-educativa/$id" params={{ id: a.id }}><Eye className="h-4 w-4" /></Link></Visualizar>}<Situacao status={a.status} label={STATUS_ACAO_LABEL[a.status as keyof typeof STATUS_ACAO_LABEL] ?? a.status} /></div>
           </li>)}</ul>
         </Lista>
       </Cartao>}
 
-      {sinalizacaoLiberada && <Cartao titulo="Sinalização Viária - O.S." link={<Link to="/sinalizacao-viaria">Abrir módulo</Link>}>
+      {!nenhum && <Cartao titulo="Sinalização Viária - O.S." liberado={sinalizacaoLiberada} link={<Link to="/sinalizacao-viaria">Abrir módulo</Link>}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Contador carregando={sinalizacao.isFetching} valor={sinalizacao.isError ? "—" : itensSinalizacao.length} rotulo="Total de O.S." />
           <Contador carregando={sinalizacao.isFetching} valor={sinalizacao.isError ? "—" : itensSinalizacao.filter(o => o.status === "Aguardando").length} rotulo="Aguardando" />
@@ -209,19 +181,23 @@ function Painel() {
         <Lista altura="h-56" quantidade={itensSinalizacao.length} carregando={sinalizacao.isFetching} erro={sinalizacao.isError} onTentar={() => void sinalizacao.refetch()}>
           <ul className="divide-y">{itensSinalizacao.map(o => <li key={o.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-2">
             <div className="min-w-0"><p className="text-[11px] font-bold text-primary">{o.numero} · {formatarData(o.data)}</p><p className="break-words text-xs font-medium">{o.natureza} — {o.endereco}</p><p className="break-words text-[11px] text-muted-foreground">{o.pedido}{o.funcionario ? ` · Responsável: ${o.funcionario}` : ""}</p></div>
-            <div className="flex shrink-0 items-center gap-1"><Visualizar titulo={`Abrir O.S. ${o.numero} no módulo`}><Link to="/sinalizacao-viaria"><Eye className="h-4 w-4" /></Link></Visualizar><Situacao status={o.status} label={o.status} /></div>
+            <div className="flex shrink-0 items-center gap-1">{sinalizacaoLiberada && <Visualizar titulo={`Abrir O.S. ${o.numero} no módulo`}><Link to="/sinalizacao-viaria"><Eye className="h-4 w-4" /></Link></Visualizar>}<Situacao status={o.status} label={o.status} /></div>
           </li>)}</ul>
         </Lista>
       </Cartao>}
 
-      {credenciaisLiberadas && <Cartao titulo="Credenciais de Estacionamento - Idoso / PCD" link={<Link to="/credenciais">Abrir módulo</Link>}>
-        {credErro ? <div className="py-6 text-center"><p className="text-xs text-destructive">Não foi possível carregar as credenciais.</p><Button variant="outline" size="sm" className="mt-2" onClick={() => { void credHistorico.refetch(); void credSistema.refetch(); }}><RefreshCw className="h-3 w-3" />Tentar novamente</Button></div>
+      {!nenhum && <Cartao titulo="Credenciais de Estacionamento - Idoso / PCD" liberado={credenciaisLiberadas} link={<Link to="/credenciais">Abrir módulo</Link>}>
+        {credErro ? <div className="py-6 text-center"><p className="text-xs text-destructive">Não foi possível carregar as credenciais.</p><Button variant="outline" size="sm" className="mt-2" onClick={recarregar}><RefreshCw className="h-3 w-3" />Tentar novamente</Button></div>
           : <div className="grid flex-1 grid-cols-2 content-center gap-3">
             {([["Total de cadastros", credenciais?.total], ["Válidas", credenciais?.validas], ["Idosos", credenciais?.idosos], ["PcD", credenciais?.pcd], ["Vencidas", credenciais?.vencidas], ["Com ocorrência", credenciais?.ocorrencia]] as const).map(([rotulo, valor], i) =>
-              <Link key={rotulo} to="/credenciais-consulta" title={`Consultar credenciais — ${rotulo}`} className={cn("min-w-0 rounded-md border bg-card px-3 py-3 shadow-sm transition-colors hover:bg-muted/60", i === 0 && "border-primary/40 bg-primary/5")}>
-                {credCarregando && valor === undefined ? <Skeleton className="h-7 w-16" /> : <p className="font-display text-xl font-semibold">{numero(valor)}</p>}
-                <p className="truncate text-[11px] text-muted-foreground">{rotulo}</p>
-              </Link>)}
+{
+                const conteudo = <>{credCarregando && valor === undefined ? <Skeleton className="h-7 w-16" /> : <p className="font-display text-xl font-semibold">{numero(valor)}</p>}
+                  <p className="truncate text-[11px] text-muted-foreground">{rotulo}</p></>;
+                const classe = cn("min-w-0 rounded-md border bg-card px-3 py-3 shadow-sm", i === 0 && "border-primary/40 bg-primary/5");
+                return credenciaisLiberadas
+                  ? <Link key={rotulo} to="/credenciais-consulta" title={`Consultar credenciais — ${rotulo}`} className={cn(classe, "transition-colors hover:bg-muted/60")}>{conteudo}</Link>
+                  : <div key={rotulo} className={classe}>{conteudo}</div>;
+              })}
           </div>}
       </Cartao>}
 

@@ -1593,6 +1593,16 @@ export type Database = {
         Returns: boolean
       }
       is_gestor: { Args: { _user_id: string }; Returns: boolean }
+      painel_dados: {
+        Args: {
+          _edu_fim: string
+          _edu_inicio: string
+          _hoje: string
+          _os_fim: string
+          _os_inicio: string
+        }
+        Returns: Json
+      }
       pode_operar: { Args: { _user_id: string }; Returns: boolean }
       resumo_alteracoes_hist: { Args: { alteracoes: Json }; Returns: Json }
       resumo_valor_hist: { Args: { v: Json }; Returns: string }
