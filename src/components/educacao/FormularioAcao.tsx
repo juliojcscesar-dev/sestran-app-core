@@ -114,7 +114,7 @@ export function FormularioAcao({ aberto, onAbertoChange, acao, duplicando = fals
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{duplicando ? "Duplicar ação educativa" : acao ? "Editar ação educativa" : "Nova ação educativa"}</DialogTitle><DialogDescription>Registre a programação e a situação da atividade.</DialogDescription></DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2"><Label htmlFor="acao-titulo">Título da Ação *</Label><EditorTexto id="acao-titulo" rotulo="Título da Ação" compacto value={estado.titulo} onChange={(valor) => campo("titulo", valor)} /></div>
+          <div className="md:col-span-2"><Label htmlFor="acao-titulo">Ação *</Label><EditorTexto id="acao-titulo" rotulo="Ação" compacto value={estado.titulo} onChange={(valor) => campo("titulo", valor)} /></div>
           <CampoCadastroEducativo tipo="categorias_educativas" rotulo="Categoria" id="acao-categoria" valor={estado.categoria} opcoes={referencias.data?.categorias ?? []} onChange={v => campo("categoria", v)} podeExcluir={podeExcluir} obrigatorio />
           <div><Label htmlFor="acao-status">Situação *</Label><Select value={estado.status_manual ? estado.status : "__auto"} onValueChange={(v) => { if (v === "__auto") campo("status_manual", false); else { campo("status_manual", true); campo("status", v); } }}><SelectTrigger id="acao-status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="__auto">Automática pelo calendário ({STATUS_ACAO_LABEL[estado.status]})</SelectItem>{STATUS_ACAO.map((s) => <SelectItem key={s} value={s}>{STATUS_ACAO_LABEL[s]}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="acao-data">Data do evento *</Label><Input id="acao-data" type="date" value={estado.data_acao} onChange={(e) => campo("data_acao", e.target.value)} /></div>
@@ -125,10 +125,10 @@ export function FormularioAcao({ aberto, onAbertoChange, acao, duplicando = fals
           <div className="md:col-span-2"><Label htmlFor="acao-endereco">Endereço</Label><Input id="acao-endereco" value={estado.endereco} onChange={e => campo("endereco", e.target.value)} /></div>
           <div><Label htmlFor="acao-numero">Número</Label><Input id="acao-numero" value={estado.numero_endereco} onChange={e => campo("numero_endereco", e.target.value)} /></div>
           <div><Label htmlFor="acao-bairro">Bairro</Label><Input id="acao-bairro" value={estado.bairro} onChange={e => campo("bairro", e.target.value)} /></div>
-          <div className="md:col-span-2"><Label htmlFor="acao-equipe">Equipe</Label>
+          {false && <div className="md:col-span-2"><Label htmlFor="acao-equipe">Equipe</Label>
             <div className="mb-2 flex gap-2"><Input list="acao-equipe-nomes" aria-label="Buscar nome já salvo na equipe" placeholder="Buscar nome já salvo…" value={buscaEquipe} onChange={e => setBuscaEquipe(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); adicionarNome(); } }} /><Button type="button" variant="outline" onClick={adicionarNome}>Adicionar</Button></div>
             <datalist id="acao-equipe-nomes">{(nomesEquipe.data ?? []).map(n => <option key={n} value={n} />)}</datalist>
-            <Textarea id="acao-equipe" value={estado.equipe} onChange={e => campo("equipe", e.target.value)} /></div>
+            <Textarea id="acao-equipe" value={estado.equipe} onChange={e => campo("equipe", e.target.value)} /></div>}
           <div><Label htmlFor="acao-publico">Público-alvo</Label><Input id="acao-publico" value={estado.publico_alvo} onChange={(e) => campo("publico_alvo", e.target.value)} /></div>
           <div className="md:col-span-2"><Label htmlFor="acao-descricao">Atividade</Label><EditorTexto id="acao-descricao" rotulo="Atividade" value={estado.descricao} onChange={(valor) => campo("descricao", valor)} /></div>
           <EditorRelatorio texto={estado.relatorio_texto} onTexto={v => campo("relatorio_texto", v)} imagens={imagens} onImagens={setImagens} />
