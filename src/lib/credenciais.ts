@@ -130,7 +130,33 @@ function nomeArquivo(c: DadosCredencial) {
   return `credencial_${ehPcd(c.tipo) ? "pcd" : "idoso"}_${base}`;
 }
 
+/** Idade completa (anos) na data de referência; null se a data for inválida ou futura. Uso só na tela, nunca na credencial. */
+export function calcularIdade(nascimento: string, referencia: string): number | null {
+  const n = /^(\d{4})-(\d{2})-(\d{2})$/.exec(nascimento); const r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(referencia);
+  if (!n || !r) return null;
+  let idade = Number(r[1]) - Number(n[1]);
+  if (Number(r[2]) * 100 + Number(r[3]) < Number(n[2]) * 100 + Number(n[3])) idade--;
+  return idade >= 0 && idade < 150 ? idade : null;
+}
+
 export async function gerarCredencialPdf(c: DadosCredencial) {
+  (await montarCredencialPdf(c)).save(`${nomeArquivo(c)}.pdf`);
+}
+
+/** Abre a impressão do navegador com o mesmo PDF da emissão, sem baixar arquivo. */
+export async function imprimirCredencial(c: DadosCredencial) {
+  const doc = await montarCredencialPdf(c);
+  doc.autoPrint();
+  const url = URL.createObjectURL(doc.output("blob"));
+  const frame = document.createElement("iframe");
+  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+  frame.src = url;
+  frame.onload = () => { try { frame.contentWindow?.focus(); frame.contentWindow?.print(); } catch { window.open(url, "_blank"); } };
+  document.body.appendChild(frame);
+  setTimeout(() => { frame.remove(); URL.revokeObjectURL(url); }, 120000);
+}
+
+async function montarCredencialPdf(c: DadosCredencial) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   doc.addImage(await bytesModelo(c.tipo), "JPEG", 0, 0, 612, 792);
@@ -139,7 +165,7 @@ export async function gerarCredencialPdf(c: DadosCredencial) {
     doc.setFontSize(f.tamanho);
     doc.text(f.texto, f.x, f.y, { align: f.centro ? "center" : "left" });
   }
-  doc.save(`${nomeArquivo(c)}.pdf`);
+  return doc;
 }
 
 export async function gerarCredencialDocx(c: DadosCredencial) {

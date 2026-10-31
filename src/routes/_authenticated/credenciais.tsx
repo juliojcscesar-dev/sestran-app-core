@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DatabaseBackup, Upload, Eye, FileDown, FileText, FolderOpen, Plus, Save, Search, Trash2 } from "lucide-react";
+import { DatabaseBackup, Upload, Eye, Printer, FileDown, FileText, FolderOpen, Plus, Save, Search, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ import { formatarDataBr } from "@/lib/os";
 import { hojeIso } from "@/lib/veiculos";
 import { exibirDocumento, exibirTelefone, mascararDocumento, mascararTelefone } from "@/lib/mascaras";
 import {
-  camposCredencial, DOCUMENTOS_CONFERENCIA, ehPcd, gerarCredencialDocx, gerarCredencialPdf, proximoNumeroRegistro,
+  calcularIdade, camposCredencial, DOCUMENTOS_CONFERENCIA, imprimirCredencial, ehPcd, gerarCredencialDocx, gerarCredencialPdf, proximoNumeroRegistro,
   TIPOS_CREDENCIAL, TIPOS_GRUPO, urlModelo, validadeAutomatica, type TipoCredencial,
 } from "@/lib/credenciais";
 import { RelatorioModulo } from "@/components/relatorio/RelatorioModulo";
@@ -186,13 +186,14 @@ function PaginaCredenciais() {
     onError: (e) => toast.error(e.message),
   });
 
-  async function emitir(formato: "pdf" | "docx") {
+  async function emitir(formato: "pdf" | "docx" | "imprimir") {
     const erro = validar();
     if (erro) { toast.error(erro); return; }
     if (!completo && !f.permitir_sem_checklist) { toast.error("Checklist incompleto. Marque “Permitir emitir mesmo com checklist incompleto” para emitir."); return; }
     setGerando(formato);
     try {
       const c = { tipo: f.tipo, nome: f.nome, numero_registro: f.numero_registro, data_emissao: f.data_emissao, data_validade: f.data_validade };
+      if (formato === "imprimir") { await imprimirCredencial(c); return; }
       if (formato === "pdf") await gerarCredencialPdf(c); else await gerarCredencialDocx(c);
       toast.success(`Credencial ${formato.toUpperCase()} gerada.`);
     } catch { toast.error("Não foi possível gerar a credencial."); } finally { setGerando(null); }
@@ -242,7 +243,7 @@ function PaginaCredenciais() {
               <div className="space-y-1.5"><Label>Documento de identificação *</Label>
                 <Select value={f.tipo_documento} onValueChange={(v) => alterar({ tipo_documento: v, numero_documento: mascararDocumento(v, f.numero_documento) })}><SelectTrigger aria-label="Documento de identificação"><SelectValue /></SelectTrigger><SelectContent>{["CPF", "RG", "CNH"].map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent></Select></div>
               <div className="space-y-1.5"><Label htmlFor="doc">Número do {f.tipo_documento} *</Label><Input id="doc" maxLength={40} inputMode={f.tipo_documento === "CPF" ? "numeric" : "text"} placeholder={f.tipo_documento === "CPF" ? "000.000.000-00" : ""} value={f.numero_documento} onChange={(e) => alterar({ numero_documento: mascararDocumento(f.tipo_documento, e.target.value) })} /></div>
-              <div className="space-y-1.5"><Label htmlFor="nasc">Data de nascimento</Label><Input id="nasc" type="date" value={f.nascimento} onChange={(e) => alterar({ nascimento: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label htmlFor="nasc">Data de nascimento</Label><Input id="nasc" type="date" value={f.nascimento} onChange={(e) => alterar({ nascimento: e.target.value })} />{(() => { const idade = calcularIdade(f.nascimento, hojeIso()); return idade === null ? null : <p className="text-sm font-medium text-primary" aria-live="polite">Idade: {idade} {idade === 1 ? "ano" : "anos"}</p>; })()}</div>
               <div className="space-y-1.5"><Label htmlFor="tel">Telefone</Label><Input id="tel" inputMode="tel" placeholder="(44) 0000-0000" value={f.telefone} onChange={(e) => alterar({ telefone: mascararTelefone(e.target.value) })} /></div>
               <div className="space-y-1.5"><Label htmlFor="end">Endereço — Rua/Av.</Label><Input id="end" value={f.endereco} onChange={(e) => alterar({ endereco: e.target.value })} /></div>
               <div className="space-y-1.5"><Label htmlFor="num">Nº</Label><Input id="num" value={f.numero} onChange={(e) => alterar({ numero: e.target.value })} /></div>
@@ -319,7 +320,7 @@ function PaginaCredenciais() {
             <CardContent className="space-y-3">
               <p className="text-sm font-semibold text-primary">{TIPOS_CREDENCIAL[f.tipo]}</p>
               <Previa f={f} />
-              <VisualizarCredencial f={f} />
+              <VisualizarCredencial f={f} imprimindo={gerando === "imprimir"} onImprimir={() => emitir("imprimir")} />
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button className="flex-1" disabled={gerando !== null} onClick={() => emitir("pdf")}><FileText className="mr-2 h-4 w-4" />{gerando === "pdf" ? "Gerando…" : "Imprimir PDF"}</Button>
                 <Button className="flex-1" variant="outline" disabled={gerando !== null} onClick={() => emitir("docx")}><FileDown className="mr-2 h-4 w-4" />{gerando === "docx" ? "Gerando…" : "Exportar Word"}</Button>
@@ -373,7 +374,7 @@ function Previa({ f, paginaInteira = false }: { f: Form; paginaInteira?: boolean
   );
 }
 
-function VisualizarCredencial({ f }: { f: Form }) {
+function VisualizarCredencial({ f, imprimindo, onImprimir }: { f: Form; imprimindo: boolean; onImprimir: () => void }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -384,6 +385,7 @@ function VisualizarCredencial({ f }: { f: Form }) {
           <DialogTitle>Visualização em tamanho real</DialogTitle>
           <DialogDescription>{TIPOS_CREDENCIAL[f.tipo]} — folha Carta completa, como sai na impressão.</DialogDescription>
         </DialogHeader>
+        <div className="flex justify-end"><Button type="button" disabled={imprimindo} onClick={onImprimir}><Printer className="mr-2 h-4 w-4" />{imprimindo ? "Preparando…" : "Imprimir"}</Button></div>
         <div className="min-h-0 flex-1 overflow-auto rounded-md bg-muted p-3">
           <Previa f={f} paginaInteira />
         </div>
