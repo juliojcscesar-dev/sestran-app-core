@@ -90,7 +90,7 @@ function PaginaCredenciais() {
   const [f, setF] = useState<Form>(vazio);
   const [busca, setBusca] = useState("");
   const [excluir, setExcluir] = useState<Registro | null>(null);
-  const [gerando, setGerando] = useState<"pdf" | "docx" | null>(null);
+  const [gerando, setGerando] = useState<"pdf" | "docx" | "imprimir" | null>(null);
 
   const lista = useQuery(credenciaisSistemaQuery);
 

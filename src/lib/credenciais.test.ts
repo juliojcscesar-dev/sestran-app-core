@@ -1,6 +1,6 @@
 import { describe, test as it } from "node:test";
 import { strict as assert } from "node:assert";
-import { camposCredencial, proximoNumeroRegistro, TAMANHO_DATA, TAMANHO_ROTULO } from "./credenciais";
+import { calcularIdade, camposCredencial, proximoNumeroRegistro, TAMANHO_DATA, TAMANHO_ROTULO } from "./credenciais";
 
 describe("credenciais", () => {
   it("datas de emissão e validade saem completas em Arial 16 (4 pt acima do texto 12 do modelo)", () => {
@@ -25,5 +25,16 @@ describe("credenciais", () => {
     assert.equal(proximoNumeroRegistro(["667", "668", null]), "669");
     assert.equal(proximoNumeroRegistro(["0099"]), "0100");
     assert.equal(proximoNumeroRegistro([null, ""]), "");
+  });
+});
+
+describe("calcularIdade", () => {
+  it("conta o aniversário só quando a data chega", () => {
+    assert.equal(calcularIdade("1960-10-31", "2026-10-31"), 66);
+    assert.equal(calcularIdade("1960-11-01", "2026-10-31"), 65);
+  });
+  it("ignora data vazia ou futura", () => {
+    assert.equal(calcularIdade("", "2026-10-31"), null);
+    assert.equal(calcularIdade("2030-01-01", "2026-10-31"), null);
   });
 });
