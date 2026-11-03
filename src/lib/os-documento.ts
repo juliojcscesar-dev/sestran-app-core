@@ -1,4 +1,4 @@
-import { lerTextoFormatado, juntarTextosFormatados, salvarTextoFormatado, type TrechoTexto } from "@/lib/texto-formatado";
+import { lerTextoFormatado, juntarTextosFormatados, salvarTextoFormatado, textoSimples, type TrechoTexto } from "@/lib/texto-formatado";
 import { formatarDataBr, formatarDataBrComDia, formatarHora, periodoHorario, STATUS_OS_LABEL, type StatusOS } from "@/lib/os";
 import type { OrdemCompleta } from "@/lib/os-api";
 import { descreverInterdicoes, descreverPercurso, lerPercurso } from "@/lib/mapa";
@@ -52,8 +52,8 @@ export function montarConteudo(dados: OrdemCompleta) {
       valor:
         dados.servicos
           .map((s) => {
-            const nome = (s as { tipos_servico?: { nome?: string } }).tipos_servico?.nome ?? "";
-            return s.detalhe ? `${nome} (${s.detalhe})` : nome;
+            const nome = textoSimples((s as { tipos_servico?: { nome?: string } }).tipos_servico?.nome ?? "");
+            return s.detalhe ? `${nome} (${textoSimples(s.detalhe)})` : nome;
           })
           .filter(Boolean)
           .join(", ") || "—",

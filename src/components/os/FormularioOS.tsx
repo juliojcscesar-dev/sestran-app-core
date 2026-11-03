@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EditorTexto } from "@/components/EditorTexto";
+import { TextoFormatado } from "@/components/TextoFormatado";
+import { textoSimples } from "@/lib/texto-formatado";
 import { Textarea } from "@/components/ui/textarea";
 import { SeletorRegistro } from "@/components/os/SeletorRegistro";
 import { MapaOS } from "@/components/os/MapaOS";
@@ -214,7 +216,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const temInterdicao = useMemo(
     () =>
       (tiposQ.data ?? []).some(
-        (t) => servicos.includes(t.id) && t.nome.toLowerCase().includes("interdi"),
+        (t) => servicos.includes(t.id) && textoSimples(t.nome).toLowerCase().includes("interdi"),
       ),
     [tiposQ.data, servicos],
   );
@@ -595,7 +597,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                 >
                   <div className="flex items-center gap-2">
                   <Checkbox
-                    aria-label={`Selecionar ${tipo.nome}`}
+                    aria-label={`Selecionar ${textoSimples(tipo.nome)}`}
                     checked={servicos.includes(tipo.id)}
                     onCheckedChange={(marcado) =>
                       setServicos((atual) =>
@@ -603,15 +605,15 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                       )
                     }
                   />
-                  <span className="min-w-0 flex-1 break-words">{tipo.nome}</span>
+                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words"><TextoFormatado valor={tipo.nome} /></span>
                   {gestor && <>
-                    <Button type="button" size="icon" variant="ghost" aria-label={`Editar serviço ${tipo.nome}`} title="Editar serviço" onClick={() => { setTipoEditando(tipo.id); setNomeTipoEditando(tipo.nome); }}><Pencil className="h-4 w-4" /></Button>
-                    <Button type="button" size="icon" variant="ghost" aria-label={`Excluir serviço ${tipo.nome}`} title="Excluir do catálogo" onClick={() => setTipoExcluindo(tipo)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button type="button" size="icon" variant="ghost" aria-label={`Editar serviço ${textoSimples(tipo.nome)}`} title="Editar serviço" onClick={() => { setTipoEditando(tipo.id); setNomeTipoEditando(tipo.nome); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button type="button" size="icon" variant="ghost" aria-label={`Excluir serviço ${textoSimples(tipo.nome)}`} title="Excluir do catálogo" onClick={() => setTipoExcluindo(tipo)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </>}
                   </div>
-                  {tipoEditando === tipo.id && <div className="flex items-center gap-1">
-                    <Input aria-label="Nome do serviço" value={nomeTipoEditando} onChange={(e) => setNomeTipoEditando(e.target.value)} />
-                    <Button type="button" size="icon" variant="outline" aria-label="Salvar nome do serviço" disabled={!nomeTipoEditando.trim() || gerenciarTipo.isPending} onClick={() => gerenciarTipo.mutate({ id: tipo.id, nome: nomeTipoEditando.trim() })}><Check className="h-4 w-4" /></Button>
+                  {tipoEditando === tipo.id && <div className="flex items-start gap-1">
+                    <div className="min-w-0 flex-1"><EditorTexto rotulo="Nome do serviço" compacto value={nomeTipoEditando} onChange={setNomeTipoEditando} /></div>
+                    <Button type="button" size="icon" variant="outline" aria-label="Salvar nome do serviço" disabled={!textoSimples(nomeTipoEditando).trim() || gerenciarTipo.isPending} onClick={() => gerenciarTipo.mutate({ id: tipo.id, nome: nomeTipoEditando.trim() })}><Check className="h-4 w-4" /></Button>
                     <Button type="button" size="icon" variant="ghost" aria-label="Cancelar edição do serviço" onClick={() => setTipoEditando(null)}><X className="h-4 w-4" /></Button>
                   </div>}
                 </div>
@@ -619,10 +621,10 @@ export function FormularioOS({ modo, inicial, id }: Props) {
             </div>
             {erroTexto("servicos")}
             {servicos.map((id) => <div key={id} className="mt-3 flex items-start gap-2">
-              <div className="flex-1"><Label htmlFor={`detalhe-${id}`}>{tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"}</Label>
+              <div className="flex-1"><Label htmlFor={`detalhe-${id}`}><TextoFormatado valor={tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"} /></Label>
                 <EditorTexto id={`detalhe-${id}`} rotulo="Detalhamento do serviço" value={detalhesServicos[id] ?? ""} onChange={(valor) => setDetalhesServicos((atuais) => ({ ...atuais, [id]: valor }))} />
               </div>
-              <Button type="button" size="icon" variant="ghost" title="Remover desta O.S." aria-label={`Remover serviço da O.S. ${tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"}`} onClick={() => setServicos((atuais) => atuais.filter((s) => s !== id))}><Trash2 className="h-4 w-4" /></Button>
+              <Button type="button" size="icon" variant="ghost" title="Remover desta O.S." aria-label={`Remover serviço da O.S. ${textoSimples(tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço")}`} onClick={() => setServicos((atuais) => atuais.filter((s) => s !== id))}><Trash2 className="h-4 w-4" /></Button>
             </div>)}
             {gestor && <div className="mt-3 flex gap-2">
               <Input
@@ -934,7 +936,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
       )}
       <AlertDialog open={Boolean(tipoExcluindo)} onOpenChange={(aberto) => { if (!aberto && !gerenciarTipo.isPending) setTipoExcluindo(null); }}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir serviço</AlertDialogTitle>
-          <AlertDialogDescription>Retirar “{tipoExcluindo?.nome}” dos serviços disponíveis? As ordens já emitidas manterão esse serviço.</AlertDialogDescription>
+          <AlertDialogDescription>Retirar “{textoSimples(tipoExcluindo?.nome ?? "")}” dos serviços disponíveis? As ordens já emitidas manterão esse serviço.</AlertDialogDescription>
         </AlertDialogHeader><AlertDialogFooter>
           <AlertDialogCancel disabled={gerenciarTipo.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={gerenciarTipo.isPending} onClick={(e) => { e.preventDefault(); if (tipoExcluindo) gerenciarTipo.mutate({ id: tipoExcluindo.id }); }}>Confirmar exclusão</AlertDialogAction>
