@@ -405,7 +405,7 @@ export async function listarTiposServico() {
       .order("nome"),
   );
   // Nomes com negrito/itálico/sublinhado ficam guardados com prefixo; ordena pelo texto visível.
-  return [...tipos]
+  return [...(tipos ?? [])]
     .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0) || textoSimples(a.nome).localeCompare(textoSimples(b.nome), "pt-BR"))
     .map(({ id, nome }) => ({ id, nome }));
 }
