@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { LogosInstitucionais } from "@/components/layout/LogosInstitucionais";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -263,10 +263,31 @@ function Campo({
   tipo: string;
   erro?: string | undefined;
 }) {
+  const [visivel, setVisivel] = useState(false);
+  const senha = tipo === "password";
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{rotulo}</Label>
-      <Input id={id} name={id} type={tipo} aria-invalid={Boolean(erro)} />
+      <div className="relative">
+        <Input
+          id={id}
+          name={id}
+          type={senha && visivel ? "text" : tipo}
+          aria-invalid={Boolean(erro)}
+          className={senha ? "pr-10" : undefined}
+        />
+        {senha && (
+          <button
+            type="button"
+            onClick={() => setVisivel((v) => !v)}
+            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground hover:text-foreground"
+            aria-label={visivel ? "Ocultar senha" : "Mostrar senha"}
+            title={visivel ? "Ocultar senha" : "Mostrar senha"}
+          >
+            {visivel ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
       {erro && <p className="text-xs text-destructive">{erro}</p>}
     </div>
   );
