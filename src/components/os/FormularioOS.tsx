@@ -216,7 +216,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
   const temInterdicao = useMemo(
     () =>
       (tiposQ.data ?? []).some(
-        (t) => servicos.includes(t.id) && t.nome.toLowerCase().includes("interdi"),
+        (t) => servicos.includes(t.id) && textoSimples(t.nome).toLowerCase().includes("interdi"),
       ),
     [tiposQ.data, servicos],
   );
@@ -621,10 +621,10 @@ export function FormularioOS({ modo, inicial, id }: Props) {
             </div>
             {erroTexto("servicos")}
             {servicos.map((id) => <div key={id} className="mt-3 flex items-start gap-2">
-              <div className="flex-1"><Label htmlFor={`detalhe-${id}`}>{tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"}</Label>
+              <div className="flex-1"><Label htmlFor={`detalhe-${id}`}><TextoFormatado valor={tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"} /></Label>
                 <EditorTexto id={`detalhe-${id}`} rotulo="Detalhamento do serviço" value={detalhesServicos[id] ?? ""} onChange={(valor) => setDetalhesServicos((atuais) => ({ ...atuais, [id]: valor }))} />
               </div>
-              <Button type="button" size="icon" variant="ghost" title="Remover desta O.S." aria-label={`Remover serviço da O.S. ${tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço"}`} onClick={() => setServicos((atuais) => atuais.filter((s) => s !== id))}><Trash2 className="h-4 w-4" /></Button>
+              <Button type="button" size="icon" variant="ghost" title="Remover desta O.S." aria-label={`Remover serviço da O.S. ${textoSimples(tiposDisponiveis.find((t) => t.id === id)?.nome ?? "Serviço")}`} onClick={() => setServicos((atuais) => atuais.filter((s) => s !== id))}><Trash2 className="h-4 w-4" /></Button>
             </div>)}
             {gestor && <div className="mt-3 flex gap-2">
               <Input
@@ -936,7 +936,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
       )}
       <AlertDialog open={Boolean(tipoExcluindo)} onOpenChange={(aberto) => { if (!aberto && !gerenciarTipo.isPending) setTipoExcluindo(null); }}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir serviço</AlertDialogTitle>
-          <AlertDialogDescription>Retirar “{tipoExcluindo?.nome}” dos serviços disponíveis? As ordens já emitidas manterão esse serviço.</AlertDialogDescription>
+          <AlertDialogDescription>Retirar “{textoSimples(tipoExcluindo?.nome ?? "")}” dos serviços disponíveis? As ordens já emitidas manterão esse serviço.</AlertDialogDescription>
         </AlertDialogHeader><AlertDialogFooter>
           <AlertDialogCancel disabled={gerenciarTipo.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={gerenciarTipo.isPending} onClick={(e) => { e.preventDefault(); if (tipoExcluindo) gerenciarTipo.mutate({ id: tipoExcluindo.id }); }}>Confirmar exclusão</AlertDialogAction>
