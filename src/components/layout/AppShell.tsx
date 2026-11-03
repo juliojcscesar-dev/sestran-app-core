@@ -142,6 +142,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {PAPEL_LABEL[papel]}
               </Badge>
             ))}
+            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+              <Link to="/definir-senha">
+                <Icons.KeyRound className="mr-2 h-4 w-4" aria-hidden="true" />
+                Senha
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" onClick={sair}>
               <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
               Sair
