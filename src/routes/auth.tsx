@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -47,6 +47,33 @@ function PaginaAcesso() {
   const navigate = useNavigate();
   const [carregando, setCarregando] = useState(false);
   const [erros, setErros] = useState<Record<string, string>>({});
+  const formEntrar = useRef<HTMLFormElement>(null);
+
+  async function esqueciSenha() {
+    const email = String(
+      formEntrar.current ? new FormData(formEntrar.current).get("email") ?? "" : "",
+    ).trim();
+    const valido = z.string().email().safeParse(email);
+    if (!valido.success) {
+      setErros({ email: "Digite seu e-mail acima para receber o link." });
+      return;
+    }
+    setErros({});
+    setCarregando(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/definir-senha`,
+    });
+    setCarregando(false);
+    if (error) {
+      toast.error("Não foi possível enviar o link", {
+        description: "Aguarde alguns minutos e tente novamente.",
+      });
+      return;
+    }
+    toast.success("Link enviado", {
+      description: "Abra o e-mail recebido e clique no link para criar uma nova senha.",
+    });
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -168,13 +195,21 @@ function PaginaAcesso() {
               </TabsList>
 
               <TabsContent value="entrar">
-                <form onSubmit={entrar} className="space-y-4" noValidate>
+                <form ref={formEntrar} onSubmit={entrar} className="space-y-4" noValidate>
                   <Campo id="email" rotulo="E-mail" tipo="email" erro={erros["email"]} />
                   <Campo id="senha" rotulo="Senha" tipo="password" erro={erros["senha"]} />
                   <Button type="submit" className="w-full" disabled={carregando}>
                     {carregando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
                   </Button>
+                  <button
+                    type="button"
+                    onClick={esqueciSenha}
+                    disabled={carregando}
+                    className="w-full text-center text-sm text-primary underline-offset-4 hover:underline"
+                  >
+                    Esqueci minha senha / criar senha
+                  </button>
                 </form>
               </TabsContent>
 
