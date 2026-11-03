@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { StatusOS } from "@/lib/os";
 import type { InterdicaoMapa, PercursoMapa } from "@/lib/mapa";
 import type { ImagemRelatorio } from "@/lib/relatorio-imagens";
+import { textoSimples } from "@/lib/texto-formatado";
 
 export type AgenteOS = {
   agente_id: string;
