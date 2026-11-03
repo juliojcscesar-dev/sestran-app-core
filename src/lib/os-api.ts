@@ -395,14 +395,18 @@ export async function listarLocais() {
 }
 
 export async function listarTiposServico() {
-  return checar(
+  const tipos = checar(
     await supabase
       .from("tipos_servico")
-      .select("id, nome")
+      .select("id, nome, ordem")
       .eq("ativo", true)
       .order("ordem")
       .order("nome"),
   );
+  // Nomes com negrito/itálico/sublinhado ficam guardados com prefixo; ordena pelo texto visível.
+  return [...tipos]
+    .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0) || textoSimples(a.nome).localeCompare(textoSimples(b.nome), "pt-BR"))
+    .map(({ id, nome }) => ({ id, nome }));
 }
 
 export async function criarSolicitante(nome: string) {
