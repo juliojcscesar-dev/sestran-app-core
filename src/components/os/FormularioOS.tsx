@@ -642,7 +642,7 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                     const criado = await criarTipoServico(novoTipo.trim());
                     setNovoTipo("");
                     await queryClient.invalidateQueries({ queryKey: ["tipos-servico"] });
-                    setServicos((a) => [...a, criado.id]);
+                    setServicos((a) => (a.includes(criado.id) ? a : [...a, criado.id]));
                     toast.success("Tipo de serviço cadastrado.");
                   } catch (e) {
                     const msg = e instanceof Error ? e.message : "";
