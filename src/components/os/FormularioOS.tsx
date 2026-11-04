@@ -642,10 +642,15 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                     const criado = await criarTipoServico(novoTipo.trim());
                     setNovoTipo("");
                     await queryClient.invalidateQueries({ queryKey: ["tipos-servico"] });
-                    setServicos((a) => [...a, criado.id]);
+                    setServicos((a) => (a.includes(criado.id) ? a : [...a, criado.id]));
                     toast.success("Tipo de serviço cadastrado.");
-                  } catch {
-                    toast.error("Solicite ao administrador a liberação para cadastrar serviços neste módulo.");
+                  } catch (e) {
+                    const msg = String((e as { message?: string } | null)?.message ?? "");
+                    toast.error(/row-level security|permission denied|42501/i.test(msg)
+                      ? "Solicite ao administrador a liberação para cadastrar serviços neste módulo."
+                      : /duplicate key|23505/i.test(msg)
+                        ? "Este tipo de serviço já está cadastrado."
+                        : "Não foi possível cadastrar o tipo de serviço. Tente novamente.");
                   }
                 }}
               >
