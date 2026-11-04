@@ -435,6 +435,16 @@ export async function criarLocal(nome: string) {
 }
 
 export async function criarTipoServico(nome: string) {
+  // O nome é único também entre tipos já excluídos (inativos): reaproveita o
+  // cadastro existente em vez de falhar com duplicidade.
+  const { data: existente, error: erroBusca } = await supabase
+    .from("tipos_servico").select("id, nome, ativo").eq("nome", nome).maybeSingle();
+  if (erroBusca) throw new Error(erroBusca.message);
+  if (existente) {
+    if (existente.ativo) return { id: existente.id, nome: existente.nome };
+    return checarUnico(await supabase.from("tipos_servico").update({ ativo: true })
+      .eq("id", existente.id).select("id, nome").single());
+  }
   return checarUnico(await supabase.from("tipos_servico").insert({ nome }).select("id, nome").single());
 }
 

@@ -644,8 +644,11 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                     await queryClient.invalidateQueries({ queryKey: ["tipos-servico"] });
                     setServicos((a) => [...a, criado.id]);
                     toast.success("Tipo de serviço cadastrado.");
-                  } catch {
-                    toast.error("Solicite ao administrador a liberação para cadastrar serviços neste módulo.");
+                  } catch (e) {
+                    const msg = e instanceof Error ? e.message : "";
+                    toast.error(/row-level security|permission denied|42501/i.test(msg)
+                      ? "Solicite ao administrador a liberação para cadastrar serviços neste módulo."
+                      : msg || "Não foi possível cadastrar o tipo de serviço.");
                   }
                 }}
               >
