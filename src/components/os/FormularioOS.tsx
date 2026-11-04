@@ -645,10 +645,12 @@ export function FormularioOS({ modo, inicial, id }: Props) {
                     setServicos((a) => (a.includes(criado.id) ? a : [...a, criado.id]));
                     toast.success("Tipo de serviço cadastrado.");
                   } catch (e) {
-                    const msg = e instanceof Error ? e.message : "";
+                    const msg = String((e as { message?: string } | null)?.message ?? "");
                     toast.error(/row-level security|permission denied|42501/i.test(msg)
                       ? "Solicite ao administrador a liberação para cadastrar serviços neste módulo."
-                      : msg || "Não foi possível cadastrar o tipo de serviço.");
+                      : /duplicate key|23505/i.test(msg)
+                        ? "Este tipo de serviço já está cadastrado."
+                        : "Não foi possível cadastrar o tipo de serviço. Tente novamente.");
                   }
                 }}
               >
