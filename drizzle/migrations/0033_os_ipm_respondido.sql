@@ -1,0 +1,1 @@
+ALTER TABLE public.ordens_servico ADD COLUMN IF NOT EXISTS ipm_respondido boolean NOT NULL DEFAULT false;

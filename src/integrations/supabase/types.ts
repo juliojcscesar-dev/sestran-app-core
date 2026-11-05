@@ -791,6 +791,7 @@ export type Database = {
           hora_inicio: string | null
           id: string
           ipm: string | null
+          ipm_respondido: boolean
           local: string | null
           mapa_imagem: string | null
           natureza: string | null
@@ -829,6 +830,7 @@ export type Database = {
           hora_inicio?: string | null
           id?: string
           ipm?: string | null
+          ipm_respondido?: boolean
           local?: string | null
           mapa_imagem?: string | null
           natureza?: string | null
@@ -867,6 +869,7 @@ export type Database = {
           hora_inicio?: string | null
           id?: string
           ipm?: string | null
+          ipm_respondido?: boolean
           local?: string | null
           mapa_imagem?: string | null
           natureza?: string | null
