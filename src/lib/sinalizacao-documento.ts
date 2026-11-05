@@ -33,7 +33,7 @@ export function htmlSinalizacao(o: DadosSinalizacao) {
     `<div class="box" style="${estilo}"><div class="l">${esc(rotulo)}</div><div class="v${centro ? " c" : ""}">${esc(valor)}</div></div>`;
   const fotos = o.imagens.map((s) => `<img src="${s}" alt="">`).join("");
   const obs = temObservacoes(o)
-    ? `<div class="box obs"><div class="l" style="margin-left:24pt">OBSERVAÇÕES / IMAGENS</div>${o.observacao?.trim() ? `<div class="v">${esc(o.observacao)}</div>` : ""}${fotos ? `<div class="fotos n${o.imagens.length}">${fotos}</div>` : ""}</div>`
+    ? `<div class="box obs"><div class="l" style="text-align:center;margin:0">OBSERVAÇÕES / IMAGENS</div>${o.observacao?.trim() ? `<div class="v c" style="margin-top:20pt">${esc(o.observacao)}</div>` : ""}${fotos ? `<div class="fotos n${o.imagens.length}">${fotos}</div>` : ""}</div>`
     : "";
   const assinatura = o.chefe_imediato || o.cargo
     ? `<div class="ass"><div class="linha"></div>${o.chefe_imediato ? `<div>${esc(o.chefe_imediato)}</div>` : ""}${o.cargo ? `<div><b>${esc(o.cargo)}</b></div>` : ""}</div>` : "";
@@ -44,11 +44,12 @@ body{font-family:"Open Sans",Arial,Helvetica,sans-serif;color:${TEXTO}}
 .moldura{border:1.5pt solid ${AZUL_BORDA};border-radius:12pt;min-height:284mm;padding:14pt 14pt 10pt;display:flex;flex-direction:column}
 .topo{text-align:center}.topo img{width:420pt;max-width:100%}
 .d1{font:bold 8.5pt Arial,sans-serif;margin-top:6pt}.d2{font:8.5pt Arial,sans-serif}
-h1{font:bold 12.5pt Arial,sans-serif;color:${AZUL_TITULO};margin:18pt 0 30pt}
-.row{display:flex;justify-content:space-between;align-items:stretch;margin-bottom:22pt;gap:16pt}
+.sep{border-top:1.5pt solid ${AZUL_BORDA};margin:8pt -14pt}
+h1{font:bold 13pt Arial,sans-serif;color:${AZUL_TITULO};margin:6pt 0 4pt;text-align:center}
+.row{display:flex;justify-content:space-between;align-items:stretch;margin-bottom:10pt;gap:14pt}
 .box{border:1.5pt solid ${AZUL_BORDA};border-radius:7pt;padding:4pt 8pt 5pt;min-height:41pt}
 .l{font:bold 7pt Arial,sans-serif;margin-left:4pt}.v{font-size:11pt;margin-top:2pt;white-space:pre-wrap;word-break:break-word}.c{text-align:center}
-.full{width:100%}.obs{width:100%;min-height:190pt;margin-bottom:18pt}
+.full{width:100%}.obs{width:100%;min-height:250pt;margin-bottom:18pt}
 .fotos{display:flex;flex-wrap:wrap;gap:8pt;justify-content:center;margin-top:8pt}.fotos img{object-fit:contain;max-height:180pt;max-width:48%}.fotos.n3 img,.fotos.n4 img{max-width:23%;max-height:140pt}.fotos.n1 img{max-width:80%;max-height:230pt}
 .espaco{flex:1}.ass{text-align:center;font:8.5pt Arial,sans-serif;margin-top:30pt}.linha{border-top:1pt solid #333;width:228pt;margin:0 auto 4pt}
 .pre{font:7.5pt Arial,sans-serif;margin:14pt 0 0 6pt}
@@ -57,13 +58,12 @@ h1{font:bold 12.5pt Arial,sans-serif;color:${AZUL_TITULO};margin:18pt 0 30pt}
 </style></head><body>
 <div class="acoes"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
 <div class="folha"><div class="moldura">
-<div class="topo"><img src="${LOGO}" alt="Prefeitura de Paranavaí — Secretaria Municipal de Segurança e Trânsito"><div class="d1">DITRAN - DIRETORIA DE TRÂNSITO</div><div class="d2">DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA</div><h1>ORDEM DE SERVIÇO — ${esc(o.numero)}</h1></div>
-<div class="row">${caixa("PEDIDO:", o.pedido, "width:31%")}${caixa("Nº DA O. S.", o.numero, "width:29%", true)}${caixa("DATA:", dataModelo(o.data), "width:30%", true)}</div>
-<div class="row">${caixa("FUNCINÁRIO(S):", o.funcionario || "", "width:30%", true)}${caixa("SITUAÇÃO:", o.status, "width:30%", true)}</div>
-<div class="row" style="margin-bottom:12pt">${caixa("NATUREZA:", o.natureza, "min-width:30%;max-width:100%")}</div>
-<div class="row" style="margin-bottom:16pt">${caixa("ENDEREÇO:", o.endereco, "", false).replace('class="box"', 'class="box full"')}</div>
-<div class="row" style="margin-bottom:18pt">${caixa("SERVIÇO:", o.servico, "", false).replace('class="box"', 'class="box full"')}</div>
-${obs}<div class="espaco"></div>${assinatura}
+<div class="topo"><img src="${LOGO}" alt="Prefeitura de Paranavaí — Secretaria Municipal de Segurança e Trânsito"><div class="d1">DITRAN - DIRETORIA DE TRÂNSITO</div><div class="d2">DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA</div></div><div class="sep"></div><h1>ORDEM DE SERVIÇO - ${esc(o.numero)}</h1><div class="sep" style="margin-bottom:12pt"></div>
+<div class="row">${caixa("PEDIDO:", o.pedido, "width:33%", true)}${caixa("Nº DA O. S.", o.numero, "width:30%", true)}${caixa("DATA:", dataModelo(o.data), "width:30%", true)}</div>
+<div class="row">${caixa("FUNCINÁRIO(S):", o.funcionario || "", "width:29%", true)}${caixa("NATUREZA:", o.natureza, "width:38%", true)}${caixa("SITUAÇÃO:", o.status, "width:26%", true)}</div>
+<div class="row">${caixa("ENDEREÇO:", o.endereco, "", true).replace('class="box"', 'class="box full"')}</div>
+<div class="row"><div class="box full"><span class="l">SERVIÇO:</span> <span class="v">${esc(o.servico)}</span></div></div>
+${obs ? `<div class="sep" style="margin:6pt -14pt 12pt"></div>${obs}` : ""}<div class="espaco"></div>${assinatura}
 <div class="pre">Preenchimento: <b>${esc(o.preenchido || "")}</b></div>
 </div></div></body></html>`;
 }
@@ -84,8 +84,11 @@ export async function gerarPdfSinalizacao(o: DadosSinalizacao) {
   doc.setTextColor(TEXTO);
   doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); doc.text("DITRAN - DIRETORIA DE TRÂNSITO", W / 2, 117, { align: "center" });
   doc.setFont("helvetica", "normal"); doc.text("DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA", W / 2, 128, { align: "center" });
-  doc.setFont("helvetica", "bold"); doc.setFontSize(12.5); doc.setTextColor(AZUL_TITULO);
-  doc.text(`ORDEM DE SERVIÇO — ${o.numero}`, W / 2, 159, { align: "center" });
+  const sep = (yy: number) => { borda(); doc.line(19, yy, W - 19, yy); };
+  sep(138);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(AZUL_TITULO);
+  doc.text(`ORDEM DE SERVIÇO - ${o.numero}`, W / 2, 157, { align: "center" });
+  sep(168);
 
   const caixa = (rotulo: string, valor: string, x: number, y: number, w: number, centro = false, hMin = 41) => {
     doc.setFont("helvetica", "normal"); doc.setFontSize(11);
@@ -97,16 +100,18 @@ export async function gerarPdfSinalizacao(o: DadosSinalizacao) {
     linhas.forEach((l, i) => doc.text(l, centro ? x + w / 2 : x + 10, y + 26 + i * 13, { align: centro ? "center" : "left" }));
     return y + h;
   };
-  caixa("PEDIDO:", o.pedido, X, 202, 171);
-  caixa("Nº DA O. S.", o.numero, 221, 202, 160, true);
-  caixa("DATA:", dataModelo(o.data), 399, 200, 164, true);
-  caixa("FUNCINÁRIO(S):", o.funcionario || "", X, 268, 163, true);
-  caixa("SITUAÇÃO:", o.status, 399, 268, 164, true);
-  doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-  const wNat = Math.min(LARG, Math.max(165, doc.getTextWidth(o.natureza || "") + 22));
-  let y = caixa("NATUREZA:", o.natureza, X, 330, wNat) + 13;
-  y = caixa("ENDEREÇO:", o.endereco, X, Math.max(y, 385), LARG) + 17;
-  y = caixa("SERVIÇO:", o.servico, X, Math.max(y, 443), LARG, false, 48) + 18;
+  let y = Math.max(caixa("PEDIDO:", o.pedido, X, 182, 175, true), caixa("Nº DA O. S.", o.numero, 222, 182, 160, true), caixa("DATA:", dataModelo(o.data), 398, 182, 168, true)) + 10;
+  y = Math.max(caixa("FUNCINÁRIO(S):", o.funcionario || "", X, y, 155, true), caixa("NATUREZA:", o.natureza, 200, y, 205, true), caixa("SITUAÇÃO:", o.status, 421, y, 145, true)) + 10;
+  y = caixa("ENDEREÇO:", o.endereco, X, y, LARG, true) + 10;
+  { doc.setFont("helvetica", "bold"); doc.setFontSize(7); const wl = doc.getTextWidth("SERVIÇO: ");
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+    const ls = doc.splitTextToSize(o.servico || "", LARG - 24 - wl) as string[];
+    const h = Math.max(48, 18 + ls.length * 14);
+    borda(); doc.roundedRect(X, y, LARG, h, 7, 7, "S"); doc.setTextColor(TEXTO);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.text("SERVIÇO:", X + 8, y + 15);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+    ls.forEach((l, i) => doc.text(l, X + 10 + wl, y + 16 + i * 14));
+    y += h + 10; }
 
   if (temObservacoes(o)) {
     doc.setFont("helvetica", "normal"); doc.setFontSize(11);
@@ -119,12 +124,13 @@ export async function gerarPdfSinalizacao(o: DadosSinalizacao) {
       catch { return { w: 0, h: 0 }; }
     });
     const altImgs = n ? Math.max(...dims.map((d) => d.h)) + 10 : 0;
-    const h = Math.max(190, 24 + linhas.length * 13 + altImgs + 8);
+    sep(y); y += 12;
+    const h = Math.max(250, 44 + linhas.length * 13 + altImgs + 8);
     borda(); doc.roundedRect(X, y, LARG, h, 7, 7, "S");
-    doc.setTextColor(TEXTO); doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.text("OBSERVAÇÕES / IMAGENS", X + 36, y + 11);
+    doc.setTextColor(TEXTO); doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.text("OBSERVAÇÕES / IMAGENS", X + LARG / 2, y + 13, { align: "center" });
     doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-    linhas.forEach((l, i) => doc.text(l, X + 12, y + 28 + i * 13));
-    const yImg = y + 24 + linhas.length * 13 + 6;
+    linhas.forEach((l, i) => doc.text(l, X + LARG / 2, y + 44 + i * 13, { align: "center" }));
+    const yImg = y + 40 + linhas.length * 13 + 6;
     const total = dims.reduce((s, d) => s + d.w, 0) + (n - 1) * 8;
     let xi = X + (LARG - total) / 2;
     o.imagens.forEach((s, i) => {
@@ -186,13 +192,16 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
     filhos.push(p([new d.ImageRun({ type: "png", data: logo, transformation: { width: 560, height: Math.round(560 * 152 / 1001) } })], d.AlignmentType.CENTER, 80));
   } catch { /* sem logo */ }
   filhos.push(p([t("DITRAN - DIRETORIA DE TRÂNSITO", { bold: true, size: 8.5 })], d.AlignmentType.CENTER));
-  filhos.push(p([t("DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA", { size: 8.5 })], d.AlignmentType.CENTER, 300));
-  filhos.push(p([t(`ORDEM DE SERVIÇO — ${o.numero}`, { bold: true, size: 12.5, color: AZUL_TITULO.slice(1) })], d.AlignmentType.CENTER, 500));
-  filhos.push(tabela([celula("PEDIDO:", o.pedido, 3400), vazio(300), celula("Nº DA O. S.", o.numero, 3200, true), vazio(300), celula("DATA:", dataModelo(o.data), 3400, true)]), espaco(20));
-  filhos.push(tabela([celula("FUNCINÁRIO(S):", o.funcionario || "", 3300, true), vazio(3900), celula("SITUAÇÃO:", o.status, 3400, true)]), espaco(14));
-  filhos.push(tabela([celula("NATUREZA:", o.natureza, 3300), vazio(7300)]), espaco(12));
-  filhos.push(tabela([celula("ENDEREÇO:", o.endereco, 10600)]), espaco(12));
-  filhos.push(tabela([celula("SERVIÇO:", o.servico, 10600)]), espaco(14));
+  const linhaSep = (antes: number, depois: number) => new d.Paragraph({ spacing: { before: antes, after: depois }, border: { bottom: { style: d.BorderStyle.SINGLE, size: 12, color: cor, space: 1 } }, children: [] });
+  filhos.push(p([t("DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA", { size: 8.5 })], d.AlignmentType.CENTER));
+  filhos.push(linhaSep(60, 120));
+  filhos.push(p([t(`ORDEM DE SERVIÇO - ${o.numero}`, { bold: true, size: 13, color: AZUL_TITULO.slice(1) })], d.AlignmentType.CENTER));
+  filhos.push(linhaSep(0, 240));
+  filhos.push(tabela([celula("PEDIDO:", o.pedido, 3500, true), vazio(250), celula("Nº DA O. S.", o.numero, 3250, true), vazio(250), celula("DATA:", dataModelo(o.data), 3350, true)]), espaco(10));
+  filhos.push(tabela([celula("FUNCINÁRIO(S):", o.funcionario || "", 3000, true), vazio(250), celula("NATUREZA:", o.natureza, 4300, true), vazio(250), celula("SITUAÇÃO:", o.status, 2800, true)]), espaco(10));
+  filhos.push(tabela([celula("ENDEREÇO:", o.endereco, 10600, true)]), espaco(10));
+  filhos.push(tabela([new d.TableCell({ width: { size: 10600, type: d.WidthType.DXA }, borders: comBorda, margins: { top: 80, bottom: 160, left: 140, right: 140 },
+    children: (o.servico || " ").split("\n").map((l, i) => p(i ? [t(l || " ")] : [t("SERVIÇO:  ", { bold: true, size: 7 }), t(l || " ")])) })]), espaco(10));
 
   if (temObservacoes(o)) {
     const extras: InstanceType<typeof d.Paragraph>[] = [];
@@ -207,9 +216,10 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
       }
       extras.push(new d.Paragraph({ alignment: d.AlignmentType.CENTER, spacing: { before: 120 }, children: runs.flatMap((r, i) => (i ? [new d.TextRun("   "), r] : [r])) }));
     }
+    filhos.push(linhaSep(0, 200));
     const cel = new d.TableCell({ width: { size: 10600, type: d.WidthType.DXA }, borders: comBorda, margins: { top: 60, bottom: 160, left: 140, right: 140 },
-      children: [p([t("      OBSERVAÇÕES / IMAGENS", { bold: true, size: 7 })]), ...(o.observacao?.trim() ? multilinha(o.observacao.trim()) : []), ...extras] });
-    filhos.push(new d.Table({ width: { size: 10600, type: d.WidthType.DXA }, layout: d.TableLayoutType.FIXED, rows: [new d.TableRow({ height: { value: 3800, rule: d.HeightRule.ATLEAST }, children: [cel] })] }));
+      children: [p([t("OBSERVAÇÕES / IMAGENS", { bold: true, size: 7 })], d.AlignmentType.CENTER, 300), ...(o.observacao?.trim() ? multilinha(o.observacao.trim(), true) : []), ...extras] });
+    filhos.push(new d.Table({ width: { size: 10600, type: d.WidthType.DXA }, layout: d.TableLayoutType.FIXED, rows: [new d.TableRow({ height: { value: 5000, rule: d.HeightRule.ATLEAST }, children: [cel] })] }));
   }
   if (o.chefe_imediato || o.cargo) {
     filhos.push(new d.Paragraph({ alignment: d.AlignmentType.CENTER, spacing: { before: 900, after: 0 }, children: [t("_______________________________________________", { size: 8.5 })] }));
