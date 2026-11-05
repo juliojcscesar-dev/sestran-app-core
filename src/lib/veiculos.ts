@@ -46,8 +46,15 @@ export function ehNomeRetorno(nome: string) {
   return /^r[eo]torno$/.test(nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase());
 }
 
+/** Situações cadastradas cujo nome é "Denúncia a verificar" (somadas ao quadro Denúncia a Verificar). */
+export const SITUACOES_DENUNCIA = new Set<string>(["DENUNCIADO"]);
+export function ehNomeDenuncia(nome: string) {
+  return /^denuncias? a verificar$/.test(nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase());
+}
+
 export function registrarSituacoes(opcoes: OpcaoSituacao[]) {
   for (const o of opcoes) {
+    if (ehNomeDenuncia(o.nome)) SITUACOES_DENUNCIA.add(o.id);
     STATUS_VEICULO_LABEL[o.id] = o.nome;
     if (ehNomeRetorno(o.nome)) { SITUACOES_RETORNO.add(o.id); STATUS_VEICULO_CLASSE[o.id] = CLASSE_RETORNO; }
     if (!STATUS_VEICULO_CLASSE[o.id]) STATUS_VEICULO_CLASSE[o.id] = "bg-muted text-muted-foreground border-border";
