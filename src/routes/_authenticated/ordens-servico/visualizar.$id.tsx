@@ -104,6 +104,19 @@ function VisualizarOS() {
     onError: () => toast.error("Você não tem permissão para alterar a situação desta ordem."),
   });
 
+  const marcarIpm = useMutation({
+    mutationFn: async (respondido: boolean) => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase.from("ordens_servico").update({ ipm_respondido: respondido }).eq("id", id).select("id");
+      if (error || !data?.length) throw error ?? new Error("sem permissão");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ordem-servico", id] });
+      toast.success("Situação do IPM atualizada.");
+    },
+    onError: () => toast.error("Não foi possível atualizar a situação do IPM."),
+  });
+
   async function gerar(formato: "pdf" | "docx") {
     setGerando(formato);
     try {
@@ -221,6 +234,24 @@ function VisualizarOS() {
               </SelectContent>
             </Select>
             {mudarStatus.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+          </CardContent>
+        </Card>
+      )}
+
+      {String(o["ipm"] ?? "").trim() && (
+        <Card className="print:hidden">
+          <CardContent className="flex flex-wrap items-center gap-4 pt-6">
+            <span className="text-base font-bold">IPM: {String(o["ipm"])}</span>
+            <button
+              type="button"
+              disabled={!podeOperar || marcarIpm.isPending}
+              onClick={() => marcarIpm.mutate(!o["ipm_respondido"])}
+              title={podeOperar ? "Clique para alternar entre Verificar e Respondido" : undefined}
+              aria-label={o["ipm_respondido"] ? "IPM respondido — clique para marcar como verificar" : "IPM a verificar — clique para marcar como respondido"}
+              className={`h-8 w-10 rounded border-2 border-foreground/70 ${o["ipm_respondido"] ? "bg-[hsl(142_70%_40%)]" : "bg-destructive"} disabled:cursor-default`}
+            />
+            <span className="text-sm font-semibold">{o["ipm_respondido"] ? "IPM - Respondido" : "IPM - Verificar"}</span>
+            {marcarIpm.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           </CardContent>
         </Card>
       )}
