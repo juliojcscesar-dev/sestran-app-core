@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Eye, Lock, Pencil, RefreshCw, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/useSessao";
-import { temAcesso } from "@/lib/permissoes";
+import { administrador, temAcesso } from "@/lib/permissoes";
+import { PainelUsuario } from "@/components/painel/PainelUsuario";
 import { dataLocalIso, STATUS_ACAO_LABEL } from "@/lib/educacao";
 import { STATUS_OS_LABEL, periodoHorario } from "@/lib/os";
 import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase } from "@/lib/veiculos";
@@ -96,10 +97,11 @@ function Painel() {
   const sinalizacaoLiberada = temAcesso(sessao, "SINALIZACAO"), credenciaisLiberadas = temAcesso(sessao, "CREDENCIAIS");
   const periodoOS = periodoCalendario(mesOS), periodoEducacao = periodoCalendario(mesEducacao);
   const hoje = dataLocalIso(new Date());
+  const admin = administrador(sessao);
   const nenhum = !osLiberada && !educacaoLiberada && !veiculosLiberados && !sinalizacaoLiberada && !credenciaisLiberadas;
   // Resumo de todos os módulos para qualquer usuário com algum módulo liberado; abrir cada módulo continua dependendo da liberação.
   const painel = useQuery({
-    queryKey: ["painel", "dados", sessao?.userId, periodoOS, periodoEducacao, hoje], enabled: Boolean(sessao) && !nenhum,
+    queryKey: ["painel", "dados", sessao?.userId, periodoOS, periodoEducacao, hoje], enabled: Boolean(sessao) && !nenhum && admin,
     placeholderData: (anterior) => anterior,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("painel_dados", { _os_inicio: periodoOS.inicio, _os_fim: periodoOS.fim, _edu_inicio: periodoEducacao.inicio, _edu_fim: periodoEducacao.fim, _hoje: hoje });
@@ -127,6 +129,11 @@ function Painel() {
     { label: "A recolher", status: "RECOLHER", cor: "border-destructive" },
   ];
   function atualizar() { if (!nenhum) recarregar(); }
+
+  if (sessao && !admin) return <div className="space-y-5">
+    {nenhum && <p className="border-l-2 border-warning py-3 pl-4 text-sm text-muted-foreground">Bem-vindo, {sessao?.nome}. Aguardando liberação de acesso aos módulos pelo administrador.</p>}
+    <PainelUsuario sessao={sessao} dataExtenso={dataPorExtenso(new Date())} noticia={NOTICIA} />
+  </div>;
 
   return <div className="space-y-5">
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:gap-6">
