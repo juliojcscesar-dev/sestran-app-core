@@ -10,6 +10,7 @@ import { dataLocalIso, STATUS_ACAO_LABEL } from "@/lib/educacao";
 import { STATUS_OS_LABEL, periodoHorario } from "@/lib/os";
 import { statusEfetivo, STATUS_VEICULO_LABEL, type VeiculoBase } from "@/lib/veiculos";
 import { formatarData } from "@/lib/sestran";
+import { NOTICIA_SECRETARIA as NOTICIA, dataPorExtenso } from "@/lib/painel-usuario";
 import { cn } from "@/lib/utils";
 import { TextoFormatado } from "@/components/TextoFormatado";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarioPainel, periodoCalendario } from "@/components/painel/CalendarioPainel";
 import noticiaAsset from "@/assets/noticia-educacao-transito.png.asset.json";
-
-const NOTICIA = {
-  url: "https://paranavai.atende.net",
-  titulo: "Alunos de Paraíso do Norte participam de atividade de educação no trânsito em Paranavaí",
-  resumo: "Ação na minicidade do Detran combina orientações teóricas e simulações práticas para ensinar regras de segurança viária.",
-};
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({ meta: [
@@ -53,10 +48,6 @@ function classeStatus(status: string) {
 }
 function Situacao({ status, label }: { status: string; label: string }) { return <Badge variant="outline" className={cn("max-w-full whitespace-normal text-[10px]", classeStatus(status))}>{label}</Badge>; }
 const numero = (n: number | undefined) => n === undefined ? "—" : n.toLocaleString("pt-BR");
-function dataPorExtenso(d: Date) {
-  return d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-    .replace(/(^|[\s-])(\p{L})(?=\p{L}{2,})/gu, (_m, a: string, b: string) => a + b.toUpperCase()).replace(/ De /g, " de ");
-}
 
 function Cartao({ titulo, link, liberado = true, children }: { titulo: string; link?: ReactNode; liberado?: boolean; children: ReactNode }) {
   return <section aria-label={titulo} className="flex h-full min-w-0 flex-col rounded-lg border bg-card p-4 shadow-sm">
