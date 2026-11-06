@@ -17,6 +17,7 @@ export type ModuloNav = {
 
 export const MODULOS: ModuloNav[] = [
   { titulo: "Painel", href: "/painel", icone: "LayoutDashboard", disponivel: true },
+  { titulo: "Painel 2", href: "/painel-2", icone: "LayoutGrid", disponivel: true, papeis: ["ADMINISTRADOR"] },
   { titulo: "Ordens de Serviço", href: "/ordens-servico", icone: "ClipboardList", disponivel: true },
   { titulo: "Sinalização Viária - O.S.", href: "/sinalizacao-viaria", icone: "TrafficCone", disponivel: true },
   { titulo: "Veículos Abandonados", href: "/veiculos-abandonados", icone: "Car", disponivel: true },

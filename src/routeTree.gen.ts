@@ -22,6 +22,7 @@ import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedOrientadoresRouteImport } from './routes/_authenticated/orientadores'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedPainel2RouteImport } from './routes/_authenticated/painel-2'
 import { Route as AuthenticatedSinalizacaoViariaRouteImport } from './routes/_authenticated/sinalizacao-viaria'
 import { Route as AuthenticatedSolicitantesRouteImport } from './routes/_authenticated/solicitantes'
 import { Route as AuthenticatedTerritorioRouteImport } from './routes/_authenticated/territorio'
@@ -102,6 +103,11 @@ const AuthenticatedOrientadoresRoute =
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPainel2Route = AuthenticatedPainel2RouteImport.update({
+  id: '/painel-2',
+  path: '/painel-2',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSinalizacaoViariaRoute =
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/historico': typeof AuthenticatedHistoricoRoute
   '/orientadores': typeof AuthenticatedOrientadoresRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/painel-2': typeof AuthenticatedPainel2Route
   '/sinalizacao-viaria': typeof AuthenticatedSinalizacaoViariaRoute
   '/solicitantes': typeof AuthenticatedSolicitantesRoute
   '/territorio': typeof AuthenticatedTerritorioRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/historico': typeof AuthenticatedHistoricoRoute
   '/orientadores': typeof AuthenticatedOrientadoresRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/painel-2': typeof AuthenticatedPainel2Route
   '/sinalizacao-viaria': typeof AuthenticatedSinalizacaoViariaRoute
   '/solicitantes': typeof AuthenticatedSolicitantesRoute
   '/territorio': typeof AuthenticatedTerritorioRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/orientadores': typeof AuthenticatedOrientadoresRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/painel-2': typeof AuthenticatedPainel2Route
   '/_authenticated/sinalizacao-viaria': typeof AuthenticatedSinalizacaoViariaRoute
   '/_authenticated/solicitantes': typeof AuthenticatedSolicitantesRoute
   '/_authenticated/territorio': typeof AuthenticatedTerritorioRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/orientadores'
     | '/painel'
+    | '/painel-2'
     | '/sinalizacao-viaria'
     | '/solicitantes'
     | '/territorio'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/orientadores'
     | '/painel'
+    | '/painel-2'
     | '/sinalizacao-viaria'
     | '/solicitantes'
     | '/territorio'
@@ -334,6 +345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/historico'
     | '/_authenticated/orientadores'
     | '/_authenticated/painel'
+    | '/_authenticated/painel-2'
     | '/_authenticated/sinalizacao-viaria'
     | '/_authenticated/solicitantes'
     | '/_authenticated/territorio'
@@ -449,6 +461,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/painel-2': {
+      id: '/_authenticated/painel-2'
+      path: '/painel-2'
+      fullPath: '/painel-2'
+      preLoaderRoute: typeof AuthenticatedPainel2RouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sinalizacao-viaria': {
       id: '/_authenticated/sinalizacao-viaria'
       path: '/sinalizacao-viaria'
@@ -553,6 +572,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedOrientadoresRoute: typeof AuthenticatedOrientadoresRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedPainel2Route: typeof AuthenticatedPainel2Route
   AuthenticatedSinalizacaoViariaRoute: typeof AuthenticatedSinalizacaoViariaRoute
   AuthenticatedSolicitantesRoute: typeof AuthenticatedSolicitantesRoute
   AuthenticatedTerritorioRoute: typeof AuthenticatedTerritorioRoute
@@ -578,6 +598,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedOrientadoresRoute: AuthenticatedOrientadoresRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedPainel2Route: AuthenticatedPainel2Route,
   AuthenticatedSinalizacaoViariaRoute: AuthenticatedSinalizacaoViariaRoute,
   AuthenticatedSolicitantesRoute: AuthenticatedSolicitantesRoute,
   AuthenticatedTerritorioRoute: AuthenticatedTerritorioRoute,
