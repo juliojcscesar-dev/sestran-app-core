@@ -32,6 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const modulosVisiveis = MODULOS.filter(
     (m) => {
       if (m.href === "/painel") return true;
+      if (m.papeis) return m.papeis.some((papel) => papeis.includes(papel));
       if (m.href === "/usuarios") return administrador(sessao);
       const modulo = moduloDoCaminho(m.href);
       return modulo ? temAcesso(sessao, modulo) : administrador(sessao);
