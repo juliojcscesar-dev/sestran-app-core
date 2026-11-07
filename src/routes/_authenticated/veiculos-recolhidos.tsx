@@ -144,7 +144,7 @@ function VeiculosRecolhidos() {
   const hoje = new Date();
   const metricas = [
     { t: "Total cadastrado", v: lista.length, i: Car, h: "Registros no sistema" },
-    { t: "Vistorias concluídas", v: lista.filter(checklistCompleto).length, i: ClipboardCheck, h: "Checklist completo" },
+    { t: "Vistorias concluídas", v: lista.filter((r) => checklistCompleto(r) || r.situacao === "Vistoria concluída").length, i: ClipboardCheck, h: "Checklist completo ou situação Vistoria concluída" },
     { t: "Entradas neste mês", v: lista.filter((r) => { const d = new Date(`${r.data_recolhimento}T12:00:00`); return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear(); }).length, i: CalendarDays, h: "Pela data de recolhimento" },
     { t: "Marco de 90 dias atingido", v: lista.filter((r) => r.situacao !== "Liberado" && diasNoPatio(r) >= 90).length, i: Timer, h: "Acompanhamento administrativo" },
   ];
