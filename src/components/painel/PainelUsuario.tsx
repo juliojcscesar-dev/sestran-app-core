@@ -32,9 +32,7 @@ export function PainelUsuario({ sessao, dataExtenso, noticia }: { sessao: Sessao
   const [dia, setDia] = useState<Date | undefined>(new Date());
   return <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
     <div className="grid grid-cols-1 items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <div className="hidden lg:block" />
-      <img src={centralAsset.url} alt="Central de Sistema SESTRAN — Tecnologia e Inovação" className="mx-auto max-h-56 w-full object-contain sm:col-span-2 lg:col-span-1" />
-      <div className="hidden lg:block" />
+      <img src={centralAsset.url} alt="Central de Sistema SESTRAN — Tecnologia e Inovação" className="mx-auto max-h-56 w-full object-contain sm:col-span-2 lg:col-span-3 lg:max-h-44 lg:max-w-[21rem]" />
       <Modulo sessao={sessao} modulo="OS" href="/ordens-servico" img={osAsset.url} titulo="Ordem de Serviço" />
       <Modulo sessao={sessao} modulo="SINALIZACAO" href="/sinalizacao-viaria" img={sinalizacaoAsset.url} titulo="Sinalização Viária" />
       <Modulo sessao={sessao} modulo="VEICULOS" href="/veiculos-abandonados" img={veiculosAsset.url} titulo="Veículo Abandonado" />
