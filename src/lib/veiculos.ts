@@ -23,7 +23,7 @@ export const STATUS_VEICULO_LABEL: Record<string, string> = {
 };
 
 export const STATUS_VEICULO_CLASSE: Record<string, string> = {
-  DENUNCIADO: "bg-primary/10 text-primary border-primary/20",
+  DENUNCIADO: "bg-violet-400/15 text-violet-600 border-violet-400/40 dark:text-violet-300",
   NOTIFICADO: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400",
   RECOLHER: "bg-destructive/10 text-destructive border-destructive/20",
   RECOLHIDO: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-400",
@@ -54,7 +54,7 @@ export function ehNomeDenuncia(nome: string) {
 
 export function registrarSituacoes(opcoes: OpcaoSituacao[]) {
   for (const o of opcoes) {
-    if (ehNomeDenuncia(o.nome)) SITUACOES_DENUNCIA.add(o.id);
+    if (ehNomeDenuncia(o.nome)) { SITUACOES_DENUNCIA.add(o.id); STATUS_VEICULO_CLASSE[o.id] = STATUS_VEICULO_CLASSE["DENUNCIADO"] ?? ""; }
     STATUS_VEICULO_LABEL[o.id] = o.nome;
     if (ehNomeRetorno(o.nome)) { SITUACOES_RETORNO.add(o.id); STATUS_VEICULO_CLASSE[o.id] = CLASSE_RETORNO; }
     if (!STATUS_VEICULO_CLASSE[o.id]) STATUS_VEICULO_CLASSE[o.id] = "bg-muted text-muted-foreground border-border";
