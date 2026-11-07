@@ -54,7 +54,7 @@ export function ehNomeDenuncia(nome: string) {
 
 export function registrarSituacoes(opcoes: OpcaoSituacao[]) {
   for (const o of opcoes) {
-    if (ehNomeDenuncia(o.nome)) { SITUACOES_DENUNCIA.add(o.id); STATUS_VEICULO_CLASSE[o.id] = STATUS_VEICULO_CLASSE.DENUNCIADO; }
+    if (ehNomeDenuncia(o.nome)) { SITUACOES_DENUNCIA.add(o.id); STATUS_VEICULO_CLASSE[o.id] = STATUS_VEICULO_CLASSE["DENUNCIADO"] ?? ""; }
     STATUS_VEICULO_LABEL[o.id] = o.nome;
     if (ehNomeRetorno(o.nome)) { SITUACOES_RETORNO.add(o.id); STATUS_VEICULO_CLASSE[o.id] = CLASSE_RETORNO; }
     if (!STATUS_VEICULO_CLASSE[o.id]) STATUS_VEICULO_CLASSE[o.id] = "bg-muted text-muted-foreground border-border";
