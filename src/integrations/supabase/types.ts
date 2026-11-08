@@ -408,6 +408,27 @@ export type Database = {
         }
         Relationships: []
       }
+      escala_agentes_estado: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          dados: Json
+          id: number
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          dados: Json
+          id?: number
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          dados?: Json
+          id?: number
+        }
+        Relationships: []
+      }
       escolas: {
         Row: {
           ativo: boolean

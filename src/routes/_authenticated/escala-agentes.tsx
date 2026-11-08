@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSessao } from "@/hooks/useSessao";
 import { administrador } from "@/lib/permissoes";
 import { Button } from "@/components/ui/button";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/escala-agentes")({
   head: () => ({ meta: [
@@ -21,5 +24,31 @@ function EscalaAgentes() {
     <p className="text-muted-foreground">A Escala dos Agentes é exclusiva do administrador.</p>
     <Button asChild variant="outline"><Link to="/painel">Voltar ao painel</Link></Button>
   </div>;
-  return <iframe title="Escala dos Agentes de Trânsito" src="/escala/index.html" className="h-[calc(100vh-7rem)] w-full rounded-lg border bg-background" />;
+  return <QuadroEscala />;
+}
+
+function QuadroEscala() {
+  const ref = useRef<HTMLIFrameElement>(null);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const aoMensagem = async (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== ref.current?.contentWindow) return;
+      if (e.data?.tipo === "escala-pronta") {
+        const { data, error } = await supabase.from("escala_agentes_estado").select("dados").eq("id", 1).maybeSingle();
+        if (error) { toast.error("Não foi possível carregar a escala salva."); return; }
+        ref.current?.contentWindow?.postMessage({ tipo: "escala-dados", dados: data?.dados ?? null }, window.location.origin);
+      } else if (e.data?.tipo === "escala-salvar") {
+        const dados = e.data.dados;
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+          const { data: u } = await supabase.auth.getUser();
+          const { error } = await supabase.from("escala_agentes_estado").upsert({ id: 1, dados, atualizado_em: new Date().toISOString(), atualizado_por: u.user?.id ?? null });
+          if (error) toast.error("Não foi possível salvar a escala.");
+        }, 800);
+      }
+    };
+    window.addEventListener("message", aoMensagem);
+    return () => { window.removeEventListener("message", aoMensagem); clearTimeout(timer); };
+  }, []);
+  return <iframe ref={ref} title="Escala dos Agentes de Trânsito" src="/escala/index.html" className="h-[calc(100vh-7rem)] w-full rounded-lg border bg-background" />;
 }
