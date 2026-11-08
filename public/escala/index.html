@@ -179,7 +179,7 @@ const seed=()=>({anchor:'2026-10-01',events:[],agents:[
  mk('ENDEL DA SILVA','1912','D','06:00','15:00','12:00 às 13:00'),mk('ANTÔNIO DE PÁDUA','7861','D','07:00','11:00'),mk('RODOLFO CESAR','1707','D','07:00','16:00'),mk('VALDELICE LOPES','9815','D','08:00','17:00','12:00 às 13:00')]});
 let S=null;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!S||!S.agents)S=seed();if(!S.events)S.events=[];
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){};try{parent.postMessage({tipo:'escala-salvar',dados:S},location.origin)}catch(e){}};
 const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const fromIso=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
 const groupOn=d=>{const a=fromIso(S.anchor);const n=Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/864e5);return((n%2)+2)%2===0?'A':'B'};
@@ -329,9 +329,11 @@ $('evAdd').onclick=()=>{const t=$('evT').value,d=$('evD').value,s=$('evS').value
  save();V.y=+d.slice(0,4);V.m=+d.slice(5,7)-1;V.sel=d;$('evR').value='';$('evN').value='';all();renderEv()};
 $('evL').onclick=e=>{const b=e.target.closest('[data-ev]');if(!b)return;S.events=S.events.filter(x=>x.id!==b.dataset.ev);save();all();renderEv()};
 applyTheme();all();setInterval(renderNow,60000);
+window.addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.tipo!=='escala-dados')return;
+ if(e.data.dados&&e.data.dados.agents){S=e.data.dados;if(!S.events)S.events=[];try{localStorage.setItem(KEY,JSON.stringify(S))}catch(x){}all();if(!$('t-ag').classList.contains('hide'))renderAg();if(!$('t-ev').classList.contains('hide'))renderEv()}
+ else save()});
+try{parent.postMessage({tipo:'escala-pronta'},location.origin)}catch(e){}
 </script>
-<script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
-</script>
+
 </body>
 </html>
