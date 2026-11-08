@@ -17,6 +17,7 @@ import { Route as AuthenticatedAgentesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCredenciaisRouteImport } from './routes/_authenticated/credenciais'
 import { Route as AuthenticatedCredenciaisConsultaRouteImport } from './routes/_authenticated/credenciais-consulta'
 import { Route as AuthenticatedEducacaoTransitoRouteImport } from './routes/_authenticated/educacao-transito'
+import { Route as AuthenticatedEscalaAgentesRouteImport } from './routes/_authenticated/escala-agentes'
 import { Route as AuthenticatedEscolasRouteImport } from './routes/_authenticated/escolas'
 import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
@@ -77,6 +78,12 @@ const AuthenticatedEducacaoTransitoRoute =
   AuthenticatedEducacaoTransitoRouteImport.update({
     id: '/educacao-transito',
     path: '/educacao-transito',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEscalaAgentesRoute =
+  AuthenticatedEscalaAgentesRouteImport.update({
+    id: '/escala-agentes',
+    path: '/escala-agentes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedEscolasRoute = AuthenticatedEscolasRouteImport.update({
@@ -195,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/credenciais': typeof AuthenticatedCredenciaisRoute
   '/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
   '/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
+  '/escala-agentes': typeof AuthenticatedEscalaAgentesRoute
   '/escolas': typeof AuthenticatedEscolasRoute
   '/eventos': typeof AuthenticatedEventosRoute
   '/historico': typeof AuthenticatedHistoricoRoute
@@ -223,6 +231,7 @@ export interface FileRoutesByTo {
   '/credenciais': typeof AuthenticatedCredenciaisRoute
   '/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
   '/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
+  '/escala-agentes': typeof AuthenticatedEscalaAgentesRoute
   '/escolas': typeof AuthenticatedEscolasRoute
   '/eventos': typeof AuthenticatedEventosRoute
   '/historico': typeof AuthenticatedHistoricoRoute
@@ -253,6 +262,7 @@ export interface FileRoutesById {
   '/_authenticated/credenciais': typeof AuthenticatedCredenciaisRoute
   '/_authenticated/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
   '/_authenticated/educacao-transito': typeof AuthenticatedEducacaoTransitoRoute
+  '/_authenticated/escala-agentes': typeof AuthenticatedEscalaAgentesRoute
   '/_authenticated/escolas': typeof AuthenticatedEscolasRoute
   '/_authenticated/eventos': typeof AuthenticatedEventosRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/credenciais'
     | '/credenciais-consulta'
     | '/educacao-transito'
+    | '/escala-agentes'
     | '/escolas'
     | '/eventos'
     | '/historico'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/credenciais'
     | '/credenciais-consulta'
     | '/educacao-transito'
+    | '/escala-agentes'
     | '/escolas'
     | '/eventos'
     | '/historico'
@@ -340,6 +352,7 @@ export interface FileRouteTypes {
     | '/_authenticated/credenciais'
     | '/_authenticated/credenciais-consulta'
     | '/_authenticated/educacao-transito'
+    | '/_authenticated/escala-agentes'
     | '/_authenticated/escolas'
     | '/_authenticated/eventos'
     | '/_authenticated/historico'
@@ -424,6 +437,13 @@ declare module '@tanstack/react-router' {
       path: '/educacao-transito'
       fullPath: '/educacao-transito'
       preLoaderRoute: typeof AuthenticatedEducacaoTransitoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/escala-agentes': {
+      id: '/_authenticated/escala-agentes'
+      path: '/escala-agentes'
+      fullPath: '/escala-agentes'
+      preLoaderRoute: typeof AuthenticatedEscalaAgentesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/escolas': {
@@ -567,6 +587,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCredenciaisRoute: typeof AuthenticatedCredenciaisRoute
   AuthenticatedCredenciaisConsultaRoute: typeof AuthenticatedCredenciaisConsultaRoute
   AuthenticatedEducacaoTransitoRoute: typeof AuthenticatedEducacaoTransitoRoute
+  AuthenticatedEscalaAgentesRoute: typeof AuthenticatedEscalaAgentesRoute
   AuthenticatedEscolasRoute: typeof AuthenticatedEscolasRoute
   AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
@@ -593,6 +614,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCredenciaisRoute: AuthenticatedCredenciaisRoute,
   AuthenticatedCredenciaisConsultaRoute: AuthenticatedCredenciaisConsultaRoute,
   AuthenticatedEducacaoTransitoRoute: AuthenticatedEducacaoTransitoRoute,
+  AuthenticatedEscalaAgentesRoute: AuthenticatedEscalaAgentesRoute,
   AuthenticatedEscolasRoute: AuthenticatedEscolasRoute,
   AuthenticatedEventosRoute: AuthenticatedEventosRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
