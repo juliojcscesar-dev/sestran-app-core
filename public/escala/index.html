@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Escala dos Agentes de Trânsito</title>
+
+<meta name="theme-color" content="#1c2f5e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Escala">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+
+
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--tx:#172033;--mut:#6b7690;--bd:#e3e8f0;--row:#f8fafd;--pri:#1c2f5e;--a:#1c3f8a;--abg:#e2e9f7;--b:#a8620a;--bbg:#fdeccb;--ok:#12805c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1420;--card:#171e2e;--tx:#e8ecf5;--mut:#8f9bb5;--bd:#27314a;--row:#1b2336;--pri:#6c93ff;--a:#7aa0ff;--abg:#172a55;--b:#ffa45c;--bbg:#4a2c12;--ok:#43c79a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#171e2e;--tx:#e8ecf5;--mut:#8f9bb5;--bd:#27314a;--row:#1b2336;--pri:#6c93ff;--a:#7aa0ff;--abg:#172a55;--b:#ffa45c;--bbg:#4a2c12;--ok:#43c79a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:18px 14px 48px}
+h1{font-size:21px;margin:0}.sub{color:var(--mut);font-size:13px}
+header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-bottom:14px}
+.tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:4px}
+.tabs button{border:0;background:none;color:var(--mut);font:inherit;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer}
+.tabs button.on{background:var(--pri);color:#fff}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:15px}
+.now{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--row);border:1px solid var(--bd);border-radius:99px;padding:4px 10px;font-size:13px}
+.chip.A{background:var(--abg);border-color:transparent;color:color-mix(in srgb,var(--a) 65%,var(--tx))}.chip.B{background:var(--bbg);border-color:transparent;color:color-mix(in srgb,var(--b) 65%,var(--tx))}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.nav{display:flex;align-items:center;gap:6px}
+.nav button,.btn{border:1px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;border-radius:10px;padding:8px 12px;cursor:pointer}
+.nav button:hover,.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.nav b{min-width:150px;text-align:center;text-transform:capitalize;font-size:16px}
+select,input[type=text],input[type=time],input[type=date]{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 8px;min-width:0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.dow{text-align:center;color:var(--mut);font-size:12px;font-weight:600;padding:4px 0}
+.cell{min-height:62px;border:1px solid var(--bd);border-radius:10px;padding:6px;background:var(--card);cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;text-align:left;font:inherit;color:var(--tx)}
+.cell.A{background:var(--abg)}.cell.B{background:var(--bbg)}
+.cell.dim{opacity:.28}.cell.mine{outline:2px solid var(--ok)}
+.cell.today .n{background:var(--pri);color:#fff;border-radius:99px;padding:0 7px}
+.cell.sel{box-shadow:0 0 0 2px var(--tx)}
+.cell .n{font-weight:700;align-self:flex-start}
+.cell .g{font-size:11px;font-weight:700;align-self:flex-end}
+.cell.A .g{color:color-mix(in srgb,var(--a) 65%,var(--tx))}.cell.B .g{color:color-mix(in srgb,var(--b) 65%,var(--tx))}
+.cell.empty{border:0;background:none;cursor:default}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mut);margin-top:10px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:5px}
+.note{background:var(--row);border:1px dashed var(--bd);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--mut);margin-bottom:12px}
+.li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.li:last-child{border:0}.li small{color:var(--mut)}
+.tag{font-size:11px;background:var(--row);border:1px solid var(--bd);border-radius:99px;padding:1px 8px;margin-left:6px}
+.sheet{background:#fff;color:#000;border:1px solid var(--bd);border-radius:6px;padding:16px;overflow-x:auto}
+.sheet table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px;min-width:560px}
+.sheet th,.sheet td{border:1px solid #000;padding:5px 8px;text-align:left}
+.sheet .t{text-align:center;font-weight:700;background:#d9d9d9}
+.sheet .g{text-align:center;font-weight:700;background:#efefef}
+.sheet .dd{font-weight:400;font-size:11px}
+.ag{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}
+.ag .nm{flex:1 1 170px}.ag .mt{width:76px}.ag input[type=time]{width:96px}.ag .lc{width:130px}
+.wds{display:flex;gap:3px}.wds button{width:28px;height:28px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--mut);cursor:pointer;font:inherit;font-size:12px}
+.wds button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.x{border:0;background:none;color:var(--mut);font-size:18px;cursor:pointer;width:30px;height:30px;border-radius:8px}
+.x:hover{color:#c93a3a}
+.fm{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.fm label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
+.fm select,.fm input{width:100%}
+.cell .top{display:flex;justify-content:space-between;align-items:flex-start;gap:2px}
+.ev{font-size:10px;font-weight:700;color:var(--ok)}
+.li.out{opacity:.55}.li.out b{text-decoration:line-through}
+.tabs{flex-wrap:wrap}
+.pre{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.pr{display:flex;flex-direction:column;gap:8px;align-items:flex-start;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;padding:10px;font:inherit;cursor:pointer}
+.pr:hover{border-color:var(--pri)}
+.pr span{display:flex}.pr i{width:26px;height:26px;border-radius:50%;margin-right:-6px;border:2px solid var(--card)}
+.tr{margin-bottom:14px}
+.sws{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.sw{width:34px;height:34px;border-radius:10px;border:2px solid transparent;cursor:pointer;padding:0}
+.sw.on{border-color:var(--tx);box-shadow:inset 0 0 0 2px var(--card)}
+.sw.cu{display:flex;align-items:center;justify-content:center;background:var(--row);border:1px dashed var(--mut);color:var(--mut);position:relative;overflow:hidden;font-weight:700}
+.sw.cu input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;padding:0;border:0}
+.hide{display:none!important}
+@media(max-width:600px){.cell{min-height:52px;padding:4px}.nav b{min-width:110px}}
+@media print{.noprint{display:none!important}body{background:#fff}.wrap{padding:0}.sheet{border:0;padding:0}}
+h1,h2{font-family:Archivo,system-ui,sans-serif;letter-spacing:-.01em}h1{color:var(--pri)}:root:not([data-theme="dark"]) h1{border-left:5px solid #e0a526;padding-left:10px}.card{box-shadow:0 1px 3px rgba(20,30,60,.06)}.tabs button.on{box-shadow:inset 0 -3px 0 #e0a526}
+</style><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Sans:wght@400;600&display=swap">
+</head>
+<body>
+<div class="wrap">
+  <header class="noprint">
+    <div><h1>Escala dos Agentes de Trânsito</h1><div class="sub">Plantões 12/36 e agentes de 8 horas</div></div>
+    <div class="tabs" id="tabs"><button data-t="cal" class="on">Calendário</button><button data-t="sheet">Escala do mês</button><button data-t="ev">Trocas e extras</button><button data-t="ag">Agentes</button><button data-t="cor">Cores</button></div>
+  </header>
+
+  <section id="t-cal" class="noprint">
+    <div class="card now"><div><h2 id="nowT" style="margin-bottom:4px"></h2><div class="sub" id="nowS"></div></div><div class="chips" id="nowC"></div></div>
+    <div class="bar">
+      <div class="nav"><button id="prev" aria-label="Mês anterior">‹</button><b id="mlab"></b><button id="next" aria-label="Próximo mês">›</button><button id="today">Hoje</button></div>
+      <label class="sub">Ver escala de: <select id="flt"></select></label>
+    </div>
+    <div class="note hide" id="n31"></div>
+    <div class="note hide" id="fltInfo"></div>
+    <div class="cal" id="cal"></div>
+    <div class="legend"><span><i class="dot" style="background:var(--abg);border:1px solid var(--a)"></i>Grupo A</span><span><i class="dot" style="background:var(--bbg);border:1px solid var(--b)"></i>Grupo B</span><span>Toque em um dia para ver quem trabalha</span></div>
+    <div class="card" style="margin-top:14px" id="det"></div>
+  </section>
+
+  <section id="t-sheet" class="hide">
+    <div class="bar noprint"><div class="nav"><button id="prev2">‹</button><b id="mlab2"></b><button id="next2">›</button></div><button class="btn pri" onclick="window.print()">Imprimir / salvar PDF</button></div>
+    <div class="sheet" id="sheet"></div>
+  </section>
+
+  <section id="t-ev" class="hide noprint">
+    <div class="card">
+      <h2>Registrar ocorrência</h2>
+      <div class="fm">
+        <label>Tipo<select id="evT"><option value="troca">Troca de plantão</option><option value="extra">Hora extra</option></select></label>
+        <label>Data<input type="date" id="evD"></label>
+        <label id="lbF">Agente que sai<select id="evF"></select></label>
+        <label id="lbTo">Agente que cobre<select id="evTo"></select></label>
+        <label>Início<input type="time" id="evS"></label>
+        <label>Fim<input type="time" id="evE"></label>
+        <label id="lbR">Devolução em (opcional)<input type="date" id="evR"></label>
+        <label id="lbN" class="hide">Observação<input type="text" id="evN" placeholder="Ex.: evento, reforço"></label>
+      </div>
+      <div class="sub" style="margin-top:8px" id="evHelp"></div>
+      <div style="margin-top:12px"><button class="btn pri" id="evAdd">Registrar</button></div>
+    </div>
+    <div class="bar"><div class="nav"><button id="prev3" aria-label="Mês anterior">‹</button><b id="mlab3"></b><button id="next3" aria-label="Próximo mês">›</button></div></div>
+    <div class="card"><h2>Ocorrências do mês</h2><div id="evL"></div></div>
+  </section>
+
+  <section id="t-cor" class="hide noprint">
+    <div class="card"><h2>Temas prontos</h2><div class="pre" id="pre"></div></div>
+    <div class="card">
+      <h2>Tabela de cores</h2>
+      <div id="cor"></div>
+      <div style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><label class="sub">Aparência: <select id="mode"><option value="">Automático</option><option value="light">Claro</option><option value="dark">Escuro</option></select></label><button class="btn" id="corReset">Restaurar cores padrão</button></div>
+    </div>
+    <div class="card">
+      <h2>Prévia</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="cell A" style="width:70px;cursor:default"><span class="top"><span class="n">1</span></span><span class="g">A</span></div><div class="cell B" style="width:70px;cursor:default"><span class="top"><span class="n">2</span></span><span class="g">B</span></div><button class="btn pri">Botão principal</button><span class="chip A">Grupo A</span><span class="chip B">Grupo B</span></div>
+    </div>
+  </section>
+
+  <section id="t-ag" class="hide noprint">
+    <div class="card">
+      <h2>Como a escala gira</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">O <b style="color:var(--a)">Grupo A</b> está de serviço em <input type="date" id="anc"></div>
+      <div class="sub" style="margin-top8px;margin-top:8px">Basta informar isso uma vez. O sistema alterna um dia para cada grupo; por isso, quando o mês tem 31 dias, os grupos trocam de dias pares/ímpares sozinhos no mês seguinte.</div>
+    </div>
+    <div class="card">
+      <h2>Agentes</h2>
+      <div id="agl"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="addA">+ Agente Grupo A</button><button class="btn" id="addB">+ Agente Grupo B</button><button class="btn" id="addD">+ Agente 8 horas</button><button class="btn" id="reset" style="margin-left:auto">Restaurar padrão</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const MN=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const WD=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+const WL=['D','S','T','Q','Q','S','S'];
+const KEY='escala-agentes-v1';
+const mk=(n,m,g,s,e,l,wd)=>({id:uid(),n,m,g,s,e,l:l||'',wd:wd||[1,2,3,4,5]});
+const seed=()=>({anchor:'2026-10-01',events:[],agents:[
+ mk('SILVANA MARQUÊS','0730','A','06:00','18:00'),mk('HELTON DAVID','1050','A','06:00','18:00'),mk('NATAN MIRANDA','1203','A','06:00','18:00'),mk('MARCOS CANTARUTI','3428','A','19:00','06:00'),
+ mk('GABRIEL DA CRUZ','1051','B','06:00','18:00'),mk('EVANDRO NIEHUES','1111','B','06:00','18:00'),mk('LISLEY FELIX','0709','B','06:00','18:00'),mk('IONE MARIA','4075','B','06:00','18:00'),mk('MARCO SCHULZE','7272','B','18:00','05:00'),
+ mk('ENDEL DA SILVA','1912','D','06:00','15:00','12:00 às 13:00'),mk('ANTÔNIO DE PÁDUA','7861','D','07:00','11:00'),mk('RODOLFO CESAR','1707','D','07:00','16:00'),mk('VALDELICE LOPES','9815','D','08:00','17:00','12:00 às 13:00')]});
+let S=null;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.agents)S=seed();if(!S.events)S.events=[];
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const fromIso=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const groupOn=d=>{const a=fromIso(S.anchor);const n=Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/864e5);return((n%2)+2)%2===0?'A':'B'};
+const night=a=>a.e<=a.s;
+const works=(a,d)=>a.g==='D'?a.wd.includes(d.getDay()):groupOn(d)===a.g;
+const hrs=a=>a.s+'HRS ÀS '+a.e+'HRS';
+const dur=(a,b)=>{const m=x=>+x.slice(0,2)*60+ +x.slice(3);let v=m(b)-m(a);if(v<=0)v+=1440;return v/60};
+const fh=h=>{const H=Math.floor(h),M=Math.round((h-H)*60);return H+'h'+(M?pad(M):'')};
+const agById=id=>S.agents.find(a=>a.id===id);
+function shifts(d){const k=iso(d),ev=S.events.filter(e=>e.d===k),r=[];
+ S.agents.forEach(a=>{if(!works(a,d))return;const t=ev.find(e=>e.t==='troca'&&e.f===a.id);r.push(t?{a,s:a.s,e:a.e,k:'out',by:agById(t.to)}:{a,s:a.s,e:a.e,k:'base'})});
+ ev.forEach(e=>{const a=agById(e.t==='troca'?e.to:e.a);if(!a)return;
+  if(e.t==='troca')r.push({a,s:e.s,e:e.e,k:'cover',of:agById(e.f)});else r.push({a,s:e.s,e:e.e,k:'extra',n:e.n})});
+ return r}
+const fd=d=>pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+const T=new Date();
+let V={y:T.getFullYear(),m:T.getMonth(),sel:iso(T),f:''};
+
+function duty(now){const t=pad(now.getHours())+':'+pad(now.getMinutes());const y=new Date(now);y.setDate(y.getDate()-1);const o=[];
+ shifts(now).forEach(x=>{if(x.k==='out')return;const nt=x.e<=x.s;if(nt?t>=x.s:(t>=x.s&&t<x.e))o.push([x,nt?'até '+x.e+' (amanhã)':'até '+x.e])});
+ shifts(y).forEach(x=>{if(x.k!=='out'&&x.e<=x.s&&t<x.e)o.push([x,'até '+x.e])});return o}
+
+function renderNow(){const n=new Date();const g=groupOn(n);
+ $('nowT').textContent='Hoje, '+WD[n.getDay()]+' '+fd(n);
+ $('nowS').innerHTML='Grupo <b style="color:var(--'+(g==='A'?'a':'b')+')">'+g+'</b> de serviço · agora '+pad(n.getHours())+':'+pad(n.getMinutes())+' · em serviço:';
+ const d=duty(n);$('nowC').innerHTML=d.length?d.map(([x,t])=>`<span class="chip ${x.a.g==='D'?'':x.a.g}">${esc(x.a.n)}${x.k==='extra'?' <b>HE</b>':''}${x.k==='cover'?' <b>troca</b>':''} <small>${t}</small></span>`).join(''):'<span class="sub">Ninguém no horário agora</span>'}
+
+function renderCal(){
+ const first=new Date(V.y,V.m,1),nd=new Date(V.y,V.m+1,0).getDate();
+ $('mlab').textContent=$('mlab2').textContent=$('mlab3').textContent=MN[V.m]+' de '+V.y;
+ $('n31').classList.toggle('hide',nd!==31);$('n31').textContent='Mês de 31 dias: no mês seguinte os grupos trocam de dias pares/ímpares.';
+ const ag=agById(V.f);let cnt=[],xh=0;
+ let h=WL.map(x=>`<div class="dow">${x}</div>`).join('');
+ for(let i=0;i<first.getDay();i++)h+='<div class="cell empty"></div>';
+ for(let d=1;d<=nd;d++){const dt=new Date(V.y,V.m,d),g=groupOn(dt),k=iso(dt),ev=S.events.filter(e=>e.d===k);let c='cell '+g;
+  if(k===iso(T))c+=' today';if(k===V.sel)c+=' sel';
+  if(ag){const mine=shifts(dt).filter(x=>x.a.id===ag.id&&x.k!=='out');if(mine.length){c+=' mine';cnt.push(pad(d));mine.forEach(x=>{if(x.k==='extra')xh+=dur(x.s,x.e)})}else c+=' dim'}
+  const tg=(ev.some(e=>e.t==='troca')?'T ':'')+(ev.some(e=>e.t==='extra')?'HE':'');
+  h+=`<button class="${c}" data-d="${k}"><span class="top"><span class="n">${d}</span><span class="ev">${tg}</span></span><span class="g">${g}</span></button>`}
+ $('cal').innerHTML=h;
+ $('fltInfo').classList.toggle('hide',!ag);
+ if(ag)$('fltInfo').innerHTML=`<b>${esc(ag.n)}</b> trabalha <b>${cnt.length}</b> dia(s) em ${MN[V.m]}: ${cnt.join(', ')||'nenhum'}${xh?` · hora extra: <b>${fh(xh)}</b>`:''}`;
+ renderDet()}
+
+function ended(x){const n=new Date();return V.sel<iso(n)||(V.sel===iso(n)&&pad(n.getHours())+':'+pad(n.getMinutes())>=x.e)}
+function renderDet(){const d=fromIso(V.sel),g=groupOn(d);const y=new Date(d);y.setDate(y.getDate()-1);
+ const L=shifts(d),yl=shifts(y).filter(x=>x.k!=='out'&&x.e<=x.s);
+ const sec=x=>{if(x.k==='extra')return'x';const o=(x.k==='cover'?x.of:x.a)||x.a;return o.g==='D'?'d':(x.e<=x.s?'n':'g')};
+ const row=x=>{const a=x.a;const tg=x.k==='out'?`<span class="tag">troca → ${esc(x.by?x.by.n:'?')}</span>`:x.k==='cover'?`<span class="tag">troca: cobre ${esc(x.of?x.of.n:'?')}</span>`:x.k==='extra'?`<span class="tag">hora extra ${fh(dur(x.s,x.e))}</span>`:'';
+  return `<div class="li ${x.k==='out'?'out':''}"><span><b>${esc(a.n)}</b> <small>mat. ${esc(a.m)}</small>${a.g==='D'?'':`<span class="chip ${a.g}" style="margin-left:6px;padding:1px 8px;font-size:11px">Grupo ${a.g}</span>`}${tg}${x.n?` <small>· ${esc(x.n)}</small>`:''}</span><span>${x.s}HRS ÀS ${x.e}HRS${x.e<=x.s?' <small>(dia seguinte)</small>':''}${x.k==='base'&&a.l?` <small>· almoço ${esc(a.l)}</small>`:''}</span></div>`};
+ const part=(k,t,em)=>{const r=L.filter(x=>sec(x)===k);return `<div class="sub" style="margin:12px 0 2px">${t}</div>${r.map(row).join('')||`<div class="sub">${em}</div>`}`};
+ $('det').innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><h2 style="margin:0">${WD[d.getDay()]}, ${fd(d)} — <span style="color:var(--${g==='A'?'a':'b'})">Grupo ${g}</span></h2><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" id="cp">Copiar escala do dia</button><button class="btn" id="bT">+ Troca</button><button class="btn" id="bX">+ Hora extra</button></div></div>
+ ${part('g','AGENTES 12/36 — GRUPO '+g+' (DIURNO)','Nenhum agente neste dia')}${part('n','PLANTÃO NOTURNO — GRUPO '+g,'Sem plantão noturno')}${part('d','AGENTES 8 HORAS','Sem expediente neste dia')}${L.some(x=>x.k==='extra')?part('x','HORA EXTRA',''):''}
+ ${yl.length?'<div class="sub" style="margin:12px 0 2px">PLANTÃO NOTURNO DA NOITE ANTERIOR</div>'+yl.map(x=>`<div class="li" style="${ended(x)?'opacity:.6':''}"><span><b>${esc(x.a.n)}</b> <span class="tag">${ended(x)?'encerrado':'em andamento'}</span></span><span>entrou ontem às ${x.s} · ${ended(x)?'saiu':'sai'} às ${x.e}</span></div>`).join(''):''}`;
+ $('bT').onclick=()=>openEv('troca',V.sel);$('bX').onclick=()=>openEv('extra',V.sel);
+ $('cp').onclick=()=>{const Lt=x=>'• '+x.a.n+' ('+x.a.m+') '+x.s+' às '+x.e+(x.k==='cover'?' (troca: cobre '+(x.of?x.of.n:'?')+')':'')+(x.k==='extra'?' (hora extra)':'');
+  const On=L.filter(x=>x.k!=='out'),pick=k=>On.filter(x=>sec(x)===k).map(Lt).join('\n')||'—';
+  let t='ESCALA '+fd(d)+' ('+WD[d.getDay()]+') - Grupo '+g+'\n\n12/36:\n'+pick('g')+'\n\nNoturno:\n'+pick('n')+'\n\n8 horas:\n'+pick('d');
+  if(On.some(x=>sec(x)==='x'))t+='\n\nHora extra:\n'+pick('x');
+  const ok=()=>{$('cp').textContent='Copiado ✓'};
+  try{navigator.clipboard.writeText(t).then(ok,()=>prompt('Copie o texto:',t))}catch(e){prompt('Copie o texto:',t)}}}
+
+function renderSheet(){const nd=new Date(V.y,V.m+1,0).getDate();let n=0;
+ const days=g=>{const r=[];for(let d=1;d<=nd;d++)if(groupOn(new Date(V.y,V.m,d))===g)r.push(pad(d));return r};
+ const par2=g=>{const l=days(g==='A'?'B':'A');return l.length&&(+l[0])%2?'ímpares':'pares'};
+ const sec=g=>{const l=days(g);const par=l.length&&(+l[0])%2?'ÍMPARES':'PARES';
+  const rows=S.agents.filter(a=>a.g===g).map(a=>`<tr><td><b>${pad(++n)}</b></td><td><b>${esc(a.n)}</b></td><td>${esc(a.m)}</td><td><b>${hrs(a)}</b></td></tr>`).join('');
+  return `<tr><td colspan="4" class="g">DIAS ${par} <span class="dd">(${l.join(', ')})</span></td></tr>${rows}`};
+ const d8=S.agents.filter(a=>a.g==='D').map(a=>`<tr><td><b>${pad(++n)}</b></td><td><b>${esc(a.n)}</b></td><td>${esc(a.m)}</td><td>${esc(a.l)||'----------'}</td><td><b>${hrs(a)}</b> <span class="dd">(${a.wd.slice().sort().map(i=>WD[i].slice(0,3)).join(', ')})</span></td></tr>`).join('');
+ const p=V.y+'-'+pad(V.m+1),evs=S.events.filter(e=>e.d.startsWith(p)).sort((a,b)=>a.d.localeCompare(b.d)),fdm=k=>k.slice(8)+'/'+k.slice(5,7);
+ const tr=evs.filter(e=>e.t==='troca'),ex=evs.filter(e=>e.t==='extra'),nm=id=>{const a=agById(id);return a?esc(a.n):'?'};
+ const tot={};ex.forEach(e=>{tot[e.a]=(tot[e.a]||0)+dur(e.s,e.e)});
+ const t1=tr.length?`<table><tr><td colspan="4" class="g">TROCAS DE PLANTÃO</td></tr><tr><th>DATA</th><th>AGENTE QUE SAI</th><th>AGENTE QUE COBRE</th><th>HORÁRIO</th></tr>${tr.map(e=>`<tr><td>${fdm(e.d)}</td><td>${nm(e.f)}</td><td>${nm(e.to)}</td><td>${e.s} ÀS ${e.e}</td></tr>`).join('')}</table>`:'';
+ const t2=ex.length?`<table><tr><td colspan="5" class="g">HORAS EXTRAS</td></tr><tr><th>DATA</th><th>AGENTE</th><th>HORÁRIO</th><th>HORAS</th><th>OBS.</th></tr>${ex.map(e=>`<tr><td>${fdm(e.d)}</td><td>${nm(e.a)}</td><td>${e.s} ÀS ${e.e}</td><td>${fh(dur(e.s,e.e))}</td><td>${esc(e.n||'')}</td></tr>`).join('')}<tr><td colspan="5"><b>TOTAL NO MÊS:</b> ${Object.keys(tot).map(id=>nm(id)+' '+fh(tot[id])).join(' · ')}</td></tr></table>`:'';
+ $('sheet').innerHTML=`<table><tr><td colspan="4" class="t">ESCALA DOS AGENTES DE TRÂNSITO - ${V.y}</td></tr><tr><th>Nº</th><th>AGENTES 12/36</th><th>${MN[V.m].toUpperCase()} — MATRÍCULA</th><th>HORÁRIOS</th></tr>${sec('A')}${sec('B')}</table>
+ <table><tr><td colspan="5" class="g">AGENTES 8 HORAS</td></tr><tr><th>Nº</th><th>AGENTE</th><th>MATRÍCULA</th><th>ALMOÇO</th><th>HORÁRIOS</th></tr>${d8}</table>${t1}${t2}`}
+
+function setDef(){const a=agById($('evF').value);if(!a)return;
+ if($('evT').value==='troca'){$('evS').value=a.s;$('evE').value=a.e}else{$('evS').value=a.e;$('evE').value=pad((+a.e.slice(0,2)+2)%24)+a.e.slice(2)}}
+function evForm(){const t=$('evT').value,f=$('evF').value,to=$('evTo').value;
+ const opt=S.agents.map(a=>`<option value="${a.id}">${esc(a.n)}</option>`).join('');
+ $('evF').innerHTML=opt;$('evTo').innerHTML=opt;if(f&&agById(f))$('evF').value=f;if(to&&agById(to))$('evTo').value=to;
+ else if(S.agents[1])$('evTo').value=S.agents[1].id;
+ $('lbF').firstChild.textContent=t==='troca'?'Agente que sai':'Agente';
+ ['lbTo','lbR'].forEach(i=>$(i).classList.toggle('hide',t!=='troca'));$('lbN').classList.toggle('hide',t==='troca');
+ $('evHelp').textContent=t==='troca'?'O agente que cobre assume o horário do agente que sai. Em “Devolução”, informe o dia em que ele devolve a troca.':'Registra horas trabalhadas além da escala normal (pode ser em dia de folga ou depois do fim do turno).'}
+function renderEv(){$('mlab3').textContent=MN[V.m]+' de '+V.y;evForm();if(!$('evD').value)$('evD').value=V.sel;if(!$('evS').value)setDef();
+ const p=V.y+'-'+pad(V.m+1),l=S.events.filter(e=>e.d.startsWith(p)).sort((a,b)=>a.d.localeCompare(b.d));
+ $('evL').innerHTML=l.map(e=>{const A=agById(e.t==='troca'?e.f:e.a),B=agById(e.to),dt=fromIso(e.d);
+  const txt=e.t==='troca'?`<b>Troca</b>: ${esc(A?A.n:'?')} → coberto por ${esc(B?B.n:'?')}`:`<b>Hora extra</b>: ${esc(A?A.n:'?')} · ${fh(dur(e.s,e.e))}${e.n?' · '+esc(e.n):''}`;
+  return `<div class="li"><span>${txt}</span><span>${WD[dt.getDay()].slice(0,3)} ${fd(dt)} · ${e.s}–${e.e} <button class="x" data-ev="${e.id}" title="Remover">×</button></span></div>`}).join('')||'<div class="sub">Nenhuma ocorrência neste mês</div>'}
+function openEv(t,d){$('evT').value=t;$('evD').value=d;document.querySelector('#tabs [data-t="ev"]').click();evForm();setDef()}
+
+function fillFlt(){$('flt').innerHTML='<option value="">Todos</option>'+S.agents.map(a=>`<option value="${a.id}" ${a.id===V.f?'selected':''}>${esc(a.n)}</option>`).join('')}
+
+function renderAg(){$('anc').value=S.anchor;
+ $('agl').innerHTML=S.agents.map(a=>`<div class="ag" data-id="${a.id}"><input type="text" class="nm" data-f="n" value="${esc(a.n)}" placeholder="Nome"><input type="text" class="mt" data-f="m" value="${esc(a.m)}" placeholder="Matrícula">
+ <select data-f="g"><option value="A" ${a.g==='A'?'selected':''}>Grupo A</option><option value="B" ${a.g==='B'?'selected':''}>Grupo B</option><option value="D" ${a.g==='D'?'selected':''}>8 horas</option></select>
+ <input type="time" data-f="s" value="${a.s}"><input type="time" data-f="e" value="${a.e}">
+ ${a.g==='D'?`<input type="text" class="lc" data-f="l" value="${esc(a.l)}" placeholder="Almoço (opcional)"><div class="wds">${WL.map((x,i)=>`<button data-wd="${i}" class="${a.wd.includes(i)?'on':''}" title="${WD[i]}">${x}</button>`).join('')}</div>`:''}
+ <button class="x" data-del title="Remover">×</button></div>`).join('')}
+
+const all=()=>{renderNow();renderCal();renderSheet();fillFlt()};
+$('tabs').onclick=e=>{const t=e.target.dataset.t;if(!t)return;document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b===e.target));
+ ['cal','sheet','ev','ag','cor'].forEach(k=>$('t-'+k).classList.toggle('hide',k!==t));if(t==='ag')renderAg();if(t==='ev')renderEv();if(t==='cor')renderCor();if(t==='sheet')renderSheet()};
+const mv=d=>{V.m+=d;if(V.m>11){V.m=0;V.y++}if(V.m<0){V.m=11;V.y--}V.sel=iso(new Date(V.y,V.m,1));renderCal();renderSheet();if(!$('t-ev').classList.contains('hide'))renderEv()};
+$('prev').onclick=$('prev2').onclick=$('prev3').onclick=()=>mv(-1);$('next').onclick=$('next2').onclick=$('next3').onclick=()=>mv(1);
+$('today').onclick=()=>{V.y=T.getFullYear();V.m=T.getMonth();V.sel=iso(T);renderCal();renderSheet()};
+$('flt').onchange=e=>{V.f=e.target.value;renderCal()};
+$('cal').onclick=e=>{const b=e.target.closest('[data-d]');if(!b)return;V.sel=b.dataset.d;renderCal()};
+$('anc').onchange=e=>{if(e.target.value){S.anchor=e.target.value;save();all()}};
+$('agl').addEventListener('input',e=>{const r=e.target.closest('.ag');if(!r||!e.target.dataset.f||e.target.tagName==='SELECT')return;const a=S.agents.find(x=>x.id===r.dataset.id);a[e.target.dataset.f]=e.target.value;save();renderNow();renderCal();renderSheet();if(e.target.dataset.f==='n')fillFlt()});
+$('agl').addEventListener('change',e=>{if(e.target.tagName!=='SELECT')return;const a=S.agents.find(x=>x.id===e.target.closest('.ag').dataset.id);a.g=e.target.value;save();renderAg();all()});
+$('agl').addEventListener('click',e=>{const r=e.target.closest('.ag');if(!r)return;const a=S.agents.find(x=>x.id===r.dataset.id);
+ if(e.target.dataset.wd!==undefined){const i=+e.target.dataset.wd;a.wd=a.wd.includes(i)?a.wd.filter(x=>x!==i):[...a.wd,i];save();renderAg();all()}
+ if(e.target.hasAttribute('data-del')&&confirm('Remover '+a.n+'?')){S.agents=S.agents.filter(x=>x!==a);save();renderAg();all()}});
+const add=g=>{S.agents.push(mk('NOVO AGENTE','',g,g==='D'?'08:00':'06:00',g==='D'?'17:00':'18:00'));save();renderAg();all()};
+$('addA').onclick=()=>add('A');$('addB').onclick=()=>add('B');$('addD').onclick=()=>add('D');
+$('reset').onclick=()=>{if(confirm('Restaurar a lista de agentes e a escala originais?')){const th=S.theme,md=S.mode;S=seed();S.theme=th;S.mode=md;save();V.f='';renderAg();all()}};
+const SW=['#2457d6','#0e7490','#0f766e','#15803d','#65a30d','#ca8a04','#c2410c','#dc2626','#be185d','#7e22ce','#4f46e5','#475569'];
+const PRE=[['Padrão',null],['Oceano',['#0e7490','#0e7490','#e2574c']],['Floresta',['#15803d','#15803d','#ca8a04']],['Ameixa',['#7e22ce','#7e22ce','#db2777']],['Grafite',['#475569','#475569','#dc2626']],['Pôr do sol',['#c2410c','#c2410c','#4f46e5']]];
+const TG=[['pri','Cor principal (botões e abas)'],['a','Grupo A'],['b','Grupo B']];
+function applyTheme(){const r=document.documentElement,t=S.theme||{};
+ ['--pri','--a','--b','--abg','--bbg'].forEach(k=>r.style.removeProperty(k));
+ if(t.pri)r.style.setProperty('--pri',t.pri);
+ if(t.a){r.style.setProperty('--a',t.a);r.style.setProperty('--abg','color-mix(in srgb,'+t.a+' 16%,var(--card))')}
+ if(t.b){r.style.setProperty('--b',t.b);r.style.setProperty('--bbg','color-mix(in srgb,'+t.b+' 16%,var(--card))')}
+ if(S.mode)r.dataset.theme=S.mode;else delete r.dataset.theme}
+function renderCor(){const t=S.theme||{};
+ $('pre').innerHTML=PRE.map(([n,p],i)=>`<button class="pr" data-i="${i}"><span><i style="background:${p?p[1]:'#2457d6'}"></i><i style="background:${p?p[2]:'#b85c10'}"></i><i style="background:${p?p[0]:'#2457d6'}"></i></span>${n}</button>`).join('');
+ $('cor').innerHTML=TG.map(([k,l])=>`<div class="tr"><div class="sub">${l}</div><div class="sws">${SW.map(c=>`<button class="sw ${t[k]===c?'on':''}" data-k="${k}" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}<label class="sw cu" title="Outra cor">+<input type="color" data-k="${k}" value="${t[k]||(k==='b'?'#b85c10':'#2457d6')}"></label></div></div>`).join('');
+ $('mode').value=S.mode||''}
+function setC(k,c,nr){S.theme=S.theme||{};S.theme[k]=c;save();applyTheme();if(!nr)renderCor()}
+$('pre').onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const p=PRE[+b.dataset.i][1];S.theme=p?{pri:p[0],a:p[1],b:p[2]}:null;save();applyTheme();renderCor()};
+$('cor').onclick=e=>{const b=e.target.closest('.sw[data-c]');if(b)setC(b.dataset.k,b.dataset.c)};
+$('cor').addEventListener('input',e=>{if(e.target.type==='color')setC(e.target.dataset.k,e.target.value,true)});
+$('mode').onchange=e=>{S.mode=e.target.value||'';save();applyTheme()};
+$('corReset').onclick=()=>{S.theme=null;S.mode='';save();applyTheme();renderCor()};
+$('evT').onchange=()=>{evForm();setDef()};$('evF').onchange=setDef;
+$('evAdd').onclick=()=>{const t=$('evT').value,d=$('evD').value,s=$('evS').value,e=$('evE').value,f=$('evF').value,to=$('evTo').value;
+ if(!d||!s||!e||!f||(t==='troca'&&!to)){alert('Preencha data, agente e horário.');return}
+ if(t==='troca'){if(to===f){alert('Escolha dois agentes diferentes.');return}
+  const A=agById(f);if(!works(A,fromIso(d))&&!confirm(A.n+' não está escalado em '+fd(fromIso(d))+'. Registrar mesmo assim?'))return;
+  S.events.push({id:uid(),t:'troca',d,f,to,s,e});
+  const r=$('evR').value;if(r){const B=agById(to);S.events.push({id:uid(),t:'troca',d:r,f:to,to:f,s:B.s,e:B.e})}}
+ else S.events.push({id:uid(),t:'extra',d,a:f,s,e,n:$('evN').value});
+ save();V.y=+d.slice(0,4);V.m=+d.slice(5,7)-1;V.sel=d;$('evR').value='';$('evN').value='';all();renderEv()};
+$('evL').onclick=e=>{const b=e.target.closest('[data-ev]');if(!b)return;S.events=S.events.filter(x=>x.id!==b.dataset.ev);save();all();renderEv()};
+applyTheme();all();setInterval(renderNow,60000);
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
