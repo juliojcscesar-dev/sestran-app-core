@@ -9,9 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/escala-agentes")({
   head: () => ({ meta: [
     { title: "Escala dos Agentes | SESTRAN Paranavaí" },
-    { name: "description", content: "Escala dos agentes de trânsito: plantões 12/36, agentes de 8 horas, trocas e horas extras." },
+    { name: "description", content: "Escala dos agentes de trânsito: plantões 12/36, agentes de 8 horas, trocas, plantões extras, férias e licença." },
     { property: "og:title", content: "Escala dos Agentes | SESTRAN Paranavaí" },
-    { property: "og:description", content: "Plantões 12/36, agentes de 8 horas, trocas e horas extras." },
+    { property: "og:description", content: "Plantões 12/36, agentes de 8 horas, trocas, plantões extras, férias e licença." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }), component: EscalaAgentes,
 });
@@ -44,6 +44,7 @@ function QuadroEscala() {
           const { data: u } = await supabase.auth.getUser();
           const { error } = await supabase.from("escala_agentes_estado").upsert({ id: 1, dados, atualizado_em: new Date().toISOString(), atualizado_por: u.user?.id ?? null });
           if (error) toast.error("Não foi possível salvar a escala.");
+          ref.current?.contentWindow?.postMessage({ tipo: "escala-salva", sucesso: !error }, window.location.origin);
         }, 800);
       }
     };

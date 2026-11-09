@@ -1,5 +1,10 @@
 # Roadmap — SESTRAN
 
+## Escala dos Agentes (09/11)
+- [ ] Renomear Hora Extra para Plantão Extra sem perder ocorrências existentes
+- [ ] Adicionar Férias e Licença com agente e situação salva no sistema
+- [ ] Verificar salvamento, reabertura e apresentação em computador e celular
+
 ## Painel para todos e aplicativo instalável (29/10)
 - [x] Painel completo para todo usuário com algum módulo liberado; abrir módulos só quando liberado
 - [x] Totais conferidos com os cálculos anteriores (credenciais idênticas)
