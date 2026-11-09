@@ -120,7 +120,7 @@ h1,h2{font-family:Archivo,system-ui,sans-serif;letter-spacing:-.01em}h1{color:va
     <div class="card">
       <h2>Registrar ocorrência</h2>
       <div class="fm">
-        <label>Tipo<select id="evT"><option value="troca">Troca de plantão</option><option value="extra">Hora extra</option></select></label>
+        <label>Tipo<select id="evT"><option value="troca">Troca de plantão</option><option value="extra">Plantão Extra</option></select></label>
         <label>Data<input type="date" id="evD"></label>
         <label id="lbF">Agente que sai<select id="evF"></select></label>
         <label id="lbTo">Agente que cobre<select id="evTo"></select></label>
@@ -131,6 +131,15 @@ h1,h2{font-family:Archivo,system-ui,sans-serif;letter-spacing:-.01em}h1{color:va
       </div>
       <div class="sub" style="margin-top:8px" id="evHelp"></div>
       <div style="margin-top:12px"><button class="btn pri" id="evAdd">Registrar</button></div>
+    </div>
+    <div class="card">
+      <h2>Férias e Licença</h2>
+      <div class="fm">
+        <label>Agente<select id="situacaoAgente"></select></label>
+        <label>Situação<select id="situacao"><option>Em Atividade</option><option>Férias</option><option>Licença</option></select></label>
+      </div>
+      <div style="margin-top:12px"><button class="btn pri" id="situacaoSalvar">Salvar situação</button></div>
+      <div class="sub" id="situacaoAviso" role="status" aria-live="polite"></div>
     </div>
     <div class="bar"><div class="nav"><button id="prev3" aria-label="Mês anterior">‹</button><b id="mlab3"></b><button id="next3" aria-label="Próximo mês">›</button></div></div>
     <div class="card"><h2>Ocorrências do mês</h2><div id="evL"></div></div>
@@ -163,7 +172,8 @@ h1,h2{font-family:Archivo,system-ui,sans-serif;letter-spacing:-.01em}h1{color:va
   </section>
 </div>
 
-<script>
+<script type="module">
+import { situacaoAgente, definirSituacao } from './situacoes.js';
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -205,7 +215,7 @@ function duty(now){const t=pad(now.getHours())+':'+pad(now.getMinutes());const y
 function renderNow(){const n=new Date();const g=groupOn(n);
  $('nowT').textContent='Hoje, '+WD[n.getDay()]+' '+fd(n);
  $('nowS').innerHTML='Grupo <b style="color:var(--'+(g==='A'?'a':'b')+')">'+g+'</b> de serviço · agora '+pad(n.getHours())+':'+pad(n.getMinutes())+' · em serviço:';
- const d=duty(n);$('nowC').innerHTML=d.length?d.map(([x,t])=>`<span class="chip ${x.a.g==='D'?'':x.a.g}">${esc(x.a.n)}${x.k==='extra'?' <b>HE</b>':''}${x.k==='cover'?' <b>troca</b>':''} <small>${t}</small></span>`).join(''):'<span class="sub">Ninguém no horário agora</span>'}
+ const d=duty(n);$('nowC').innerHTML=d.length?d.map(([x,t])=>`<span class="chip ${x.a.g==='D'?'':x.a.g}">${esc(x.a.n)}${x.k==='extra'?' <b>PE</b>':''}${x.k==='cover'?' <b>troca</b>':''} <small>${t}</small></span>`).join(''):'<span class="sub">Ninguém no horário agora</span>'}
 
 function renderCal(){
  const first=new Date(V.y,V.m,1),nd=new Date(V.y,V.m+1,0).getDate();
@@ -217,28 +227,28 @@ function renderCal(){
  for(let d=1;d<=nd;d++){const dt=new Date(V.y,V.m,d),g=groupOn(dt),k=iso(dt),ev=S.events.filter(e=>e.d===k);let c='cell '+g;
   if(k===iso(T))c+=' today';if(k===V.sel)c+=' sel';
   if(ag){const mine=shifts(dt).filter(x=>x.a.id===ag.id&&x.k!=='out');if(mine.length){c+=' mine';cnt.push(pad(d));mine.forEach(x=>{if(x.k==='extra')xh+=dur(x.s,x.e)})}else c+=' dim'}
-  const tg=(ev.some(e=>e.t==='troca')?'T ':'')+(ev.some(e=>e.t==='extra')?'HE':'');
+  const tg=(ev.some(e=>e.t==='troca')?'T ':'')+(ev.some(e=>e.t==='extra')?'PE':'');
   h+=`<button class="${c}" data-d="${k}"><span class="top"><span class="n">${d}</span><span class="ev">${tg}</span></span><span class="g">${g}</span></button>`}
  $('cal').innerHTML=h;
  $('fltInfo').classList.toggle('hide',!ag);
- if(ag)$('fltInfo').innerHTML=`<b>${esc(ag.n)}</b> trabalha <b>${cnt.length}</b> dia(s) em ${MN[V.m]}: ${cnt.join(', ')||'nenhum'}${xh?` · hora extra: <b>${fh(xh)}</b>`:''}`;
+ if(ag)$('fltInfo').innerHTML=`<b>${esc(ag.n)}</b> · ${esc(situacaoAgente(ag))} · trabalha <b>${cnt.length}</b> dia(s) em ${MN[V.m]}: ${cnt.join(', ')||'nenhum'}${xh?` · plantão extra: <b>${fh(xh)}</b>`:''}`;
  renderDet()}
 
 function ended(x){const n=new Date();return V.sel<iso(n)||(V.sel===iso(n)&&pad(n.getHours())+':'+pad(n.getMinutes())>=x.e)}
 function renderDet(){const d=fromIso(V.sel),g=groupOn(d);const y=new Date(d);y.setDate(y.getDate()-1);
  const L=shifts(d),yl=shifts(y).filter(x=>x.k!=='out'&&x.e<=x.s);
  const sec=x=>{if(x.k==='extra')return'x';const o=(x.k==='cover'?x.of:x.a)||x.a;return o.g==='D'?'d':(x.e<=x.s?'n':'g')};
- const row=x=>{const a=x.a;const tg=x.k==='out'?`<span class="tag">troca → ${esc(x.by?x.by.n:'?')}</span>`:x.k==='cover'?`<span class="tag">troca: cobre ${esc(x.of?x.of.n:'?')}</span>`:x.k==='extra'?`<span class="tag">hora extra ${fh(dur(x.s,x.e))}</span>`:'';
+ const row=x=>{const a=x.a;const tg=x.k==='out'?`<span class="tag">troca → ${esc(x.by?x.by.n:'?')}</span>`:x.k==='cover'?`<span class="tag">troca: cobre ${esc(x.of?x.of.n:'?')}</span>`:x.k==='extra'?`<span class="tag">plantão extra ${fh(dur(x.s,x.e))}</span>`:'';
   return `<div class="li ${x.k==='out'?'out':''}"><span><b>${esc(a.n)}</b> <small>mat. ${esc(a.m)}</small>${a.g==='D'?'':`<span class="chip ${a.g}" style="margin-left:6px;padding:1px 8px;font-size:11px">Grupo ${a.g}</span>`}${tg}${x.n?` <small>· ${esc(x.n)}</small>`:''}</span><span>${x.s}HRS ÀS ${x.e}HRS${x.e<=x.s?' <small>(dia seguinte)</small>':''}${x.k==='base'&&a.l?` <small>· almoço ${esc(a.l)}</small>`:''}</span></div>`};
  const part=(k,t,em)=>{const r=L.filter(x=>sec(x)===k);return `<div class="sub" style="margin:12px 0 2px">${t}</div>${r.map(row).join('')||`<div class="sub">${em}</div>`}`};
- $('det').innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><h2 style="margin:0">${WD[d.getDay()]}, ${fd(d)} — <span style="color:var(--${g==='A'?'a':'b'})">Grupo ${g}</span></h2><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" id="cp">Copiar escala do dia</button><button class="btn" id="bT">+ Troca</button><button class="btn" id="bX">+ Hora extra</button></div></div>
- ${part('g','AGENTES 12/36 — GRUPO '+g+' (DIURNO)','Nenhum agente neste dia')}${part('n','PLANTÃO NOTURNO — GRUPO '+g,'Sem plantão noturno')}${part('d','AGENTES 8 HORAS','Sem expediente neste dia')}${L.some(x=>x.k==='extra')?part('x','HORA EXTRA',''):''}
+ $('det').innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><h2 style="margin:0">${WD[d.getDay()]}, ${fd(d)} — <span style="color:var(--${g==='A'?'a':'b'})">Grupo ${g}</span></h2><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" id="cp">Copiar escala do dia</button><button class="btn" id="bT">+ Troca</button><button class="btn" id="bX">+ Plantão Extra</button></div></div>
+ ${part('g','AGENTES 12/36 — GRUPO '+g+' (DIURNO)','Nenhum agente neste dia')}${part('n','PLANTÃO NOTURNO — GRUPO '+g,'Sem plantão noturno')}${part('d','AGENTES 8 HORAS','Sem expediente neste dia')}${L.some(x=>x.k==='extra')?part('x','PLANTÃO EXTRA',''):''}
  ${yl.length?'<div class="sub" style="margin:12px 0 2px">PLANTÃO NOTURNO DA NOITE ANTERIOR</div>'+yl.map(x=>`<div class="li" style="${ended(x)?'opacity:.6':''}"><span><b>${esc(x.a.n)}</b> <span class="tag">${ended(x)?'encerrado':'em andamento'}</span></span><span>entrou ontem às ${x.s} · ${ended(x)?'saiu':'sai'} às ${x.e}</span></div>`).join(''):''}`;
  $('bT').onclick=()=>openEv('troca',V.sel);$('bX').onclick=()=>openEv('extra',V.sel);
- $('cp').onclick=()=>{const Lt=x=>'• '+x.a.n+' ('+x.a.m+') '+x.s+' às '+x.e+(x.k==='cover'?' (troca: cobre '+(x.of?x.of.n:'?')+')':'')+(x.k==='extra'?' (hora extra)':'');
+ $('cp').onclick=()=>{const Lt=x=>'• '+x.a.n+' ('+x.a.m+') '+x.s+' às '+x.e+(x.k==='cover'?' (troca: cobre '+(x.of?x.of.n:'?')+')':'')+(x.k==='extra'?' (plantão extra)':'');
   const On=L.filter(x=>x.k!=='out'),pick=k=>On.filter(x=>sec(x)===k).map(Lt).join('\n')||'—';
   let t='ESCALA '+fd(d)+' ('+WD[d.getDay()]+') - Grupo '+g+'\n\n12/36:\n'+pick('g')+'\n\nNoturno:\n'+pick('n')+'\n\n8 horas:\n'+pick('d');
-  if(On.some(x=>sec(x)==='x'))t+='\n\nHora extra:\n'+pick('x');
+  if(On.some(x=>sec(x)==='x'))t+='\n\nPlantão Extra:\n'+pick('x');
   const ok=()=>{$('cp').textContent='Copiado ✓'};
   try{navigator.clipboard.writeText(t).then(ok,()=>prompt('Copie o texto:',t))}catch(e){prompt('Copie o texto:',t)}}}
 
@@ -253,7 +263,7 @@ function renderSheet(){const nd=new Date(V.y,V.m+1,0).getDate();let n=0;
  const tr=evs.filter(e=>e.t==='troca'),ex=evs.filter(e=>e.t==='extra'),nm=id=>{const a=agById(id);return a?esc(a.n):'?'};
  const tot={};ex.forEach(e=>{tot[e.a]=(tot[e.a]||0)+dur(e.s,e.e)});
  const t1=tr.length?`<table><tr><td colspan="4" class="g">TROCAS DE PLANTÃO</td></tr><tr><th>DATA</th><th>AGENTE QUE SAI</th><th>AGENTE QUE COBRE</th><th>HORÁRIO</th></tr>${tr.map(e=>`<tr><td>${fdm(e.d)}</td><td>${nm(e.f)}</td><td>${nm(e.to)}</td><td>${e.s} ÀS ${e.e}</td></tr>`).join('')}</table>`:'';
- const t2=ex.length?`<table><tr><td colspan="5" class="g">HORAS EXTRAS</td></tr><tr><th>DATA</th><th>AGENTE</th><th>HORÁRIO</th><th>HORAS</th><th>OBS.</th></tr>${ex.map(e=>`<tr><td>${fdm(e.d)}</td><td>${nm(e.a)}</td><td>${e.s} ÀS ${e.e}</td><td>${fh(dur(e.s,e.e))}</td><td>${esc(e.n||'')}</td></tr>`).join('')}<tr><td colspan="5"><b>TOTAL NO MÊS:</b> ${Object.keys(tot).map(id=>nm(id)+' '+fh(tot[id])).join(' · ')}</td></tr></table>`:'';
+ const t2=ex.length?`<table><tr><td colspan="5" class="g">PLANTÕES EXTRAS</td></tr><tr><th>DATA</th><th>AGENTE</th><th>HORÁRIO</th><th>HORAS</th><th>OBS.</th></tr>${ex.map(e=>`<tr><td>${fdm(e.d)}</td><td>${nm(e.a)}</td><td>${e.s} ÀS ${e.e}</td><td>${fh(dur(e.s,e.e))}</td><td>${esc(e.n||'')}</td></tr>`).join('')}<tr><td colspan="5"><b>TOTAL NO MÊS:</b> ${Object.keys(tot).map(id=>nm(id)+' '+fh(tot[id])).join(' · ')}</td></tr></table>`:'';
  $('sheet').innerHTML=`<table><tr><td colspan="4" class="t">ESCALA DOS AGENTES DE TRÂNSITO - ${V.y}</td></tr><tr><th>Nº</th><th>AGENTES 12/36</th><th>${MN[V.m].toUpperCase()} — MATRÍCULA</th><th>HORÁRIOS</th></tr>${sec('A')}${sec('B')}</table>
  <table><tr><td colspan="5" class="g">AGENTES 8 HORAS</td></tr><tr><th>Nº</th><th>AGENTE</th><th>MATRÍCULA</th><th>ALMOÇO</th><th>HORÁRIOS</th></tr>${d8}</table>${t1}${t2}`}
 
@@ -266,10 +276,16 @@ function evForm(){const t=$('evT').value,f=$('evF').value,to=$('evTo').value;
  $('lbF').firstChild.textContent=t==='troca'?'Agente que sai':'Agente';
  ['lbTo','lbR'].forEach(i=>$(i).classList.toggle('hide',t!=='troca'));$('lbN').classList.toggle('hide',t==='troca');
  $('evHelp').textContent=t==='troca'?'O agente que cobre assume o horário do agente que sai. Em “Devolução”, informe o dia em que ele devolve a troca.':'Registra horas trabalhadas além da escala normal (pode ser em dia de folga ou depois do fim do turno).'}
-function renderEv(){$('mlab3').textContent=MN[V.m]+' de '+V.y;evForm();if(!$('evD').value)$('evD').value=V.sel;if(!$('evS').value)setDef();
+function renderSituacao(){const id=$('situacaoAgente').value;
+ $('situacaoAgente').innerHTML=S.agents.map(a=>`<option value="${a.id}">${esc(a.n)}</option>`).join('');
+ if(agById(id))$('situacaoAgente').value=id;
+ $('situacao').value=situacaoAgente(agById($('situacaoAgente').value));
+ $('situacaoSalvar').disabled=!S.agents.length;
+}
+function renderEv(){$('mlab3').textContent=MN[V.m]+' de '+V.y;evForm();renderSituacao();if(!$('evD').value)$('evD').value=V.sel;if(!$('evS').value)setDef();
  const p=V.y+'-'+pad(V.m+1),l=S.events.filter(e=>e.d.startsWith(p)).sort((a,b)=>a.d.localeCompare(b.d));
  $('evL').innerHTML=l.map(e=>{const A=agById(e.t==='troca'?e.f:e.a),B=agById(e.to),dt=fromIso(e.d);
-  const txt=e.t==='troca'?`<b>Troca</b>: ${esc(A?A.n:'?')} → coberto por ${esc(B?B.n:'?')}`:`<b>Hora extra</b>: ${esc(A?A.n:'?')} · ${fh(dur(e.s,e.e))}${e.n?' · '+esc(e.n):''}`;
+  const txt=e.t==='troca'?`<b>Troca</b>: ${esc(A?A.n:'?')} → coberto por ${esc(B?B.n:'?')}`:`<b>Plantão Extra</b>: ${esc(A?A.n:'?')} · ${fh(dur(e.s,e.e))}${e.n?' · '+esc(e.n):''}`;
   return `<div class="li"><span>${txt}</span><span>${WD[dt.getDay()].slice(0,3)} ${fd(dt)} · ${e.s}–${e.e} <button class="x" data-ev="${e.id}" title="Remover">×</button></span></div>`}).join('')||'<div class="sub">Nenhuma ocorrência neste mês</div>'}
 function openEv(t,d){$('evT').value=t;$('evD').value=d;document.querySelector('#tabs [data-t="ev"]').click();evForm();setDef()}
 
@@ -280,7 +296,7 @@ function renderAg(){$('anc').value=S.anchor;
  <select data-f="g"><option value="A" ${a.g==='A'?'selected':''}>Grupo A</option><option value="B" ${a.g==='B'?'selected':''}>Grupo B</option><option value="D" ${a.g==='D'?'selected':''}>8 horas</option></select>
  <input type="time" data-f="s" value="${a.s}"><input type="time" data-f="e" value="${a.e}">
  ${a.g==='D'?`<input type="text" class="lc" data-f="l" value="${esc(a.l)}" placeholder="Almoço (opcional)"><div class="wds">${WL.map((x,i)=>`<button data-wd="${i}" class="${a.wd.includes(i)?'on':''}" title="${WD[i]}">${x}</button>`).join('')}</div>`:''}
- <button class="x" data-del title="Remover">×</button></div>`).join('')}
+ <span class="tag">${esc(situacaoAgente(a))}</span><button class="x" data-del title="Remover">×</button></div>`).join('')}
 
 const all=()=>{renderNow();renderCal();renderSheet();fillFlt()};
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(!t)return;document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b===e.target));
@@ -319,6 +335,12 @@ $('cor').addEventListener('input',e=>{if(e.target.type==='color')setC(e.target.d
 $('mode').onchange=e=>{S.mode=e.target.value||'';save();applyTheme()};
 $('corReset').onclick=()=>{S.theme=null;S.mode='';save();applyTheme();renderCor()};
 $('evT').onchange=()=>{evForm();setDef()};$('evF').onchange=setDef;
+$('situacaoAgente').onchange=()=>{$('situacao').value=situacaoAgente(agById($('situacaoAgente').value));$('situacaoAviso').textContent=''};
+$('situacao').onchange=()=>{$('situacaoAviso').textContent=''};
+$('situacaoSalvar').onclick=()=>{
+ try{S.agents=definirSituacao(S.agents,$('situacaoAgente').value,$('situacao').value)}catch(e){$('situacaoAviso').textContent=e.message;return}
+ $('situacaoAviso').textContent='Salvando situação…';save();all();
+};
 $('evAdd').onclick=()=>{const t=$('evT').value,d=$('evD').value,s=$('evS').value,e=$('evE').value,f=$('evF').value,to=$('evTo').value;
  if(!d||!s||!e||!f||(t==='troca'&&!to)){alert('Preencha data, agente e horário.');return}
  if(t==='troca'){if(to===f){alert('Escolha dois agentes diferentes.');return}
@@ -329,7 +351,9 @@ $('evAdd').onclick=()=>{const t=$('evT').value,d=$('evD').value,s=$('evS').value
  save();V.y=+d.slice(0,4);V.m=+d.slice(5,7)-1;V.sel=d;$('evR').value='';$('evN').value='';all();renderEv()};
 $('evL').onclick=e=>{const b=e.target.closest('[data-ev]');if(!b)return;S.events=S.events.filter(x=>x.id!==b.dataset.ev);save();all();renderEv()};
 applyTheme();all();setInterval(renderNow,60000);
-window.addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.tipo!=='escala-dados')return;
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==parent||!e.data)return;
+ if(e.data.tipo==='escala-salva'){if($('situacaoAviso').textContent==='Salvando situação…')$('situacaoAviso').textContent=e.data.sucesso?'Situação salva.':'Não foi possível salvar. Tente novamente.';return}
+ if(e.data.tipo!=='escala-dados')return;
  if(e.data.dados&&e.data.dados.agents){S=e.data.dados;if(!S.events)S.events=[];try{localStorage.setItem(KEY,JSON.stringify(S))}catch(x){}all();if(!$('t-ag').classList.contains('hide'))renderAg();if(!$('t-ev').classList.contains('hide'))renderEv()}
  else save()});
 try{parent.postMessage({tipo:'escala-pronta'},location.origin)}catch(e){}
