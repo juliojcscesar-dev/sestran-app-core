@@ -106,7 +106,7 @@ export async function obterVeiculo(id: string) {
     supabase.from("veiculos_abandonados").select(SELECAO).eq("id", id).single(),
     supabase
       .from("veiculo_fotos")
-      .select("id, veiculo_id, caminho, url, descricao, created_at")
+      .select("id, veiculo_id, caminho, url, descricao, tamanho, created_at")
       .eq("veiculo_id", id)
       .order("created_at"),
     supabase
