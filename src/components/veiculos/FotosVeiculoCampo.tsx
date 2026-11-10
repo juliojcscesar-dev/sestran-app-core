@@ -9,7 +9,7 @@ function MiniaturaSalva({ foto, onRemover }: { foto: FotoVeiculo; onRemover: () 
   const q = useQuery({ queryKey: ["veiculos", "foto-documento", foto.caminho], queryFn: () => urlAssinada(foto.caminho), staleTime: 30 * 60 * 1000 });
   return <Miniatura src={q.data ?? undefined} legenda={foto.descricao || "Foto salva"} onRemover={onRemover} />;
 }
-function Miniatura({ src, legenda, onRemover }: { src?: string; legenda: string; onRemover: () => void }) {
+function Miniatura({ src, legenda, onRemover }: { src?: string | undefined; legenda: string; onRemover: () => void }) {
   return <figure className="relative w-32 overflow-hidden rounded-md border bg-muted">
     {src ? <img src={src} alt={legenda} className="h-24 w-full object-cover" /> : <div className="flex h-24 items-center justify-center text-xs text-muted-foreground">Carregando…</div>}
     <figcaption className="truncate px-1 py-0.5 text-[11px]">{legenda}</figcaption>
@@ -45,7 +45,7 @@ export function FotosVeiculoCampo({ novas, onNovas, salvas, removidas, onRemovid
     <p className="mt-2 text-xs text-muted-foreground">Recorte o mapa ou qualquer imagem e cole aqui com Ctrl+V. Até 10 MB por imagem. As exclusões valem ao salvar.</p>
     {(visiveis.length > 0 || novas.length > 0) && <div className="mt-3 flex flex-wrap gap-3">
       {visiveis.map((f) => <MiniaturaSalva key={f.id} foto={f} onRemover={() => onRemovidas([...removidas, f.id])} />)}
-      {novas.map((f, i) => <Miniatura key={urls[i]} src={urls[i]} legenda={f.name.startsWith("recorte-") ? "Recorte colado" : f.name} onRemover={() => onNovas(novas.filter((_, j) => j !== i))} />)}
+      {novas.map((f, i) => <Miniatura key={`${i}-${f.name}`} src={urls[i]} legenda={f.name.startsWith("recorte-") ? "Recorte colado" : f.name} onRemover={() => onNovas(novas.filter((_, j) => j !== i))} />)}
     </div>}
   </div>;
 }
