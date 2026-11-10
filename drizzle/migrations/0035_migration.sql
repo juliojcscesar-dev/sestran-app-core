@@ -1,0 +1,1 @@
+ALTER TABLE public.veiculo_fotos ADD COLUMN IF NOT EXISTS tamanho smallint NOT NULL DEFAULT 100 CHECK (tamanho BETWEEN 25 AND 100);
