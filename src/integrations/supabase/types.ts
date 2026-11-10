@@ -1304,6 +1304,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
+          tamanho: number
           url: string
           veiculo_id: string
         }
@@ -1312,6 +1313,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          tamanho?: number
           url: string
           veiculo_id: string
         }
@@ -1320,6 +1322,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
+          tamanho?: number
           url?: string
           veiculo_id?: string
         }
