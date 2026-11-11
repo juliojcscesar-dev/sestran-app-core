@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gerarRelatorioDocx, gerarRelatorioPdf, intervaloPeriodo, TIPO_PERIODO_LABEL, type TipoPeriodo } from "@/lib/relatorios";
 import { hojeIso } from "@/lib/veiculos";
@@ -16,12 +17,16 @@ type Props = {
   /** Cabeçalhos das colunas da tabela do relatório. */
   colunas: string[];
   /** Busca as linhas do relatório no período; sem datas quando o período é Geral. */
-  buscar: (de?: string, ate?: string) => Promise<string[][]>;
+  buscar: (de?: string, ate?: string, situacao?: string) => Promise<string[][]>;
   /** Nome base do arquivo gerado, sem extensão. */
   arquivo: string;
   /** Texto do botão; padrão "Relatório". */
   rotulo?: string;
+  /** Opções de situação para filtrar o relatório; quando omitido, o filtro não aparece. */
+  situacoes?: { valor: string; rotulo: string }[];
 };
+
+const TODAS_SITUACOES = "__todas__";
 
 /** Botão "Relatório" da página inicial do módulo: escolhe o período e gera PDF ou DOCX. */
 export function RelatorioModulo(props: Props & { modulo: ModuloAcesso }) {
