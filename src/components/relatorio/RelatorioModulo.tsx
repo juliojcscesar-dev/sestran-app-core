@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gerarRelatorioDocx, gerarRelatorioPdf, intervaloPeriodo, TIPO_PERIODO_LABEL, type TipoPeriodo } from "@/lib/relatorios";
 import { hojeIso } from "@/lib/veiculos";
@@ -16,12 +17,16 @@ type Props = {
   /** Cabeçalhos das colunas da tabela do relatório. */
   colunas: string[];
   /** Busca as linhas do relatório no período; sem datas quando o período é Geral. */
-  buscar: (de?: string, ate?: string) => Promise<string[][]>;
+  buscar: (de?: string, ate?: string, situacao?: string) => Promise<string[][]>;
   /** Nome base do arquivo gerado, sem extensão. */
   arquivo: string;
   /** Texto do botão; padrão "Relatório". */
   rotulo?: string;
+  /** Opções de situação para filtrar o relatório; quando omitido, o filtro não aparece. */
+  situacoes?: { valor: string; rotulo: string }[];
 };
+
+const TODAS_SITUACOES = "__todas__";
 
 /** Botão "Relatório" da página inicial do módulo: escolhe o período e gera PDF ou DOCX. */
 export function RelatorioModulo(props: Props & { modulo: ModuloAcesso }) {
@@ -30,36 +35,39 @@ export function RelatorioModulo(props: Props & { modulo: ModuloAcesso }) {
   return <RelatorioModuloLiberado {...props} />;
 }
 
-function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo, rotulo = "Relatório" }: Props) {
+function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo, rotulo = "Relatório", situacoes }: Props) {
   const [aberto, setAberto] = useState(false);
   const [tipo, setTipo] = useState<TipoPeriodo>("mes");
   const [dia, setDia] = useState(hojeIso());
   const [mes, setMes] = useState(hojeIso().slice(0, 7));
   const [ano, setAno] = useState(hojeIso().slice(0, 4));
+  const [situacao, setSituacao] = useState(TODAS_SITUACOES);
   const [linhas, setLinhas] = useState<string[][] | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [gerando, setGerando] = useState<"pdf" | "docx" | null>(null);
 
   const referencia = tipo === "dia" ? dia : tipo === "mes" ? mes : ano;
   const intervalo = intervaloPeriodo(tipo, referencia);
+  const situacaoRotulo = situacao === TODAS_SITUACOES ? null : situacoes?.find((s) => s.valor === situacao)?.rotulo ?? null;
 
   useEffect(() => {
     if (!aberto) return;
     let vivo = true;
     setCarregando(true);
-    buscar(intervalo.de, intervalo.ate)
+    buscar(intervalo.de, intervalo.ate, situacao === TODAS_SITUACOES ? undefined : situacao)
       .then((resultado) => { if (vivo) setLinhas(resultado); })
       .catch(() => { if (vivo) { setLinhas([]); toast.error("Não foi possível carregar os registros do período."); } })
       .finally(() => { if (vivo) setCarregando(false); });
     return () => { vivo = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aberto, tipo, referencia]);
+  }, [aberto, tipo, referencia, situacao]);
 
   async function gerar(formato: "pdf" | "docx") {
     const dados = linhas ?? [];
     setGerando(formato);
     try {
-      const base = { titulo: `Relatório — ${titulo}`, periodo: intervalo.rotulo, colunas, linhas: dados, arquivo };
+      const periodo = situacaoRotulo ? `${intervalo.rotulo} · Situação: ${situacaoRotulo}` : intervalo.rotulo;
+      const base = { titulo: `Relatório — ${titulo}`, periodo, colunas, linhas: dados, arquivo };
       if (formato === "pdf") await gerarRelatorioPdf(base);
       else await gerarRelatorioDocx(base);
       toast.success(`Relatório ${formato.toUpperCase()} gerado.`);
@@ -97,6 +105,15 @@ function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo, rotulo = "R
           )}
           {tipo === "ano" && (
             <Input type="number" aria-label="Ano do relatório" min={2000} max={2100} value={ano} onChange={(e) => setAno(e.target.value)} />
+          )}
+          {situacoes && situacoes.length > 0 && (
+            <Select value={situacao} onValueChange={setSituacao}>
+              <SelectTrigger aria-label="Situação do relatório"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODAS_SITUACOES}>Todas as situações</SelectItem>
+                {situacoes.map((s) => <SelectItem key={s.valor} value={s.valor}>{s.rotulo}</SelectItem>)}
+              </SelectContent>
+            </Select>
           )}
           <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
             <p className="text-muted-foreground">{intervalo.rotulo}</p>

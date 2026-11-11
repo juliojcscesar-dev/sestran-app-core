@@ -183,8 +183,10 @@ function ListaOS() {
             titulo="Ordens de Serviço"
             arquivo="relatorio-ordens-servico"
             colunas={["Número", "Data", "Evento", "Local", "Situação"]}
-            buscar={async (de, ate) =>
-              ((await listarOrdens({ ...(de ? { de } : {}), ...(ate ? { ate } : {}) })) ?? []).map((os) => [
+            situacoes={STATUS_OS.map((s) => ({ valor: s, rotulo: STATUS_OS_LABEL[s] }))}
+            buscar={async (de, ate, situacao) =>
+              (((await listarOrdens({ ...(de ? { de } : {}), ...(ate ? { ate } : {}) })) ?? [])
+                .filter((os) => !situacao || os.status === situacao)).map((os) => [
                 os.numero ?? "—",
                 formatarDataBr(os.data_servico),
                 os.eventos?.titulo ?? "—",
