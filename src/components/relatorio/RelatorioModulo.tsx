@@ -35,36 +35,39 @@ export function RelatorioModulo(props: Props & { modulo: ModuloAcesso }) {
   return <RelatorioModuloLiberado {...props} />;
 }
 
-function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo, rotulo = "Relatório" }: Props) {
+function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo, rotulo = "Relatório", situacoes }: Props) {
   const [aberto, setAberto] = useState(false);
   const [tipo, setTipo] = useState<TipoPeriodo>("mes");
   const [dia, setDia] = useState(hojeIso());
   const [mes, setMes] = useState(hojeIso().slice(0, 7));
   const [ano, setAno] = useState(hojeIso().slice(0, 4));
+  const [situacao, setSituacao] = useState(TODAS_SITUACOES);
   const [linhas, setLinhas] = useState<string[][] | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [gerando, setGerando] = useState<"pdf" | "docx" | null>(null);
 
   const referencia = tipo === "dia" ? dia : tipo === "mes" ? mes : ano;
   const intervalo = intervaloPeriodo(tipo, referencia);
+  const situacaoRotulo = situacao === TODAS_SITUACOES ? null : situacoes?.find((s) => s.valor === situacao)?.rotulo ?? null;
 
   useEffect(() => {
     if (!aberto) return;
     let vivo = true;
     setCarregando(true);
-    buscar(intervalo.de, intervalo.ate)
+    buscar(intervalo.de, intervalo.ate, situacao === TODAS_SITUACOES ? undefined : situacao)
       .then((resultado) => { if (vivo) setLinhas(resultado); })
       .catch(() => { if (vivo) { setLinhas([]); toast.error("Não foi possível carregar os registros do período."); } })
       .finally(() => { if (vivo) setCarregando(false); });
     return () => { vivo = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aberto, tipo, referencia]);
+  }, [aberto, tipo, referencia, situacao]);
 
   async function gerar(formato: "pdf" | "docx") {
     const dados = linhas ?? [];
     setGerando(formato);
     try {
-      const base = { titulo: `Relatório — ${titulo}`, periodo: intervalo.rotulo, colunas, linhas: dados, arquivo };
+      const periodo = situacaoRotulo ? `${intervalo.rotulo} · Situação: ${situacaoRotulo}` : intervalo.rotulo;
+      const base = { titulo: `Relatório — ${titulo}`, periodo, colunas, linhas: dados, arquivo };
       if (formato === "pdf") await gerarRelatorioPdf(base);
       else await gerarRelatorioDocx(base);
       toast.success(`Relatório ${formato.toUpperCase()} gerado.`);
