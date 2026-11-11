@@ -106,6 +106,15 @@ function RelatorioModuloLiberado({ titulo, colunas, buscar, arquivo, rotulo = "R
           {tipo === "ano" && (
             <Input type="number" aria-label="Ano do relatório" min={2000} max={2100} value={ano} onChange={(e) => setAno(e.target.value)} />
           )}
+          {situacoes && situacoes.length > 0 && (
+            <Select value={situacao} onValueChange={setSituacao}>
+              <SelectTrigger aria-label="Situação do relatório"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODAS_SITUACOES}>Todas as situações</SelectItem>
+                {situacoes.map((s) => <SelectItem key={s.valor} value={s.valor}>{s.rotulo}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
           <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
             <p className="text-muted-foreground">{intervalo.rotulo}</p>
             <p className="font-display text-xl font-semibold">
