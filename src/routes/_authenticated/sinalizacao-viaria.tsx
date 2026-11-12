@@ -23,7 +23,7 @@ const STATUS = ["Aguardando", "Em Execução", "Concluída", "Cancelada"];
 const NATUREZAS = ["Sinalização Vertical", "Sinalização Horizontal", "Quebra-molas", "Semafórico", "Reparos - Placas e Pinturas", "Reparos - Quebra-molas"];
 const COR: Record<string, string> = { Aguardando: "border-warning/50 bg-warning/20 text-warning-foreground", "Em Execução": "border-primary/40 bg-primary/10 text-primary", "Concluída": "border-success/40 bg-success/15 text-success", Cancelada: "border-destructive/40 bg-destructive/10 text-destructive" };
 const hoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
-const vazio = () => ({ id: "", pedido: "", numero: "", data: hoje(), status: "Aguardando", natureza: "", naturezaOutra: "", endereco: "", servico: "", funcionario: "", observacao: "", preenchido: "", chefe: "Juarez Santana", cargo: "Gerente de Divisão - Sinalização Viária", imagens: [] as string[] });
+const vazio = () => ({ id: "", pedido: "", numero: "", numeroPedido: "", data: hoje(), status: "Aguardando", natureza: "", naturezaOutra: "", endereco: "", servico: "", funcionario: "", observacao: "", preenchido: "", chefe: "Juarez Santana", cargo: "Gerente de Divisão - Sinalização Viária", imagens: [] as string[] });
 const fmt = (s?: string | null) => { if (!s) return "—"; const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
 const esc = (v: unknown) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 const imgs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
@@ -62,13 +62,13 @@ function Sinalizacao() {
     const ultima = q.data[0];
     if (ultima) setF((p) => (p.id ? p : { ...p, preenchido: p.preenchido || ultima.preenchido || "", funcionario: p.funcionario || ultima.funcionario || "" }));
   }, [q.data, ultimosAplicados]);
-  const lista = useMemo(() => { const t = busca.toLocaleLowerCase("pt-BR"); return ordens.filter((o) => (!fs || o.status === fs) && (!fn || o.natureza === fn) && [o.numero, o.endereco, o.servico, o.funcionario, o.pedido, o.natureza].join(" ").toLocaleLowerCase("pt-BR").includes(t)); }, [ordens, busca, fs, fn]);
+  const lista = useMemo(() => { const t = busca.toLocaleLowerCase("pt-BR"); return ordens.filter((o) => (!fs || o.status === fs) && (!fn || o.natureza === fn) && [o.numero, o.numero_pedido, o.endereco, o.servico, o.funcionario, o.pedido, o.natureza].join(" ").toLocaleLowerCase("pt-BR").includes(t)); }, [ordens, busca, fs, fn]);
 
   const proximo = () => { let max = 0; ordens.forEach((o) => { const n = parseInt(o.numero.replace(/\D/g, "")); if (n > max) max = n; }); return "OS-" + String(max + 1).padStart(4, "0"); };
 
   const salvar = useMutation({ mutationFn: async () => {
     const natureza = f.natureza === "Outro" ? (f.naturezaOutra.trim() || "Outro") : f.natureza;
-    const dados = { pedido: f.pedido, numero: f.numero.trim() || proximo(), data: f.data, status: f.status, natureza, endereco: f.endereco.trim(), servico: f.servico.trim(), funcionario: f.funcionario.trim() || null, observacao: f.observacao.trim() || null, preenchido: f.preenchido.trim() || null, chefe_imediato: f.chefe.trim() || null, cargo: f.cargo.trim() || null, imagens: f.imagens, atualizado_em: new Date().toISOString() };
+    const dados = { pedido: f.pedido, numero: f.numero.trim() || proximo(), numero_pedido: f.numeroPedido.trim() || null, data: f.data, status: f.status, natureza, endereco: f.endereco.trim(), servico: f.servico.trim(), funcionario: f.funcionario.trim() || null, observacao: f.observacao.trim() || null, preenchido: f.preenchido.trim() || null, chefe_imediato: f.chefe.trim() || null, cargo: f.cargo.trim() || null, imagens: f.imagens, atualizado_em: new Date().toISOString() };
     const r = f.id ? await supabase.from("sinalizacao_os").update(dados).eq("id", f.id).select("id") : await supabase.from("sinalizacao_os").insert(dados).select("id");
     if (r.error) throw r.error; if (!r.data?.length) throw new Error("Sem permissão para salvar.");
   }, onSuccess: () => { toast.success(f.id ? "Ordem de serviço atualizada." : "Ordem de serviço salva com sucesso."); setF({ ...vazio(), preenchido: f.preenchido.trim(), funcionario: f.funcionario.trim() }); qc.invalidateQueries({ queryKey: ["sinalizacao_os"] }); }, onError: (e: Error) => toast.error(e.message) });
@@ -80,7 +80,7 @@ function Sinalizacao() {
 
   function editar(o: Registro) {
     const conhecida = NATUREZAS.includes(o.natureza);
-    setF({ id: o.id, pedido: o.pedido, numero: o.numero, data: o.data, status: o.status, natureza: conhecida ? o.natureza : "Outro", naturezaOutra: conhecida ? "" : o.natureza, endereco: o.endereco, servico: o.servico, funcionario: o.funcionario ?? "", observacao: o.observacao ?? "", preenchido: o.preenchido ?? "", chefe: o.chefe_imediato ?? "", cargo: o.cargo ?? "", imagens: imgs(o.imagens) });
+    setF({ id: o.id, pedido: o.pedido, numero: o.numero, numeroPedido: o.numero_pedido ?? "", data: o.data, status: o.status, natureza: conhecida ? o.natureza : "Outro", naturezaOutra: conhecida ? "" : o.natureza, endereco: o.endereco, servico: o.servico, funcionario: o.funcionario ?? "", observacao: o.observacao ?? "", preenchido: o.preenchido ?? "", chefe: o.chefe_imediato ?? "", cargo: o.cargo ?? "", imagens: imgs(o.imagens) });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -110,7 +110,7 @@ function Sinalizacao() {
 
   function exportarCSV() {
     if (!ordens.length) { toast.error("Não há ordens para exportar."); return; }
-    const cols = ["numero", "data", "pedido", "status", "natureza", "endereco", "servico", "funcionario", "observacao", "preenchido", "chefe_imediato", "cargo"] as const;
+    const cols = ["numero", "numero_pedido", "data", "pedido", "status", "natureza", "endereco", "servico", "funcionario", "observacao", "preenchido", "chefe_imediato", "cargo"] as const;
     const csv = [cols.join(";"), ...ordens.map((o) => cols.map((k) => `"${String(o[k] ?? "").replace(/"/g, '""').replace(/\n/g, " ")}"`).join(";"))].join("\r\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" })); a.download = "relatorio_ordens_sinalizacao.csv"; a.click(); URL.revokeObjectURL(a.href);
   }
@@ -140,8 +140,9 @@ function Sinalizacao() {
             <form onSubmit={(e) => { e.preventDefault(); salvar.mutate(); }} className="grid gap-4 sm:grid-cols-2">
               <p className={secao}>IDENTIFICAÇÃO DO PEDIDO</p>
               <div className="space-y-1.5"><Label>Origem do pedido *</Label><select required className={sel} value={f.pedido} onChange={(e) => set("pedido", e.target.value)}><option value="">Selecione...</option>{PEDIDOS.map((p) => <option key={p}>{p}</option>)}</select></div>
-              <div className="space-y-1.5"><Label>Nº da O.S.</Label><Input value={f.numero} onChange={(e) => set("numero", e.target.value)} placeholder="Gerado automaticamente se vazio" /></div>
               <div className="space-y-1.5"><Label>Data de abertura *</Label><Input type="date" required value={f.data} onChange={(e) => set("data", e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Nº da O.S.</Label><Input value={f.numero} onChange={(e) => set("numero", e.target.value)} placeholder="Gerado automaticamente se vazio" /></div>
+              <div className="space-y-1.5"><Label>Nº do pedido (GEO / IPM)</Label><Input value={f.numeroPedido} onChange={(e) => set("numeroPedido", e.target.value)} placeholder="Opcional — número do GEO ou do IPM" /></div>
               <div className="space-y-1.5"><Label>Situação *</Label><select className={sel} value={f.status} onChange={(e) => set("status", e.target.value)}>{STATUS.map((s) => <option key={s}>{s}</option>)}</select></div>
               <div className="space-y-1.5 sm:col-span-2"><Label>Natureza do serviço *</Label><select required className={sel} value={f.natureza} onChange={(e) => set("natureza", e.target.value)}><option value="">Selecione...</option>{[...NATUREZAS, "Outro"].map((n) => <option key={n}>{n}</option>)}</select></div>
               {f.natureza === "Outro" && <div className="space-y-1.5 sm:col-span-2"><Label>Especifique a natureza</Label><Input value={f.naturezaOutra} onChange={(e) => set("naturezaOutra", e.target.value)} /></div>}
@@ -173,7 +174,7 @@ function Sinalizacao() {
             {q.isPending ? <p className="py-10 text-center text-sm text-muted-foreground">Carregando...</p> : !lista.length ? <div className="py-12 text-center text-muted-foreground"><p className="font-semibold text-foreground">Nenhuma ordem encontrada</p><p className="text-sm">Cadastre uma nova O.S. ou ajuste os filtros de busca.</p></div> :
               lista.map((o) => <article key={o.id} className="py-4">
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-bold text-primary">{o.numero} · {fmt(o.data)}</p><h4 className="break-words text-sm font-semibold">{o.natureza} — {o.endereco}</h4></div><Badge variant="outline" className={COR[o.status]}>{o.status}</Badge></div>
-                <p className="mt-1 text-xs text-muted-foreground">{o.pedido} • Responsável: {o.funcionario || "Não informado"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{o.pedido}{o.numero_pedido ? ` · Nº do pedido: ${o.numero_pedido}` : ""} • Responsável: {o.funcionario || "Não informado"}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{o.servico.length > 110 ? o.servico.slice(0, 110) + "…" : o.servico}{imgs(o.imagens).length ? ` • ${imgs(o.imagens).length} imagem(ns)` : ""}</p>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2"><span className="text-xs text-muted-foreground">Preenchido por {o.preenchido || "—"}</span><div className="flex gap-1.5"><Button size="sm" variant="outline" onClick={() => ver(o)}>Ver</Button><Button size="sm" variant="outline" onClick={() => arquivo(o, "pdf")}>PDF</Button><Button size="sm" variant="outline" onClick={() => arquivo(o, "docx")}>DOC</Button>{podeEditar && <Button size="sm" variant="outline" onClick={() => editar(o)}>Editar</Button>}{podeExcluir && <Button size="sm" variant="outline" className="text-destructive" onClick={() => setExcluir(o)}>Excluir</Button>}</div></div>
               </article>)}

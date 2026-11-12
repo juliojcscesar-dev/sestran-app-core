@@ -1084,6 +1084,7 @@ export type Database = {
           imagens: Json
           natureza: string
           numero: string
+          numero_pedido: string | null
           observacao: string | null
           pedido: string
           preenchido: string | null
@@ -1103,6 +1104,7 @@ export type Database = {
           imagens?: Json
           natureza: string
           numero: string
+          numero_pedido?: string | null
           observacao?: string | null
           pedido: string
           preenchido?: string | null
@@ -1122,6 +1124,7 @@ export type Database = {
           imagens?: Json
           natureza?: string
           numero?: string
+          numero_pedido?: string | null
           observacao?: string | null
           pedido?: string
           preenchido?: string | null

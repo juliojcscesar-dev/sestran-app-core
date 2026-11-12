@@ -2,7 +2,7 @@
    O mesmo modelo é usado na visualização (HTML), no PDF e no DOCX. Observações/imagens só aparecem quando usadas. */
 
 export type DadosSinalizacao = {
-  pedido: string; numero: string; data: string; status: string; natureza: string; endereco: string; servico: string;
+  pedido: string; numero: string; numero_pedido: string | null; data: string; status: string; natureza: string; endereco: string; servico: string;
   funcionario: string | null; observacao: string | null; preenchido: string | null; chefe_imediato: string | null; cargo: string | null; imagens: string[];
 };
 
@@ -37,6 +37,9 @@ export function htmlSinalizacao(o: DadosSinalizacao) {
     : "";
   const assinatura = o.chefe_imediato || o.cargo
     ? `<div class="ass"><div class="linha"></div>${o.chefe_imediato ? `<div>${esc(o.chefe_imediato)}</div>` : ""}${o.cargo ? `<div><b>${esc(o.cargo)}</b></div>` : ""}</div>` : "";
+  const linha1 = o.numero_pedido?.trim()
+    ? `<div class="row">${caixa("PEDIDO:", o.pedido, "width:24%", true)}${caixa("Nº DO PEDIDO:", o.numero_pedido, "width:24%", true)}${caixa("Nº DA O. S.", o.numero, "width:24%", true)}${caixa("DATA:", dataModelo(o.data), "width:24%", true)}</div>`
+    : `<div class="row">${caixa("PEDIDO:", o.pedido, "width:33%", true)}${caixa("Nº DA O. S.", o.numero, "width:30%", true)}${caixa("DATA:", dataModelo(o.data), "width:30%", true)}</div>`;
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Ordem de Serviço ${esc(o.numero)}</title><style>
 @page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;background:#e9edf2}
 body{font-family:"Open Sans",Arial,Helvetica,sans-serif;color:${TEXTO}}
@@ -59,7 +62,7 @@ h1{font:bold 13pt Arial,sans-serif;color:${AZUL_TITULO};margin:6pt 0 4pt;text-al
 <div class="acoes"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
 <div class="folha"><div class="moldura">
 <div class="topo"><img src="${LOGO}" alt="Prefeitura de Paranavaí — Secretaria Municipal de Segurança e Trânsito"><div class="d1">DITRAN - DIRETORIA DE TRÂNSITO</div><div class="d2">DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA</div></div><div class="sep"></div><h1>ORDEM DE SERVIÇO - ${esc(o.numero)}</h1><div class="sep" style="margin-bottom:12pt"></div>
-<div class="row">${caixa("PEDIDO:", o.pedido, "width:33%", true)}${caixa("Nº DA O. S.", o.numero, "width:30%", true)}${caixa("DATA:", dataModelo(o.data), "width:30%", true)}</div>
+${linha1}
 <div class="row">${caixa("FUNCINÁRIO(S):", o.funcionario || "", "width:29%", true)}${caixa("NATUREZA:", o.natureza, "width:38%", true)}${caixa("SITUAÇÃO:", o.status, "width:26%", true)}</div>
 <div class="row">${caixa("ENDEREÇO:", o.endereco, "", true).replace('class="box"', 'class="box full"')}</div>
 <div class="row"><div class="box full"><span class="l">SERVIÇO:</span> <span class="v">${esc(o.servico)}</span></div></div>
@@ -100,7 +103,9 @@ export async function gerarPdfSinalizacao(o: DadosSinalizacao) {
     linhas.forEach((l, i) => doc.text(l, centro ? x + w / 2 : x + 10, y + 26 + i * 13, { align: centro ? "center" : "left" }));
     return y + h;
   };
-  let y = Math.max(caixa("PEDIDO:", o.pedido, X, 182, 175, true), caixa("Nº DA O. S.", o.numero, 222, 182, 160, true), caixa("DATA:", dataModelo(o.data), 398, 182, 168, true)) + 10;
+  let y = (o.numero_pedido?.trim()
+    ? Math.max(caixa("PEDIDO:", o.pedido, X, 182, 122, true), caixa("Nº DO PEDIDO:", o.numero_pedido, 169, 182, 122, true), caixa("Nº DA O. S.", o.numero, 305, 182, 122, true), caixa("DATA:", dataModelo(o.data), 441, 182, 122, true))
+    : Math.max(caixa("PEDIDO:", o.pedido, X, 182, 175, true), caixa("Nº DA O. S.", o.numero, 222, 182, 160, true), caixa("DATA:", dataModelo(o.data), 398, 182, 168, true))) + 10;
   y = Math.max(caixa("FUNCINÁRIO(S):", o.funcionario || "", X, y, 155, true), caixa("NATUREZA:", o.natureza, 200, y, 205, true), caixa("SITUAÇÃO:", o.status, 421, y, 145, true)) + 10;
   y = caixa("ENDEREÇO:", o.endereco, X, y, LARG, true) + 10;
   { doc.setFont("helvetica", "bold"); doc.setFontSize(7); const wl = doc.getTextWidth("SERVIÇO: ");
@@ -197,7 +202,9 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
   filhos.push(linhaSep(60, 120));
   filhos.push(p([t(`ORDEM DE SERVIÇO - ${o.numero}`, { bold: true, size: 13, color: AZUL_TITULO.slice(1) })], d.AlignmentType.CENTER));
   filhos.push(linhaSep(0, 240));
-  filhos.push(tabela([celula("PEDIDO:", o.pedido, 3500, true), vazio(250), celula("Nº DA O. S.", o.numero, 3250, true), vazio(250), celula("DATA:", dataModelo(o.data), 3350, true)]), espaco(10));
+  filhos.push(o.numero_pedido?.trim()
+    ? tabela([celula("PEDIDO:", o.pedido, 2462, true), vazio(250), celula("Nº DO PEDIDO:", o.numero_pedido, 2462, true), vazio(250), celula("Nº DA O. S.", o.numero, 2462, true), vazio(250), celula("DATA:", dataModelo(o.data), 2464, true)])
+    : tabela([celula("PEDIDO:", o.pedido, 3500, true), vazio(250), celula("Nº DA O. S.", o.numero, 3250, true), vazio(250), celula("DATA:", dataModelo(o.data), 3350, true)]), espaco(10));
   filhos.push(tabela([celula("FUNCINÁRIO(S):", o.funcionario || "", 3000, true), vazio(250), celula("NATUREZA:", o.natureza, 4300, true), vazio(250), celula("SITUAÇÃO:", o.status, 2800, true)]), espaco(10));
   filhos.push(tabela([celula("ENDEREÇO:", o.endereco, 10600, true)]), espaco(10));
   filhos.push(tabela([new d.TableCell({ width: { size: 10600, type: d.WidthType.DXA }, borders: comBorda, margins: { top: 80, bottom: 160, left: 140, right: 140 },
