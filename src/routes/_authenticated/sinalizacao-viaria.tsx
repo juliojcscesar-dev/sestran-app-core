@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, ClipboardList, Clock, Download, Hammer, Plus, Printer, RefreshCw, X } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock, Download, Hammer, Plus, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RelatorioModulo } from "@/components/relatorio/RelatorioModulo";
 import { Textarea } from "@/components/ui/textarea";
 
 type Registro = Database["public"]["Tables"]["sinalizacao_os"]["Row"];
@@ -101,12 +102,6 @@ function Sinalizacao() {
     catch { toast.error("Não foi possível gerar o documento."); }
   }
 
-  function imprimirRelatorio() {
-    const w = window.open("", "_blank"); if (!w) { toast.error("Permita pop-ups para imprimir."); return; }
-    const linhas = lista.map((o) => `<tr><td>${esc(o.numero)}</td><td>${fmt(o.data)}</td><td>${esc(o.pedido)}</td><td>${esc(o.natureza)}</td><td>${esc(o.endereco)}</td><td>${esc(o.funcionario || "—")}</td><td>${esc(o.status)}</td></tr>`).join("");
-    w.document.write(`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Relatório — Sinalização Viária</title><style>body{font:12px Arial;margin:24px}header{text-align:center}header img{max-height:70px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:4px 6px;text-align:left}th{background:#eee}@page{size:A4 landscape;margin:12mm}</style><header><img src="/assets/logo-header.png" alt=""><h2>Ordens de Serviço — Sinalização Viária</h2><p>${lista.length} ordem(ns)</p></header><table><tr><th>Nº</th><th>Data</th><th>Pedido</th><th>Natureza</th><th>Endereço</th><th>Responsável</th><th>Situação</th></tr>${linhas}</table><script>window.onload=()=>window.print()<\/script></html>`);
-    w.document.close();
-  }
 
   function exportarCSV() {
     if (!ordens.length) { toast.error("Não há ordens para exportar."); return; }
@@ -128,7 +123,7 @@ function Sinalizacao() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="text-xs font-semibold tracking-wider text-muted-foreground">DITRAN · DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA</p><h1 className="font-display text-2xl font-semibold">Painel de Sinalização Viária</h1><p className="text-sm text-muted-foreground">Cadastre, acompanhe e consulte as ordens de serviço do setor.</p></div>
-        <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={exportarCSV}><Download className="mr-2 h-4 w-4" />Exportar CSV</Button><Button variant="outline" onClick={imprimirRelatorio}><Printer className="mr-2 h-4 w-4" />Imprimir relatório</Button></div>
+        <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={exportarCSV}><Download className="mr-2 h-4 w-4" />Exportar CSV</Button><RelatorioModulo modulo="SINALIZACAO" titulo="Ordens de Serviço — Sinalização Viária" arquivo="relatorio-sinalizacao-viaria" colunas={["Nº", "Data", "Pedido", "Natureza", "Endereço", "Situação"]} situacoes={STATUS.map((s) => ({ valor: s, rotulo: s }))} buscar={async (de, ate, situacao) => ordens.filter((o) => (!de || o.data >= de) && (!ate || o.data <= ate) && (!situacao || o.status === situacao)).map((o) => [o.numero, fmt(o.data), [o.pedido, o.numero_pedido].filter(Boolean).join(" · "), o.natureza, o.endereco, o.status])} /></div>
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map(({ t, v, s, I }) => <Card key={t}><CardContent className="p-4"><div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">{t}<span className="grid h-8 w-8 place-items-center rounded-md bg-primary/10 text-primary"><I className="h-4 w-4" /></span></div><p className="mt-2 font-display text-3xl font-semibold">{v}</p><p className="text-xs text-muted-foreground">{s}</p></CardContent></Card>)}
