@@ -1079,6 +1079,7 @@ export type Database = {
           criado_por: string | null
           data: string
           endereco: string
+          fonte_tamanho: number
           funcionario: string | null
           id: string
           imagens: Json
@@ -1099,6 +1100,7 @@ export type Database = {
           criado_por?: string | null
           data?: string
           endereco: string
+          fonte_tamanho?: number
           funcionario?: string | null
           id?: string
           imagens?: Json
@@ -1119,6 +1121,7 @@ export type Database = {
           criado_por?: string | null
           data?: string
           endereco?: string
+          fonte_tamanho?: number
           funcionario?: string | null
           id?: string
           imagens?: Json

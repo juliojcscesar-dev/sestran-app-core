@@ -1,0 +1,1 @@
+ALTER TABLE public.sinalizacao_os ADD COLUMN IF NOT EXISTS fonte_tamanho smallint NOT NULL DEFAULT 11 CHECK (fonte_tamanho BETWEEN 8 AND 18);

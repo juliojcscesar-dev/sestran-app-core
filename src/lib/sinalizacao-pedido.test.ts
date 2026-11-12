@@ -1,6 +1,6 @@
 import { describe, test as it } from "node:test";
 import { strict as assert } from "node:assert";
-import { htmlSinalizacao, type DadosSinalizacao } from "./sinalizacao-documento";
+import { fonteDe, htmlSinalizacao, type DadosSinalizacao } from "./sinalizacao-documento";
 
 const base = (extra: Partial<DadosSinalizacao> = {}): DadosSinalizacao => ({
   pedido: "Ouvidoria - GEO", numero: "OS-0007", numero_pedido: null, data: "2026-11-12", status: "Aguardando",
@@ -25,4 +25,11 @@ describe("Nº do pedido (GEO / IPM) no documento da O.S. de Sinalização", () =
   it("ignora espaços em branco", () => {
     assert.equal(htmlSinalizacao(base({ numero_pedido: "   " })).includes("Nº DO PEDIDO"), false);
   });
+});
+
+test("tamanho da letra do preenchimento fica entre 8 e 18 pt, padrão 11", () => {
+  assert.equal(fonteDe(base()), 11);
+  assert.equal(fonteDe(base({ fonte_tamanho: 30 })), 18);
+  assert.equal(fonteDe(base({ fonte_tamanho: 14 })), 14);
+  assert.ok(htmlSinalizacao(base({ fonte_tamanho: 14 })).includes(".v{font-size:14pt"));
 });

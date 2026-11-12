@@ -1,9 +1,11 @@
+import { htmlTextoFormatado, lerTextoFormatado, textoSimples, type TrechoTexto } from "@/lib/texto-formatado";
+
 /* Documento da O.S. de Sinalização Viária — segue o modelo oficial (A4, bordas arredondadas em azul-claro).
    O mesmo modelo é usado na visualização (HTML), no PDF e no DOCX. Observações/imagens só aparecem quando usadas. */
 
 export type DadosSinalizacao = {
   pedido: string; numero: string; numero_pedido: string | null; data: string; status: string; natureza: string; endereco: string; servico: string;
-  funcionario: string | null; observacao: string | null; preenchido: string | null; chefe_imediato: string | null; cargo: string | null; imagens: string[];
+  funcionario: string | null; observacao: string | null; preenchido: string | null; chefe_imediato: string | null; cargo: string | null; imagens: string[]; fonte_tamanho?: number | null;
 };
 
 const LOGO = "/assets/logo-header.png";
@@ -16,7 +18,42 @@ export function dataModelo(s: string) {
   return y && m && d ? `${d} / ${m} / ${y}` : "";
 }
 const esc = (v: unknown) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
-export const temObservacoes = (o: DadosSinalizacao) => !!(o.observacao?.trim() || o.imagens.length);
+export const fonteDe = (o: DadosSinalizacao) => Math.min(18, Math.max(8, Number(o.fonte_tamanho) || 11));
+const ROTULO = 9.5;
+type JsPdf = InstanceType<typeof import("jspdf").jsPDF>;
+const estiloPdf = (t: TrechoTexto) => (t.negrito ? (t.italico ? "bolditalic" : "bold") : t.italico ? "italic" : "normal");
+/** Quebra texto formatado em linhas que cabem na largura, preservando negrito/itálico/sublinhado. */
+function quebrar(doc: JsPdf, valor: string, largura: number, fs: number) {
+  const linhas: { trechos: TrechoTexto[]; w: number }[] = [{ trechos: [], w: 0 }];
+  for (const tr of lerTextoFormatado(valor || "")) {
+    for (const pal of tr.texto.split(/(\n|[^\S\n]+)/).filter(Boolean)) {
+      if (pal === "\n") { linhas.push({ trechos: [], w: 0 }); continue; }
+      doc.setFont("helvetica", estiloPdf(tr)); doc.setFontSize(fs);
+      const add = (txt: string) => {
+        const w = doc.getTextWidth(txt); let l = linhas[linhas.length - 1] ?? { trechos: [], w: 0 };
+        if (l.w + w > largura && l.w > 0) { if (/^\s+$/.test(txt)) return; l = { trechos: [], w: 0 }; linhas.push(l); }
+        const ant = l.trechos.at(-1);
+        if (ant && ant.negrito === tr.negrito && ant.italico === tr.italico && ant.sublinhado === tr.sublinhado) ant.texto += txt; else l.trechos.push({ ...tr, texto: txt });
+        l.w += w;
+      };
+      if (doc.getTextWidth(pal) > largura) for (const c of pal) add(c); else add(pal);
+    }
+  }
+  return linhas;
+}
+function escrever(doc: JsPdf, linhas: ReturnType<typeof quebrar>, x: number, y: number, larg: number, centro: boolean, fs: number, passo: number) {
+  doc.setTextColor(TEXTO);
+  linhas.forEach((l, i) => {
+    let xx = centro ? x + (larg - l.w) / 2 : x; const by = y + i * passo;
+    l.trechos.forEach((t) => {
+      doc.setFont("helvetica", estiloPdf(t)); doc.setFontSize(fs); doc.text(t.texto, xx, by);
+      const w = doc.getTextWidth(t.texto);
+      if (t.sublinhado) { doc.setDrawColor(TEXTO); doc.setLineWidth(0.6); doc.line(xx, by + 1.5, xx + w, by + 1.5); }
+      xx += w;
+    });
+  });
+}
+export const temObservacoes = (o: DadosSinalizacao) => !!(textoSimples(o.observacao ?? "").trim() || o.imagens.length);
 
 function nomeArquivo(o: DadosSinalizacao) {
   return `os_sinalizacao_${(o.numero || "sem_numero").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "_")}`;
@@ -30,10 +67,10 @@ function baixar(blob: Blob, nome: string) {
 /* ---------------- Visualização / impressão (HTML A4) ---------------- */
 export function htmlSinalizacao(o: DadosSinalizacao) {
   const caixa = (rotulo: string, valor: string, estilo: string, centro = false) =>
-    `<div class="box" style="${estilo}"><div class="l">${esc(rotulo)}</div><div class="v${centro ? " c" : ""}">${esc(valor)}</div></div>`;
+    `<div class="box" style="${estilo}"><div class="l">${esc(rotulo)}</div><div class="v${centro ? " c" : ""}">${htmlTextoFormatado(valor ?? "")}</div></div>`;
   const fotos = o.imagens.map((s) => `<img src="${s}" alt="">`).join("");
   const obs = temObservacoes(o)
-    ? `<div class="box obs"><div class="l" style="text-align:center;margin:0">OBSERVAÇÕES / IMAGENS</div>${o.observacao?.trim() ? `<div class="v c" style="margin-top:20pt">${esc(o.observacao)}</div>` : ""}${fotos ? `<div class="fotos n${o.imagens.length}">${fotos}</div>` : ""}</div>`
+    ? `<div class="box obs"><div class="l" style="text-align:center;margin:0">OBSERVAÇÕES / IMAGENS</div>${textoSimples(o.observacao ?? "").trim() ? `<div class="v c" style="margin-top:20pt">${htmlTextoFormatado(o.observacao ?? "")}</div>` : ""}${fotos ? `<div class="fotos n${o.imagens.length}">${fotos}</div>` : ""}</div>`
     : "";
   const assinatura = o.chefe_imediato || o.cargo
     ? `<div class="ass"><div class="linha"></div>${o.chefe_imediato ? `<div>${esc(o.chefe_imediato)}</div>` : ""}${o.cargo ? `<div><b>${esc(o.cargo)}</b></div>` : ""}</div>` : "";
@@ -51,7 +88,7 @@ body{font-family:"Open Sans",Arial,Helvetica,sans-serif;color:${TEXTO}}
 h1{font:bold 13pt Arial,sans-serif;color:${AZUL_TITULO};margin:6pt 0 4pt;text-align:center}
 .row{display:flex;justify-content:space-between;align-items:stretch;margin-bottom:10pt;gap:14pt}
 .box{border:1.5pt solid ${AZUL_BORDA};border-radius:7pt;padding:4pt 8pt 5pt;min-height:41pt}
-.l{font:bold 7pt Arial,sans-serif;margin-left:4pt}.v{font-size:11pt;margin-top:2pt;white-space:pre-wrap;word-break:break-word}.c{text-align:center}
+.l{font:bold ${ROTULO}pt Arial,sans-serif;margin-left:4pt;text-transform:uppercase}.v{font-size:${fonteDe(o)}pt;margin-top:2pt;white-space:pre-wrap;word-break:break-word}.c{text-align:center}
 .full{width:100%}.obs{width:100%;min-height:250pt;margin-bottom:18pt}
 .fotos{display:flex;flex-wrap:wrap;gap:8pt;justify-content:center;margin-top:8pt}.fotos img{object-fit:contain;max-height:180pt;max-width:48%}.fotos.n3 img,.fotos.n4 img{max-width:23%;max-height:140pt}.fotos.n1 img{max-width:80%;max-height:230pt}
 .espaco{flex:1}.ass{text-align:center;font:8.5pt Arial,sans-serif;margin-top:30pt}.linha{border-top:1pt solid #333;width:228pt;margin:0 auto 4pt}
@@ -65,7 +102,7 @@ h1{font:bold 13pt Arial,sans-serif;color:${AZUL_TITULO};margin:6pt 0 4pt;text-al
 ${linha1}
 <div class="row">${caixa("FUNCINÁRIO(S):", o.funcionario || "", "width:29%", true)}${caixa("NATUREZA:", o.natureza, "width:38%", true)}${caixa("SITUAÇÃO:", o.status, "width:26%", true)}</div>
 <div class="row">${caixa("ENDEREÇO:", o.endereco, "", true).replace('class="box"', 'class="box full"')}</div>
-<div class="row"><div class="box full"><span class="l">SERVIÇO:</span> <span class="v">${esc(o.servico)}</span></div></div>
+<div class="row"><div class="box full"><span class="l">SERVIÇO:</span> <span class="v">${htmlTextoFormatado(o.servico ?? "")}</span></div></div>
 ${obs ? `<div class="sep" style="margin:6pt -14pt 12pt"></div>${obs}` : ""}<div class="espaco"></div>${assinatura}
 <div class="pre">Preenchimento: <b>${esc(o.preenchido || "")}</b></div>
 </div></div></body></html>`;
@@ -93,14 +130,13 @@ export async function gerarPdfSinalizacao(o: DadosSinalizacao) {
   doc.text(`ORDEM DE SERVIÇO - ${o.numero}`, W / 2, 157, { align: "center" });
   sep(168);
 
-  const caixa = (rotulo: string, valor: string, x: number, y: number, w: number, centro = false, hMin = 41) => {
-    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-    const linhas = doc.splitTextToSize(valor || "", w - 20) as string[];
-    const h = Math.max(hMin, 24 + linhas.length * 13);
+  const fs = fonteDe(o), passo = fs * 1.2;
+  const caixa = (rotulo: string, valor: string, x: number, y: number, w: number, centro = false, hMin = 44) => {
+    const linhas = quebrar(doc, valor, w - 20, fs);
+    const h = Math.max(hMin, 16 + passo + linhas.length * passo);
     borda(); doc.roundedRect(x, y, w, h, 7, 7, "S");
-    doc.setTextColor(TEXTO); doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.text(rotulo, x + 12, y + 11);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-    linhas.forEach((l, i) => doc.text(l, centro ? x + w / 2 : x + 10, y + 26 + i * 13, { align: centro ? "center" : "left" }));
+    doc.setTextColor(TEXTO); doc.setFont("helvetica", "bold"); doc.setFontSize(ROTULO); doc.text(rotulo, x + 12, y + 13);
+    escrever(doc, linhas, x + 10, y + 16 + fs, w - 20, centro, fs, passo);
     return y + h;
   };
   let y = (o.numero_pedido?.trim()
@@ -108,19 +144,16 @@ export async function gerarPdfSinalizacao(o: DadosSinalizacao) {
     : Math.max(caixa("PEDIDO:", o.pedido, X, 182, 175, true), caixa("Nº DA O. S.", o.numero, 222, 182, 160, true), caixa("DATA:", dataModelo(o.data), 398, 182, 168, true))) + 10;
   y = Math.max(caixa("FUNCINÁRIO(S):", o.funcionario || "", X, y, 155, true), caixa("NATUREZA:", o.natureza, 200, y, 205, true), caixa("SITUAÇÃO:", o.status, 421, y, 145, true)) + 10;
   y = caixa("ENDEREÇO:", o.endereco, X, y, LARG, true) + 10;
-  { doc.setFont("helvetica", "bold"); doc.setFontSize(7); const wl = doc.getTextWidth("SERVIÇO: ");
-    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-    const ls = doc.splitTextToSize(o.servico || "", LARG - 24 - wl) as string[];
-    const h = Math.max(48, 18 + ls.length * 14);
+  { doc.setFont("helvetica", "bold"); doc.setFontSize(ROTULO); const wl = doc.getTextWidth("SERVIÇO: ");
+    const ls = quebrar(doc, o.servico || "", LARG - 24 - wl, fs);
+    const h = Math.max(48, 20 + ls.length * passo);
     borda(); doc.roundedRect(X, y, LARG, h, 7, 7, "S"); doc.setTextColor(TEXTO);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.text("SERVIÇO:", X + 8, y + 15);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-    ls.forEach((l, i) => doc.text(l, X + 10 + wl, y + 16 + i * 14));
+    doc.setFont("helvetica", "bold"); doc.setFontSize(ROTULO); doc.text("SERVIÇO:", X + 8, y + 17);
+    escrever(doc, ls, X + 10 + wl, y + 17, LARG - 24 - wl, false, fs, passo);
     y += h + 10; }
 
   if (temObservacoes(o)) {
-    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-    const linhas = o.observacao?.trim() ? (doc.splitTextToSize(o.observacao.trim(), LARG - 24) as string[]) : [];
+    const linhas = textoSimples(o.observacao ?? "").trim() ? quebrar(doc, o.observacao ?? "", LARG - 24, fs) : [];
     const n = o.imagens.length;
     const maxH = n === 1 ? 230 : n === 2 ? 180 : 140;
     const cel = n ? (LARG - 30 - (n - 1) * 8) / n : 0;
@@ -130,12 +163,11 @@ export async function gerarPdfSinalizacao(o: DadosSinalizacao) {
     });
     const altImgs = n ? Math.max(...dims.map((d) => d.h)) + 10 : 0;
     sep(y); y += 12;
-    const h = Math.max(250, 44 + linhas.length * 13 + altImgs + 8);
+    const h = Math.max(250, 44 + linhas.length * passo + altImgs + 8);
     borda(); doc.roundedRect(X, y, LARG, h, 7, 7, "S");
-    doc.setTextColor(TEXTO); doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.text("OBSERVAÇÕES / IMAGENS", X + LARG / 2, y + 13, { align: "center" });
-    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-    linhas.forEach((l, i) => doc.text(l, X + LARG / 2, y + 44 + i * 13, { align: "center" }));
-    const yImg = y + 40 + linhas.length * 13 + 6;
+    doc.setTextColor(TEXTO); doc.setFont("helvetica", "bold"); doc.setFontSize(ROTULO); doc.text("OBSERVAÇÕES / IMAGENS", X + LARG / 2, y + 14, { align: "center" });
+    escrever(doc, linhas, X + 12, y + 44, LARG - 24, true, fs, passo);
+    const yImg = y + 40 + linhas.length * passo + 6;
     const total = dims.reduce((s, d) => s + d.w, 0) + (n - 1) * 8;
     let xi = X + (LARG - total) / 2;
     o.imagens.forEach((s, i) => {
@@ -177,15 +209,21 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
   const N = { style: d.BorderStyle.NIL, size: 0, color: "FFFFFF" };
   const comBorda = { top: B, bottom: B, left: B, right: B };
   const semBorda = { top: N, bottom: N, left: N, right: N };
-  const t = (text: string, o2: { bold?: boolean; size?: number; color?: string } = {}) =>
-    new d.TextRun({ text, font: "Arial", size: Math.round((o2.size ?? 11) * 2), ...(o2.bold ? { bold: true } : {}), ...(o2.color ? { color: o2.color } : {}) });
+  const fs = fonteDe(o);
+  const t = (text: string, o2: { bold?: boolean; size?: number; color?: string; italics?: boolean; underline?: boolean } = {}) =>
+    new d.TextRun({ text, font: "Arial", size: Math.round((o2.size ?? fs) * 2), ...(o2.bold ? { bold: true } : {}), ...(o2.italics ? { italics: true } : {}), ...(o2.underline ? { underline: {} } : {}), ...(o2.color ? { color: o2.color } : {}) });
+  const linhasRicas = (valor: string) => {
+    const ls: InstanceType<typeof d.TextRun>[][] = [[]];
+    for (const tr of lerTextoFormatado(valor || "")) tr.texto.split("\n").forEach((parte, i) => { if (i) ls.push([]); if (parte) ls[ls.length - 1]?.push(t(parte, { bold: !!tr.negrito, italics: !!tr.italico, underline: !!tr.sublinhado })); });
+    return ls.map((l) => (l.length ? l : [t(" ")]));
+  };
   const p = (runs: InstanceType<typeof d.TextRun>[] | InstanceType<typeof d.ImageRun>[], al: (typeof d.AlignmentType)[keyof typeof d.AlignmentType] = d.AlignmentType.LEFT, after = 0) =>
     new d.Paragraph({ alignment: al, spacing: { before: 0, after }, children: runs });
   const multilinha = (texto: string, centro = false) =>
-    (texto || " ").split("\n").map((l) => p([t(l || " ")], centro ? d.AlignmentType.CENTER : d.AlignmentType.LEFT));
+    linhasRicas(texto).map((l) => p(l, centro ? d.AlignmentType.CENTER : d.AlignmentType.LEFT));
   const celula = (rotulo: string, valor: string, largura: number, centro = false, extras: InstanceType<typeof d.Paragraph>[] = []) =>
     new d.TableCell({ width: { size: largura, type: d.WidthType.DXA }, borders: comBorda, margins: { top: 60, bottom: 100, left: 140, right: 140 },
-      children: [p([t(rotulo, { bold: true, size: 7 })]), ...multilinha(valor, centro), ...extras] });
+      children: [p([t(rotulo, { bold: true, size: ROTULO })]), ...multilinha(valor, centro), ...extras] });
   const vazio = (largura: number) => new d.TableCell({ width: { size: largura, type: d.WidthType.DXA }, borders: semBorda, children: [p([t("")])] });
   const tabela = (celulas: InstanceType<typeof d.TableCell>[]) => new d.Table({ width: { size: 10600, type: d.WidthType.DXA }, borders: { ...semBorda, insideHorizontal: N, insideVertical: N },
     layout: d.TableLayoutType.FIXED, rows: [new d.TableRow({ children: celulas })] });
@@ -208,7 +246,7 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
   filhos.push(tabela([celula("FUNCINÁRIO(S):", o.funcionario || "", 3000, true), vazio(250), celula("NATUREZA:", o.natureza, 4300, true), vazio(250), celula("SITUAÇÃO:", o.status, 2800, true)]), espaco(10));
   filhos.push(tabela([celula("ENDEREÇO:", o.endereco, 10600, true)]), espaco(10));
   filhos.push(tabela([new d.TableCell({ width: { size: 10600, type: d.WidthType.DXA }, borders: comBorda, margins: { top: 80, bottom: 160, left: 140, right: 140 },
-    children: (o.servico || " ").split("\n").map((l, i) => p(i ? [t(l || " ")] : [t("SERVIÇO:  ", { bold: true, size: 7 }), t(l || " ")])) })]), espaco(10));
+    children: linhasRicas(o.servico).map((l, i) => p(i ? l : [t("SERVIÇO:  ", { bold: true, size: ROTULO }), ...l])) })]), espaco(10));
 
   if (temObservacoes(o)) {
     const extras: InstanceType<typeof d.Paragraph>[] = [];
@@ -225,7 +263,7 @@ export async function gerarDocxSinalizacao(o: DadosSinalizacao) {
     }
     filhos.push(linhaSep(0, 200));
     const cel = new d.TableCell({ width: { size: 10600, type: d.WidthType.DXA }, borders: comBorda, margins: { top: 60, bottom: 160, left: 140, right: 140 },
-      children: [p([t("OBSERVAÇÕES / IMAGENS", { bold: true, size: 7 })], d.AlignmentType.CENTER, 300), ...(o.observacao?.trim() ? multilinha(o.observacao.trim(), true) : []), ...extras] });
+      children: [p([t("OBSERVAÇÕES / IMAGENS", { bold: true, size: ROTULO })], d.AlignmentType.CENTER, 300), ...(textoSimples(o.observacao ?? "").trim() ? multilinha(o.observacao ?? "", true) : []), ...extras] });
     filhos.push(new d.Table({ width: { size: 10600, type: d.WidthType.DXA }, layout: d.TableLayoutType.FIXED, rows: [new d.TableRow({ height: { value: 5000, rule: d.HeightRule.ATLEAST }, children: [cel] })] }));
   }
   if (o.chefe_imediato || o.cargo) {
