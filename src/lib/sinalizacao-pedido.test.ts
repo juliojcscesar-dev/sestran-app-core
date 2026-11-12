@@ -27,7 +27,7 @@ describe("Nº do pedido (GEO / IPM) no documento da O.S. de Sinalização", () =
   });
 });
 
-test("tamanho da letra do preenchimento fica entre 8 e 18 pt, padrão 11", () => {
+it("tamanho da letra do preenchimento fica entre 8 e 18 pt, padrão 11", () => {
   assert.equal(fonteDe(base()), 11);
   assert.equal(fonteDe(base({ fonte_tamanho: 30 })), 18);
   assert.equal(fonteDe(base({ fonte_tamanho: 14 })), 14);
