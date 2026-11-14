@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DefinirSenhaRouteImport } from './routes/definir-senha'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAgentesRouteImport } from './routes/_authenticated/agentes'
 import { Route as AuthenticatedCredenciaisRouteImport } from './routes/_authenticated/credenciais'
 import { Route as AuthenticatedCredenciaisConsultaRouteImport } from './routes/_authenticated/credenciais-consulta'
@@ -30,6 +32,7 @@ import { Route as AuthenticatedTerritorioRouteImport } from './routes/_authentic
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedVeiculosAbandonadosRouteImport } from './routes/_authenticated/veiculos-abandonados'
 import { Route as AuthenticatedVeiculosRecolhidosRouteImport } from './routes/_authenticated/veiculos-recolhidos'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedAgendaEducativaIdRouteImport } from './routes/_authenticated/agenda-educativa.$id'
 import { Route as AuthenticatedDocumentoVeiculoIdRouteImport } from './routes/_authenticated/documento-veiculo.$id'
 import { Route as AuthenticatedOrdensServicoIndexRouteImport } from './routes/_authenticated/ordens-servico/index'
@@ -57,6 +60,17 @@ const DefinirSenhaRoute = DefinirSenhaRouteImport.update({
   path: '/definir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAgentesRoute = AuthenticatedAgentesRouteImport.update({
   id: '/agentes',
   path: '/agentes',
@@ -151,6 +165,11 @@ const AuthenticatedVeiculosRecolhidosRoute =
     path: '/veiculos-recolhidos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAgendaEducativaIdRoute =
   AuthenticatedAgendaEducativaIdRouteImport.update({
     id: '/agenda-educativa/$id',
@@ -198,6 +217,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/definir-senha': typeof DefinirSenhaRoute
+  '/mcp': typeof McpRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/agentes': typeof AuthenticatedAgentesRoute
   '/credenciais': typeof AuthenticatedCredenciaisRoute
   '/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
@@ -215,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
   '/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -227,6 +249,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/definir-senha': typeof DefinirSenhaRoute
+  '/mcp': typeof McpRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/agentes': typeof AuthenticatedAgentesRoute
   '/credenciais': typeof AuthenticatedCredenciaisRoute
   '/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
@@ -244,6 +268,7 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
   '/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -258,6 +283,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/definir-senha': typeof DefinirSenhaRoute
+  '/mcp': typeof McpRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/agentes': typeof AuthenticatedAgentesRoute
   '/_authenticated/credenciais': typeof AuthenticatedCredenciaisRoute
   '/_authenticated/credenciais-consulta': typeof AuthenticatedCredenciaisConsultaRoute
@@ -275,6 +302,7 @@ export interface FileRoutesById {
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/_authenticated/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/agenda-educativa/$id': typeof AuthenticatedAgendaEducativaIdRoute
   '/_authenticated/documento-veiculo/$id': typeof AuthenticatedDocumentoVeiculoIdRoute
   '/_authenticated/ordens-servico/nova': typeof AuthenticatedOrdensServicoNovaRoute
@@ -289,6 +317,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/definir-senha'
+    | '/mcp'
+    | '/.well-known/oauth-protected-resource'
     | '/agentes'
     | '/credenciais'
     | '/credenciais-consulta'
@@ -306,6 +336,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/veiculos-abandonados'
     | '/veiculos-recolhidos'
+    | '/.lovable/oauth/consent'
     | '/agenda-educativa/$id'
     | '/documento-veiculo/$id'
     | '/ordens-servico/nova'
@@ -318,6 +349,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/definir-senha'
+    | '/mcp'
+    | '/.well-known/oauth-protected-resource'
     | '/agentes'
     | '/credenciais'
     | '/credenciais-consulta'
@@ -335,6 +368,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/veiculos-abandonados'
     | '/veiculos-recolhidos'
+    | '/.lovable/oauth/consent'
     | '/agenda-educativa/$id'
     | '/documento-veiculo/$id'
     | '/ordens-servico/nova'
@@ -348,6 +382,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/definir-senha'
+    | '/mcp'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/agentes'
     | '/_authenticated/credenciais'
     | '/_authenticated/credenciais-consulta'
@@ -365,6 +401,7 @@ export interface FileRouteTypes {
     | '/_authenticated/usuarios'
     | '/_authenticated/veiculos-abandonados'
     | '/_authenticated/veiculos-recolhidos'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/agenda-educativa/$id'
     | '/_authenticated/documento-veiculo/$id'
     | '/_authenticated/ordens-servico/nova'
@@ -379,6 +416,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   DefinirSenhaRoute: typeof DefinirSenhaRoute
+  McpRoute: typeof McpRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -409,6 +449,20 @@ declare module '@tanstack/react-router' {
       path: '/definir-senha'
       fullPath: '/definir-senha'
       preLoaderRoute: typeof DefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/agentes': {
@@ -530,6 +584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVeiculosRecolhidosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/agenda-educativa/$id': {
       id: '/_authenticated/agenda-educativa/$id'
       path: '/agenda-educativa/$id'
@@ -647,6 +708,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   DefinirSenhaRoute: DefinirSenhaRoute,
+  McpRoute: McpRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

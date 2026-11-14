@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { oauthReturnPath } from "@/lib/oauth-return-path";
 import { LogosInstitucionais } from "@/components/layout/LogosInstitucionais";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -30,6 +31,8 @@ export const Route = createFileRoute("/auth")({
       },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { next?: string } =>
+    typeof s["next"] === "string" ? { next: s["next"] } : {},
   component: PaginaAcesso,
 });
 
@@ -45,6 +48,9 @@ const esquemaCadastro = esquemaLogin.extend({
 
 function PaginaAcesso() {
   const navigate = useNavigate();
+  const { next: nextBruto } = Route.useSearch();
+  const destino = nextBruto ? oauthReturnPath(nextBruto) : "/painel";
+  const irDestino = () => (destino === "/painel" ? navigate({ to: "/painel", replace: true }) : window.location.assign(destino));
   const [carregando, setCarregando] = useState(false);
   const [erros, setErros] = useState<Record<string, string>>({});
   const formEntrar = useRef<HTMLFormElement>(null);
@@ -77,9 +83,9 @@ function PaginaAcesso() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/painel", replace: true });
+      if (data.session) irDestino();
     });
-  }, [navigate]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function entrar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -105,7 +111,7 @@ function PaginaAcesso() {
       });
       return;
     }
-    navigate({ to: "/painel", replace: true });
+    irDestino();
   }
 
   async function cadastrar(evento: React.FormEvent<HTMLFormElement>) {
@@ -127,7 +133,7 @@ function PaginaAcesso() {
       email: resultado.data.email,
       password: resultado.data.senha,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: new URL(destino, window.location.origin).href,
         data: { nome_completo: resultado.data.nome, cargo: resultado.data.cargo },
       },
     });
@@ -142,13 +148,13 @@ function PaginaAcesso() {
       });
       return;
     }
-    navigate({ to: "/painel", replace: true });
+    irDestino();
   }
 
   async function entrarComGoogle() {
     setCarregando(true);
     const resultado = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: new URL(destino === "/painel" ? "/" : destino, window.location.origin).href,
     });
     if (resultado.error) {
       setCarregando(false);
@@ -156,7 +162,7 @@ function PaginaAcesso() {
       return;
     }
     if (resultado.redirected) return;
-    navigate({ to: "/painel", replace: true });
+    irDestino();
   }
 
   return (

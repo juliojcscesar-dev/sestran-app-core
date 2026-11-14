@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { administrador, moduloDoCaminho, temAcesso } from "@/lib/permissoes";
 import { LogosInstitucionais } from "@/components/layout/LogosInstitucionais";
 import { BotaoInstalar } from "@/components/layout/BotaoInstalar";
+import { useWebMCP } from "use-webmcp-tool";
+import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 
 function Icone({ nome, className }: { nome: string; className: string }) {
   const Componente = (
@@ -43,6 +45,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   const permitido = Boolean(sessao?.ativo) && (pathname === "/painel" || (moduloAtual
     ? temAcesso(sessao, moduloAtual, escrita ? "OPERADOR" : "CONSULTA")
     : administrador(sessao)));
+
+  useWebMCP({
+    name: "abrir_modulo",
+    description: "Abre um dos módulos do menu liberados para o usuário. Informe o título exato do módulo.",
+    enabled: Boolean(sessao?.ativo),
+    inputSchema: {
+      type: "object",
+      properties: {
+        modulo: { type: "string", enum: modulosVisiveis.map((m) => m.titulo), description: "Título do módulo no menu." },
+      },
+      required: ["modulo"],
+    },
+    execute: ({ modulo }: { modulo: string }) =>
+      runWebMCPTool("abrir_modulo", async () => {
+        const alvo = modulosVisiveis.find((m) => m.titulo === modulo);
+        if (!alvo) throw new Error("Módulo desconhecido ou não liberado para esta conta.");
+        await navigate({ to: alvo.href as "/painel" });
+        return `Aberto: ${alvo.titulo}.`;
+      }),
+  });
 
   async function sair() {
     await queryClient.cancelQueries();
