@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ClipboardEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardList, Clock, Download, Hammer, Plus, RefreshCw, X } from "lucide-react";
@@ -87,10 +87,25 @@ function Sinalizacao() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function anexar(files: FileList | null) {
+  async function anexar(files: FileList | File[] | null) {
     if (!files) return; setOcupado(true);
     try { const novas: string[] = []; for (const a of [...files].slice(0, 4 - f.imagens.length)) { if (a.type.startsWith("image/")) novas.push(await prepararImagemRecolhido(a)); } setF((p) => ({ ...p, imagens: [...p.imagens, ...novas].slice(0, 4) })); }
     catch { toast.error("Não foi possível carregar a imagem."); } finally { setOcupado(false); }
+  }
+  function colarEvento(e: ClipboardEvent) {
+    const arqs = [...e.clipboardData.items].filter((i) => i.type.startsWith("image/")).map((i) => i.getAsFile()).filter((a): a is File => !!a);
+    if (!arqs.length) { toast.error("A área de transferência não contém imagem. Copie uma imagem (Ctrl + C) e tente de novo."); return; }
+    e.preventDefault();
+    if (f.imagens.length >= 4) { toast.error("Limite de 4 imagens atingido."); return; }
+    void anexar(arqs);
+  }
+  async function colarBotao() {
+    try {
+      const itens = await navigator.clipboard.read(); const arqs: File[] = [];
+      for (const it of itens) { const t = it.types.find((x) => x.startsWith("image/")); if (t) { const b = await it.getType(t); arqs.push(new File([b], "colada.png", { type: t })); } }
+      if (!arqs.length) { toast.error("A área de transferência não contém imagem."); return; }
+      void anexar(arqs);
+    } catch { toast.error("O navegador bloqueou o acesso. Clique na área tracejada e use Ctrl + V."); }
   }
 
   const doc = (o: Registro): DadosSinalizacao => ({ ...o, imagens: imgs(o.imagens) });
@@ -151,6 +166,10 @@ function Sinalizacao() {
               <div className="space-y-1.5 sm:col-span-2"><Label>Observações / descrição do trabalho</Label><EditorTexto rotulo="Observações" value={f.observacao} onChange={(v) => set("observacao", v)} /></div>
               <div className="space-y-1.5 sm:col-span-2"><Label>Imagens / anexos ({f.imagens.length}/4)</Label>
                 <Input type="file" accept="image/*" multiple disabled={ocupado || f.imagens.length >= 4} onChange={(e) => { anexar(e.target.files); e.target.value = ""; }} />
+                <div tabIndex={0} role="button" aria-label="Área para colar imagem" onPaste={colarEvento} className="flex flex-wrap items-center justify-between gap-2 rounded-md border-2 border-dashed border-primary/40 bg-muted/40 px-3 py-2 text-xs text-muted-foreground outline-none focus:border-primary focus:bg-primary/5">
+                  <span>Clique aqui e pressione <strong>Ctrl + V</strong> para colar uma imagem copiada (Ctrl + C) de qualquer lugar.</span>
+                  <Button type="button" size="sm" variant="outline" disabled={ocupado || f.imagens.length >= 4} onClick={colarBotao}>Colar imagem</Button>
+                </div>
                 {f.imagens.length > 0 && <div className="flex flex-wrap gap-2">{f.imagens.map((s, i) => <div key={i} className="relative"><img src={s} alt={`Anexo ${i + 1}`} className="h-20 w-20 rounded border object-cover" /><button type="button" aria-label="Excluir imagem" onClick={() => setF((p) => ({ ...p, imagens: p.imagens.filter((_, j) => j !== i) }))} className="absolute -right-2 -top-2 rounded-full bg-destructive p-0.5 text-destructive-foreground"><X className="h-3 w-3" /></button></div>)}</div>}
               </div>
               <p className={secao}>RESPONSÁVEL PELO PREENCHIMENTO</p>
