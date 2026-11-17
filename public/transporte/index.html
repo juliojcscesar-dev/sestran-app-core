@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SESTRAN - Diretoria de Transporte e Estatística</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS (XLSX) para importação e exportação de planilhas .xls / .xlsx -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Fonte Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            sestran: {
+              900: '#0f172a',
+              800: '#1e293b',
+              700: '#1d4ed8',
+              600: '#2563eb',
+              500: '#3b82f6',
+              100: '#dbeafe',
+              50: '#eff6ff',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    /* Estilos específicos para Impressão / PDF Oficial */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11pt;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-container {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      th, td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 6px 8px !important;
+        font-size: 9.5pt !important;
+      }
+      th {
+        background-color: #f1f5f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      /* Se estiver imprimindo uma ficha individual via modal */
+      body.printing-ficha #app-wrapper {
+        display: none !important;
+      }
+      body.printing-ficha #modal-ficha {
+        position: static !important;
+        background: transparent !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+      body.printing-ficha #modal-ficha-box {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    /* Scrollbar discreta */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    /* Padrão institucional SESTRAN nos relatórios (azul-marinho + âmbar) */
+    .rel-cabecalho { border-bottom: 3px solid #d97706; padding-bottom: 12px; }
+    .rel-info { color: #1e3a5f; }
+    .rel-faixa { background: #1e3a5f; color: #ffffff; border-radius: 6px; padding: 8px 12px; border-left: 6px solid #d97706; }
+    .rel-thead th { background: #1e3a5f !important; color: #ffffff !important; }
+    #tbody-report tr:nth-child(even) { background: #f3f6fa; }
+    @media print {
+      @page { size: A4 landscape; margin: 12mm; }
+      .rel-faixa, .rel-thead th, #tbody-report tr:nth-child(even) { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rel-thead th { background: #1e3a5f !important; color: #ffffff !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Toast / Notificação Flutuante (Substitui alert/confirm) -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 no-print"></div>
+
+  <!-- Modal de Confirmação Customizado -->
+  <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+      <div class="flex items-center gap-3 text-amber-600 mb-3">
+        <div class="p-2.5 bg-amber-50 rounded-xl">
+          <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+        <h3 id="confirm-title" class="text-lg font-bold text-slate-900">Confirmar Ação</h3>
+      </div>
+      <p id="confirm-message" class="text-sm text-slate-600 mb-6 leading-relaxed"></p>
+      <div class="flex justify-end gap-3">
+        <button id="confirm-cancel-btn" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+          Cancelar
+        </button>
+        <button id="confirm-ok-btn" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition shadow-sm">
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WRAPPER PRINCIPAL DA APLICAÇÃO -->
+  <div id="app-wrapper" class="flex-1 flex flex-col">
+
+    <!-- CABEÇALHO INSTITUCIONAL -->
+    <header class="bg-slate-900 text-white shadow-lg border-b border-slate-800 no-print">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-md shrink-0">
+              <i data-lucide="shield-check" class="w-7 h-7 text-white"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 text-[11px] font-bold tracking-wider uppercase bg-blue-500/20 text-blue-300 border border-blue-400/30 rounded-md">
+                  SESTRAN
+                </span>
+                <span class="text-xs text-slate-400 font-medium hidden sm:inline">Sistema de Gestão de Alvarás</span>
+              </div>
+              <h1 class="text-base sm:text-lg md:text-xl font-bold tracking-tight text-white leading-snug">
+                SESTRAN - Secretaria Municipal de Segurança e Trânsito
+              </h1>
+              <p class="text-xs sm:text-sm text-slate-300 font-medium">
+                Diretoria de Transporte e Estatística
+              </p>
+            </div>
+          </div>
+
+          <!-- Simulador de Data de Referência (Útil para testar alertas de vencimento e prazos finais) -->
+          <div class="flex items-center gap-2 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 self-start md:self-auto">
+            <i data-lucide="calendar-clock" class="w-4 h-4 text-blue-400 shrink-0"></i>
+            <div class="text-xs">
+              <label for="reference-date" class="block text-slate-400 text-[10px] uppercase font-semibold">Data Base (Alertas)</label>
+              <input type="date" id="reference-date" onchange="refreshAllViews()" class="bg-transparent text-white font-semibold focus:outline-none text-xs cursor-pointer" />
+            </div>
+            <button onclick="resetReferenceDate()" title="Voltar para data atual" class="ml-1 p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- BARRA DE NAVEGAÇÃO PRINCIPAL -->
+        <nav class="flex gap-1.5 sm:gap-2 mt-5 overflow-x-auto pb-1">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition whitespace-nowrap bg-blue-600 text-white shadow-sm">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            <span>Visão Geral</span>
+          </button>
+          <button onclick="switchTab('taxi')" id="nav-taxi" class="nav-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="car-taxi-front" class="w-4 h-4"></i>
+            <span>Alvará - Táxi</span>
+            <span id="badge-count-taxi" class="ml-1 px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-200">0</span>
+          </button>
+          <button onclick="switchTab('escolar')" id="nav-escolar" class="nav-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="bus" class="w-4 h-4"></i>
+            <span>Alvará - Transporte Escolar</span>
+            <span id="badge-count-escolar" class="ml-1 px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-200">0</span>
+          </button>
+          <button onclick="switchTab('relatorios')" id="nav-relatorios" class="nav-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition whitespace-nowrap text-slate-300 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            <span>Relatórios</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      <!-- ========================================================= -->
+      <!-- ABA 1: VISÃO GERAL (DASHBOARD)                            -->
+      <!-- ========================================================= -->
+      <section id="tab-dashboard" class="space-y-6">
+        <!-- Banner de Regras de Prazos -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Painel de Controle — Diretoria de Transporte e Estatística</h2>
+            <p class="text-sm text-slate-600 mt-0.5">
+              Monitoramento automático de validade (<strong>31/12</strong>) e prazos finais de renovação:
+              <span class="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">Táxi: até 28/02</span>
+              <span class="inline-flex items-center gap-1 font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">Escolar: até 05/02 (Início das Aulas)</span>
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="openFormModal('taxi')" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              Novo Alvará Táxi
+            </button>
+            <button onclick="openFormModal('escolar')" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-xl shadow-xs transition">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              Novo Alvará Escolar
+            </button>
+          </div>
+        </div>
+
+        <!-- KPIs Principais -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Geral</span>
+              <div class="p-2 bg-slate-100 text-slate-700 rounded-xl"><i data-lucide="layers" class="w-5 h-5"></i></div>
+            </div>
+            <p id="kpi-total" class="text-3xl font-extrabold text-slate-900 mt-3">0</p>
+            <p id="kpi-sub-total" class="text-xs text-slate-500 mt-1">0 Táxis • 0 Escolares</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-emerald-200 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Vigentes</span>
+              <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
+            </div>
+            <p id="kpi-vigentes" class="text-3xl font-extrabold text-emerald-700 mt-3">0</p>
+            <p class="text-xs text-slate-500 mt-1">Dentro da validade regular</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-yellow-200 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-yellow-700">Vence em Breve</span>
+              <div class="p-2 bg-yellow-50 text-yellow-600 rounded-xl"><i data-lucide="clock" class="w-5 h-5"></i></div>
+            </div>
+            <p id="kpi-atencao" class="text-3xl font-extrabold text-yellow-700 mt-3">0</p>
+            <p class="text-xs text-slate-500 mt-1">A menos de 45 dias de 31/12</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-amber-300 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Prazo Renovação</span>
+              <div class="p-2 bg-amber-100 text-amber-700 rounded-xl"><i data-lucide="alert-circle" class="w-5 h-5"></i></div>
+            </div>
+            <p id="kpi-tolerancia" class="text-3xl font-extrabold text-amber-700 mt-3">0</p>
+            <p class="text-xs text-slate-500 mt-1">Até 28/02 (Táxi) ou 05/02 (Esc.)</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-red-200 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-red-700">Vencidos</span>
+              <div class="p-2 bg-red-50 text-red-600 rounded-xl"><i data-lucide="x-octagon" class="w-5 h-5"></i></div>
+            </div>
+            <p id="kpi-vencidos" class="text-3xl font-extrabold text-red-700 mt-3">0</p>
+            <p class="text-xs text-slate-500 mt-1">Prazo final expirado</p>
+          </div>
+        </div>
+
+        <!-- Lista Rápida de Alertas Prioritários e Resumo -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="bell-ring" class="w-5 h-5 text-amber-600"></i>
+                <h3 class="font-bold text-slate-900">Alertas de Vencimento e Prazo Final de Renovação</h3>
+              </div>
+              <span id="alert-count-badge" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800">0 alertas</span>
+            </div>
+            <div id="dashboard-alerts-list" class="divide-y divide-slate-100 max-h-[420px] overflow-y-auto">
+              <!-- Preenchido via JS -->
+            </div>
+          </div>
+
+          <!-- Atalhos e Importação Rápida -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 flex flex-col justify-between space-y-6">
+            <div>
+              <h3 class="font-bold text-slate-900 flex items-center gap-2 mb-3">
+                <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                Regras do Sistema SESTRAN
+              </h3>
+              <ul class="space-y-3 text-sm text-slate-600">
+                <li class="flex items-start gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-600 mt-1.5 shrink-0"></span>
+                  <span><strong>Cadastro Nº Sequencial:</strong> O primeiro cadastro define o início da numeração; os seguintes são incrementados automaticamente, mas podem ser editados livremente.</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-600 mt-1.5 shrink-0"></span>
+                  <span><strong>Validade Automática:</strong> Definida automaticamente para <strong>31/12</strong> do ano de emissão (com ajuste manual opcional).</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-amber-600 mt-1.5 shrink-0"></span>
+                  <span><strong>Prazo Final Táxi:</strong> Renovação permitida após 31/12 até <strong>28/02</strong> do ano seguinte.</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shrink-0"></span>
+                  <span><strong>Prazo Final Escolar:</strong> Renovação permitida após 31/12 até <strong>05/02</strong> (início das aulas) do ano seguinte, com suporte a múltiplos veículos.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 space-y-2.5">
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Acesso Rápido</p>
+              <button onclick="switchTab('relatorios')" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold transition">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                Gerar Relatórios Oficiais
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- ABA 2: CADASTRO DE ALVARÁ DE LICENÇA - TÁXI               -->
+      <!-- ========================================================= -->
+      <section id="tab-taxi" class="hidden space-y-6">
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 text-xs font-bold bg-amber-100 text-amber-800 rounded-md">MODALIDADE TÁXI</span>
+              <span class="text-xs text-slate-500">Prazo final pós-vencimento: até 28/02</span>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900 mt-1">Cadastro de Alvará de Licença — Táxi</h2>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="downloadTemplate('taxi')" class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl transition">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              Modelo XLS
+            </button>
+            <label class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-xl cursor-pointer shadow-xs transition">
+              <i data-lucide="file-up" class="w-4 h-4"></i>
+              Importar Planilha (.xls/.xlsx)
+              <input type="file" accept=".xls,.xlsx,.csv" onchange="handleExcelImport(event, 'taxi')" class="hidden" />
+            </label>
+            <button onclick="openFormModal('taxi')" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              Novo Cadastro Táxi
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Filtros Táxi -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs grid grid-cols-1 md:grid-cols-12 gap-3">
+          <div class="md:col-span-6 relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="filter-taxi-search" oninput="renderTaxiTable()" placeholder="Pesquisar por Nome, CPF/RG/CNPJ ou Nº de Alvará..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" />
+          </div>
+          <div class="md:col-span-4">
+            <select id="filter-taxi-status" onchange="renderTaxiTable()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="TODOS">Todos os Status</option>
+              <option value="VIGENTE">Vigentes</option>
+              <option value="ATENCAO">Atenção (Vence em breve)</option>
+              <option value="TOLERANCIA">Em Prazo de Renovação (até 28/02)</option>
+              <option value="VENCIDO">Vencidos (Prazo Expirado)</option>
+            </select>
+          </div>
+          <div class="md:col-span-2 flex items-center justify-end">
+            <button onclick="clearFilters('taxi')" class="w-full px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+              Limpar Filtros
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela de Cadastros Táxi -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-3.5 px-4">Cad. Nº</th>
+                  <th class="py-3.5 px-4">Alvará Nº</th>
+                  <th class="py-3.5 px-4">Permissionário / Razão Social</th>
+                  <th class="py-3.5 px-4">IPM / Insc. Mun.</th>
+                  <th class="py-3.5 px-4">Veículo</th>
+                  <th class="py-3.5 px-4">Emissão / Validade</th>
+                  <th class="py-3.5 px-4">Situação / Prazo</th>
+                  <th class="py-3.5 px-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-taxi" class="divide-y divide-slate-100 text-sm">
+                <!-- Renderizado via JS -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-taxi" class="hidden py-12 text-center px-4">
+            <i data-lucide="car-taxi-front" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+            <p class="text-slate-600 font-semibold">Nenhum cadastro de Táxi encontrado.</p>
+            <p class="text-xs text-slate-400 mt-1">Cadastre manualmente ou importe uma planilha Excel (.xls / .xlsx).</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- ABA 3: CADASTRO DE ALVARÁ DE LICENÇA - TRANSPORTE ESCOLAR -->
+      <!-- ========================================================= -->
+      <section id="tab-escolar" class="hidden space-y-6">
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 text-xs font-bold bg-blue-100 text-blue-800 rounded-md">TRANSPORTE ESCOLAR</span>
+              <span class="text-xs text-slate-500">Prazo final pós-vencimento: até 05/02 (Início das Aulas)</span>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900 mt-1">Cadastro de Alvará de Licença — Transporte Escolar</h2>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="downloadTemplate('escolar')" class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl transition">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              Modelo XLS
+            </button>
+            <label class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-xl cursor-pointer shadow-xs transition">
+              <i data-lucide="file-up" class="w-4 h-4"></i>
+              Importar Planilha (.xls/.xlsx)
+              <input type="file" accept=".xls,.xlsx,.csv" onchange="handleExcelImport(event, 'escolar')" class="hidden" />
+            </label>
+            <button onclick="openFormModal('escolar')" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              Novo Cadastro Escolar
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Filtros Escolar -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs grid grid-cols-1 md:grid-cols-12 gap-3">
+          <div class="md:col-span-6 relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="filter-escolar-search" oninput="renderEscolarTable()" placeholder="Pesquisar por Nome, CPF/RG/CNPJ ou Nº de Alvará..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" />
+          </div>
+          <div class="md:col-span-4">
+            <select id="filter-escolar-status" onchange="renderEscolarTable()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="TODOS">Todos os Status</option>
+              <option value="VIGENTE">Vigentes</option>
+              <option value="ATENCAO">Atenção (Vence em breve)</option>
+              <option value="TOLERANCIA">Em Prazo de Renovação (até 05/02)</option>
+              <option value="VENCIDO">Vencidos (Prazo Expirado)</option>
+            </select>
+          </div>
+          <div class="md:col-span-2 flex items-center justify-end">
+            <button onclick="clearFilters('escolar')" class="w-full px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+              Limpar Filtros
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela de Cadastros Transporte Escolar -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-3.5 px-4">Cad. Nº</th>
+                  <th class="py-3.5 px-4">Alvará Nº</th>
+                  <th class="py-3.5 px-4">Permissionário / Razão Social</th>
+                  <th class="py-3.5 px-4">IPM / Insc. Mun.</th>
+                  <th class="py-3.5 px-4">Frota / Veículos</th>
+                  <th class="py-3.5 px-4">Emissão / Validade</th>
+                  <th class="py-3.5 px-4">Situação / Prazo</th>
+                  <th class="py-3.5 px-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-escolar" class="divide-y divide-slate-100 text-sm">
+                <!-- Renderizado via JS -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-escolar" class="hidden py-12 text-center px-4">
+            <i data-lucide="bus" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+            <p class="text-slate-600 font-semibold">Nenhum cadastro de Transporte Escolar encontrado.</p>
+            <p class="text-xs text-slate-400 mt-1">Cadastre manualmente ou importe uma planilha Excel (.xls / .xlsx).</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- ABA 4: RELATÓRIOS (TÁXI E TRANSPORTE ESCOLAR)             -->
+      <!-- ========================================================= -->
+      <section id="tab-relatorios" class="hidden space-y-6">
+        <!-- Controles do Relatório (Ocultos na impressão) -->
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs no-print space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Gerador de Relatórios Oficiais</h2>
+              <p class="text-sm text-slate-500">Exibe exclusivamente os registros ativos com os campos oficiais da SESTRAN.</p>
+            </div>
+            <div class="flex flex-wrap gap-2.5">
+              <button onclick="exportReportToExcel()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-xs transition">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                Exportar Excel (.xlsx)
+              </button>
+              <button onclick="printReport()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                Imprimir / Salvar PDF
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Modalidade / Cadastro</label>
+              <select id="report-category" onchange="renderReportTable()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="TODOS">Todos (Táxi + Transporte Escolar)</option>
+                <option value="taxi">Somente Táxi</option>
+                <option value="escolar">Somente Transporte Escolar (Vans/Ônibus)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Filtrar por Situação</label>
+              <select id="report-status" onchange="renderReportTable()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="TODOS">Todas as Situações</option>
+                <option value="VIGENTE">Vigentes</option>
+                <option value="ATENCAO">Atenção (Vence em breve)</option>
+                <option value="TOLERANCIA">Em Prazo de Renovação</option>
+                <option value="VENCIDO">Vencidos</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Busca Rápida no Relatório</label>
+              <input type="text" id="report-search" oninput="renderReportTable()" placeholder="Filtrar nome, IPM ou alvará..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Área Imprimível do Relatório -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 print-container">
+          <!-- Cabeçalho Oficial para Impressão -->
+          <div class="rel-cabecalho mb-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <img src="/assets/logo-header.png" alt="Prefeitura Municipal de Paranavaí — Secretaria Municipal de Segurança e Trânsito" class="h-16 w-auto object-contain" />
+              <div class="text-left sm:text-right text-xs rel-info">
+                <p id="report-print-date" class="font-semibold"></p>
+                <p id="report-total-rows" class="mt-0.5"></p>
+              </div>
+            </div>
+            <div class="rel-faixa mt-3">
+              <h1 class="text-sm sm:text-base font-extrabold uppercase tracking-tight">Diretoria de Transporte e Estatística</h1>
+              <p id="report-subtitle" class="text-xs mt-0.5 font-medium">Relatório Geral de Alvarás de Licença — Táxi e Transporte Escolar</p>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="rel-thead text-xs font-bold uppercase tracking-wider">
+                  <th id="th-report-cat" class="py-3 px-3">Categoria</th>
+                  <th class="py-3 px-3">NOME / RAZÃO SOCIAL</th>
+                  <th class="py-3 px-3">Nº IPM</th>
+                  <th class="py-3 px-3">Nº ALVARÁ</th>
+                  <th id="th-report-veiculo" class="py-3 px-3">VEÍCULO / FROTA</th>
+                  <th class="py-3 px-3">DATA DE EMISSÃO</th>
+                  <th class="py-3 px-3">DATA DE VALIDADE</th>
+                  <th class="py-3 px-3">STATUS / PRAZO</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-report" class="divide-y divide-slate-200 text-sm">
+                <!-- Preenchido apenas com registros existentes -->
+              </tbody>
+            </table>
+          </div>
+          <div id="empty-report" class="hidden py-10 text-center text-slate-500 text-sm">
+            Nenhum registro encontrado para os filtros selecionados neste relatório.
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- RODAPÉ -->
+    <footer class="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500 no-print">
+      SESTRAN - Secretaria Municipal de Segurança e Trânsito • Diretoria de Transporte e Estatística
+    </footer>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL DE CADASTRO / EDIÇÃO (TÁXI E TRANSPORTE ESCOLAR)    -->
+  <!-- ========================================================= -->
+  <div id="form-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-3 sm:p-4 overflow-y-auto no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full border border-slate-200 my-auto overflow-hidden">
+      <!-- Cabeçalho Modal -->
+      <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div>
+          <span id="modal-badge-type" class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30">
+            CADASTRO DE ALVARÁ
+          </span>
+          <h3 id="modal-form-title" class="text-lg font-bold mt-1">Cadastro de Alvará de Licença</h3>
+        </div>
+        <button type="button" onclick="closeFormModal()" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Formulário -->
+      <form id="alvara-form" onsubmit="saveAlvara(event)" class="p-6 space-y-5 max-h-[82vh] overflow-y-auto">
+        <input type="hidden" id="form-id" />
+        <input type="hidden" id="form-type" />
+
+        <!-- Alerta de Regra de Prazo Dinâmico dentro do Modal -->
+        <div id="modal-rule-banner" class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
+          <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+          <div id="modal-rule-text"></div>
+        </div>
+
+        <!-- Linha 1: Cadastro Nº e Alvará Nº -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">
+              CADASTRO Nº <span class="text-blue-600 font-normal normal-case">(Sequencial / Editável)</span> *
+            </label>
+            <input type="text" id="field-cadastro-num" required placeholder="Ex: 001" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+            <p id="hint-cadastro-num" class="text-[11px] text-slate-500 mt-1">Gerado automaticamente a partir do último cadastro, podendo ser alterado.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">
+              ALVARÁ Nº *
+            </label>
+            <input type="text" id="field-alvara-num" required placeholder="Ex: 06/2026" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+          </div>
+        </div>
+
+        <!-- Linha 2: Data de Emissão e Data de Validade Automática -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">
+              DATA DE EMISSÃO *
+            </label>
+            <input type="date" id="field-emissao" required onchange="autoCalculateValidade()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold uppercase text-slate-700">
+                DATA DE VALIDADE *
+              </label>
+              <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Auto: 31/12</span>
+            </div>
+            <input type="date" id="field-validade" required onchange="updateFormStatusPreview()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+            <p class="text-[11px] text-slate-500 mt-1">Calculada automaticamente para 31/12 do ano (editável se necessário).</p>
+          </div>
+        </div>
+
+        <!-- Preview de Status em Tempo Real no Formulário -->
+        <div id="form-status-preview" class="p-3 rounded-xl border text-xs font-medium flex items-center justify-between">
+          <!-- Atualizado via JS -->
+        </div>
+
+        <!-- Linha 3: Nº Processo IPM e Inscrição Municipal -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">
+              Nº DO PROCESSO DO IPM
+            </label>
+            <input type="text" id="field-ipm" placeholder="Ex: 12345/2026" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">
+              INSCRIÇÃO MUNICIPAL
+            </label>
+            <input type="text" id="field-inscricao" placeholder="Ex: 987654" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+          </div>
+        </div>
+
+        <!-- Linha 4: Documento (CPF / RG / CNPJ) e Nome / Razão Social -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+          <div class="sm:col-span-4">
+            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">
+              DOCUMENTO (CPF / RG / CNPJ)
+            </label>
+            <div class="flex rounded-xl overflow-hidden border border-slate-300 bg-slate-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white">
+              <select id="field-doc-type" onchange="handleDocTypeChange()" class="bg-slate-100 border-r border-slate-300 px-2.5 py-2.5 text-xs font-bold text-slate-700 focus:outline-none">
+                <option value="CPF">CPF</option>
+                <option value="RG">RG</option>
+                <option value="CNPJ">CNPJ</option>
+              </select>
+              <input type="text" id="field-doc-value" oninput="maskDocumentInput(this)" placeholder="000.000.000-00" class="w-full px-3 py-2.5 bg-transparent text-sm focus:outline-none" />
+            </div>
+          </div>
+          <div class="sm:col-span-8">
+            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">
+              NOME / RAZÃO SOCIAL *
+            </label>
+            <input type="text" id="field-nome" required placeholder="Nome completo ou Razão Social" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm uppercase font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+          </div>
+        </div>
+
+        <!-- SEÇÃO DE VEÍCULOS DINÂMICA (TÁXI E TRANSPORTE ESCOLAR) -->
+        <div id="section-veiculos-dinamica" class="pt-3 border-t border-slate-200 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h4 id="vehicles-section-title" class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                <i data-lucide="car" class="w-4 h-4 text-blue-600"></i>
+                <span>Veículos Vinculados</span>
+              </h4>
+              <p id="vehicles-section-subtitle" class="text-[11px] text-slate-500">
+                Adicione um ou mais veículos vinculados a este alvará e personalize o tipo de veículo quando necessário.
+              </p>
+            </div>
+            <button type="button" onclick="addVehicleRow()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition self-start sm:self-auto">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              Adicionar Veículo
+            </button>
+          </div>
+          <div id="vehicles-container" class="space-y-2.5">
+            <!-- Linhas dinâmicas de veículos (Táxi e Transporte Escolar) -->
+          </div>
+        </div>
+
+        <!-- Botões de Ação do Modal (Salvar Cadastro e Cancelar) -->
+        <div class="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+          <button type="button" onclick="closeFormModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+            Cancelar
+          </button>
+          <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            Salvar Cadastro
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL RÁPIDO PARA ADICIONAR NOVO TIPO DE VEÍCULO -->
+  <div id="modal-new-vehicle-type" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2.5 text-blue-700">
+          <div class="p-2 bg-blue-50 rounded-xl">
+            <i data-lucide="tag" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-900">Adicionar Tipo de Veículo</h3>
+        </div>
+        <button type="button" onclick="closeNewVehicleTypeModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p id="new-vehicle-type-desc" class="text-xs text-slate-600 mb-4">
+        Cadastre um novo tipo de veículo para ficar disponível permanentemente nas opções de seleção.
+      </p>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Nome do Tipo de Veículo *</label>
+          <input type="text" id="input-new-vehicle-type" placeholder="Ex: Kombi Escolar, Utilitário, Minivan..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmAddVehicleType();}" />
+        </div>
+        <div class="flex justify-end gap-2.5 pt-2">
+          <button type="button" onclick="closeNewVehicleTypeModal()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+            Cancelar
+          </button>
+          <button type="button" onclick="confirmAddVehicleType()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition shadow-xs">
+            Salvar Tipo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL DE VISUALIZAÇÃO / IMPRESSÃO DE FICHA INDIVIDUAL     -->
+  <!-- ========================================================= -->
+  <div id="modal-ficha" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4 overflow-y-auto">
+    <div id="modal-ficha-box" class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden my-auto">
+      <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between no-print">
+        <h3 class="font-bold text-base">Ficha Cadastral do Alvará</h3>
+        <div class="flex items-center gap-2">
+          <button onclick="printFicha()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            Imprimir Ficha
+          </button>
+          <button onclick="closeFichaModal()" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="ficha-content" class="p-6 space-y-5 text-sm">
+        <!-- Preenchido dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // ESTADO GLOBAL E CHAVES DE ARMAZENAMENTO (localStorage)
+    // =========================================================================
+    const STORAGE_KEY = 'sestran_alvaras_db_v1';
+    const VEHICLE_TYPES_STORAGE_KEY = 'sestran_vehicle_types_v1';
+    let currentTab = 'dashboard';
+    let records = [];
+    let pendingVehicleSelectEl = null;
+
+    const DEFAULT_VEHICLE_TYPES = {
+      taxi: ['Sedan / Táxi', 'Hatch', 'SUV / Minivan', 'Perua / Station Wagon'],
+      escolar: ['Van', 'Micro-ônibus', 'Ônibus']
+    };
+
+    let customVehicleTypes = {
+      taxi: [...DEFAULT_VEHICLE_TYPES.taxi],
+      escolar: [...DEFAULT_VEHICLE_TYPES.escolar]
+    };
+
+    // Dados iniciais baseados nos exemplos da SESTRAN
+    const INITIAL_SEED_DATA = [
+      {
+        id: 'seed-taxi-1',
+        type: 'taxi',
+        cadastroNum: '001',
+        alvaraNum: '06/2026',
+        emissao: '2026-02-05',
+        validade: '2026-12-31',
+        ipm: '',
+        inscricaoMunicipal: '',
+        docType: 'CPF',
+        docValue: '',
+        nome: '1976966 - ANTONIO FERNANDES DAMASCENO',
+        vehicles: [
+          { tipo: 'Sedan / Táxi', marca: 'VW', modelo: 'VIRTUS', placa: 'TBZ-5E26' }
+        ]
+      },
+      {
+        id: 'seed-escolar-1',
+        type: 'escolar',
+        cadastroNum: '001',
+        alvaraNum: '10/2026',
+        emissao: '2026-02-05',
+        validade: '2026-12-31',
+        ipm: '',
+        inscricaoMunicipal: '',
+        docType: 'CPF',
+        docValue: '',
+        nome: 'ALTAIR DE SOUZA MEIRA',
+        vehicles: [
+          { tipo: 'Ônibus', marca: 'VW', modelo: 'MPOLO IDEALE', placa: 'KOU-5843' }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // INICIALIZAÇÃO
+    // =========================================================================
+    function sestranIniciar() {
+      initReferenceDate();
+      loadVehicleTypes();
+      loadRecords();
+      refreshAllViews();
+      lucide.createIcons();
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.parent === window) { sestranIniciar(); return; }
+      window.addEventListener('message', (e) => {
+        if (e.origin !== window.location.origin || e.data?.tipo !== 'transporte-dados') return;
+        try {
+          if (e.data.registros) localStorage.setItem(STORAGE_KEY, JSON.stringify(e.data.registros)); else localStorage.removeItem(STORAGE_KEY);
+          if (e.data.tipos) localStorage.setItem(VEHICLE_TYPES_STORAGE_KEY, JSON.stringify(e.data.tipos)); else localStorage.removeItem(VEHICLE_TYPES_STORAGE_KEY);
+          localStorage.removeItem('sestra_alvaras_db_v1'); localStorage.removeItem('sestra_vehicle_types_v1');
+        } catch (err) {}
+        sestranIniciar();
+      }, { once: true });
+      window.parent.postMessage({ tipo: 'transporte-pronto' }, window.location.origin);
+    });
+    function sestranSincronizar() {
+      if (window.parent !== window) window.parent.postMessage({ tipo: 'transporte-salvar', registros: records, tipos: customVehicleTypes }, window.location.origin);
+    }
+
+    function getTodayISO() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function initReferenceDate() {
+      const refInput = document.getElementById('reference-date');
+      if (refInput && !refInput.value) {
+        refInput.value = getTodayISO();
+      }
+    }
+
+    function resetReferenceDate() {
+      const refInput = document.getElementById('reference-date');
+      if (refInput) {
+        refInput.value = getTodayISO();
+        refreshAllViews();
+        showToast('Data base restaurada para hoje.', 'info');
+      }
+    }
+
+    function getReferenceDateObj() {
+      const refVal = document.getElementById('reference-date')?.value || getTodayISO();
+      const [y, m, d] = refVal.split('-').map(Number);
+      return new Date(y, m - 1, d, 12, 0, 0);
+    }
+
+    function loadRecords() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('sestra_alvaras_db_v1');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          records = Array.isArray(parsed) ? parsed : [...INITIAL_SEED_DATA];
+        } else {
+          records = [...INITIAL_SEED_DATA];
+          saveRecordsToStorage();
+        }
+      } catch (e) {
+        records = [...INITIAL_SEED_DATA];
+      }
+    }
+
+    function loadVehicleTypes() {
+      try {
+        const raw = localStorage.getItem(VEHICLE_TYPES_STORAGE_KEY) || localStorage.getItem('sestra_vehicle_types_v1');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          customVehicleTypes = {
+            taxi: Array.isArray(parsed.taxi) && parsed.taxi.length ? parsed.taxi : [...DEFAULT_VEHICLE_TYPES.taxi],
+            escolar: Array.isArray(parsed.escolar) && parsed.escolar.length ? parsed.escolar : [...DEFAULT_VEHICLE_TYPES.escolar]
+          };
+        } else {
+          saveVehicleTypesToStorage();
+        }
+      } catch (e) {
+        customVehicleTypes = {
+          taxi: [...DEFAULT_VEHICLE_TYPES.taxi],
+          escolar: [...DEFAULT_VEHICLE_TYPES.escolar]
+        };
+      }
+    }
+
+    function saveVehicleTypesToStorage() {
+      try {
+        localStorage.setItem(VEHICLE_TYPES_STORAGE_KEY, JSON.stringify(customVehicleTypes));
+        sestranSincronizar();
+      } catch (e) {
+        console.error('Erro ao salvar tipos de veículo:', e);
+      }
+    }
+
+    function saveRecordsToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        sestranSincronizar();
+      } catch (e) {
+        showToast('Erro ao salvar dados no navegador.', 'error');
+      }
+    }
+
+    // =========================================================================
+    // MOTOR DE REGRAS DE VALIDADE, PRAZOS FINAIS E ALERTAS
+    // =========================================================================
+    function evaluateAlvaraStatus(record) {
+      const refDate = getReferenceDateObj();
+      if (!record.validade) {
+        return {
+          code: 'VIGENTE',
+          label: 'Sem validade definida',
+          shortLabel: 'Indefinido',
+          alertText: '',
+          badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+          deadlineStr: '-'
+        };
+      }
+
+      const [vy, vm, vd] = record.validade.split('-').map(Number);
+      const validadeDate = new Date(vy, vm - 1, vd, 23, 59, 59);
+
+      const nextYear = vy + 1;
+      let finalDeadlineDate;
+      let finalDeadlineStr;
+
+      if (record.type === 'taxi') {
+        const isLeap = (nextYear % 4 === 0 && nextYear % 100 !== 0) || (nextYear % 400 === 0);
+        const febLastDay = isLeap ? 29 : 28;
+        finalDeadlineDate = new Date(nextYear, 1, febLastDay, 23, 59, 59);
+        finalDeadlineStr = `${String(febLastDay).padStart(2, '0')}/02/${nextYear}`;
+      } else {
+        finalDeadlineDate = new Date(nextYear, 1, 5, 23, 59, 59);
+        finalDeadlineStr = `05/02/${nextYear}`;
+      }
+
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const daysToValidade = Math.ceil((validadeDate - refDate) / msPerDay);
+      const daysToFinalDeadline = Math.ceil((finalDeadlineDate - refDate) / msPerDay);
+
+      if (refDate <= validadeDate) {
+        if (daysToValidade <= 45) {
+          return {
+            code: 'ATENCAO',
+            label: `Vence em ${daysToValidade} dia(s) (${formatDateBR(record.validade)})`,
+            shortLabel: 'Vence em breve',
+            alertText: `Alvará próximo do vencimento em ${formatDateBR(record.validade)}. Prazo final de renovação será até ${finalDeadlineStr}.`,
+            badgeClass: 'bg-yellow-50 text-yellow-800 border-yellow-300',
+            deadlineStr: finalDeadlineStr
+          };
+        }
+        return {
+          code: 'VIGENTE',
+          label: `Vigente até ${formatDateBR(record.validade)}`,
+          shortLabel: 'Vigente',
+          alertText: `Alvará regular. Prazo de renovação após vencimento: até ${finalDeadlineStr}.`,
+          badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          deadlineStr: finalDeadlineStr
+        };
+      }
+
+      if (refDate <= finalDeadlineDate) {
+        const motivo = record.type === 'taxi'
+          ? `Prazo final Táxi até ${finalDeadlineStr}`
+          : `Prazo final Início das Aulas até ${finalDeadlineStr}`;
+        return {
+          code: 'TOLERANCIA',
+          label: `Em Renovação (${daysToFinalDeadline}d restantes - ${motivo})`,
+          shortLabel: `Renovar até ${finalDeadlineStr.slice(0, 5)}`,
+          alertText: `ATENÇÃO: Alvará venceu em ${formatDateBR(record.validade)}! Restam ${daysToFinalDeadline} dia(s) para o prazo final (${finalDeadlineStr}).`,
+          badgeClass: 'bg-amber-100 text-amber-900 border-amber-300',
+          deadlineStr: finalDeadlineStr
+        };
+      }
+
+      return {
+        code: 'VENCIDO',
+        label: `Vencido (Prazo final ${finalDeadlineStr} expirado)`,
+        shortLabel: 'Vencido / Expirado',
+        alertText: `IRREGULAR: Alvará vencido em ${formatDateBR(record.validade)} e prazo final de renovação (${finalDeadlineStr}) encerrado!`,
+        badgeClass: 'bg-red-100 text-red-800 border-red-300',
+        deadlineStr: finalDeadlineStr
+      };
+    }
+
+    // =========================================================================
+    // NAVEGAÇÃO ENTRE ABAS
+    // =========================================================================
+    function switchTab(tabName) {
+      currentTab = tabName;
+      ['dashboard', 'taxi', 'escolar', 'relatorios'].forEach(t => {
+        const section = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`nav-${t}`);
+        if (t === tabName) {
+          section.classList.remove('hidden');
+          btn.classList.remove('text-slate-300', 'hover:bg-slate-800', 'hover:text-white');
+          btn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+        } else {
+          section.classList.add('hidden');
+          btn.classList.add('text-slate-300', 'hover:bg-slate-800', 'hover:text-white');
+          btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+        }
+      });
+
+      refreshAllViews();
+    }
+
+    function refreshAllViews() {
+      updateCountersAndDashboard();
+      renderTaxiTable();
+      renderEscolarTable();
+      renderReportTable();
+      lucide.createIcons();
+    }
+
+    // =========================================================================
+    // VISÃO GERAL (KPIs E ALERTAS)
+    // =========================================================================
+    function updateCountersAndDashboard() {
+      const taxiRecords = records.filter(r => r.type === 'taxi');
+      const escolarRecords = records.filter(r => r.type === 'escolar');
+
+      document.getElementById('badge-count-taxi').textContent = taxiRecords.length;
+      document.getElementById('badge-count-escolar').textContent = escolarRecords.length;
+
+      let vigentes = 0;
+      let atencao = 0;
+      let tolerancia = 0;
+      let vencidos = 0;
+      const priorityAlerts = [];
+
+      records.forEach(rec => {
+        const st = evaluateAlvaraStatus(rec);
+        if (st.code === 'VIGENTE') vigentes++;
+        else if (st.code === 'ATENCAO') {
+          atencao++;
+          priorityAlerts.push({ rec, st, priority: 3 });
+        } else if (st.code === 'TOLERANCIA') {
+          tolerancia++;
+          priorityAlerts.push({ rec, st, priority: 2 });
+        } else if (st.code === 'VENCIDO') {
+          vencidos++;
+          priorityAlerts.push({ rec, st, priority: 1 });
+        }
+      });
+
+      document.getElementById('kpi-total').textContent = records.length;
+      document.getElementById('kpi-sub-total').textContent = `${taxiRecords.length} Táxi(s) • ${escolarRecords.length} Escolar(es)`;
+      document.getElementById('kpi-vigentes').textContent = vigentes;
+      document.getElementById('kpi-atencao').textContent = atencao;
+      document.getElementById('kpi-tolerancia').textContent = tolerancia;
+      document.getElementById('kpi-vencidos').textContent = vencidos;
+
+      priorityAlerts.sort((a, b) => a.priority - b.priority);
+      const alertsListEl = document.getElementById('dashboard-alerts-list');
+      const alertCountBadge = document.getElementById('alert-count-badge');
+      alertCountBadge.textContent = `${priorityAlerts.length} alerta(s)`;
+
+      if (priorityAlerts.length === 0) {
+        alertsListEl.innerHTML = `
+          <div class="p-8 text-center">
+            <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+              <i data-lucide="check-circle" class="w-6 h-6"></i>
+            </div>
+            <p class="text-sm font-semibold text-slate-800">Nenhum alvará vencido ou próximo do prazo final!</p>
+            <p class="text-xs text-slate-500 mt-1">Todos os cadastros estão regulares na data base selecionada.</p>
+          </div>
+        `;
+      } else {
+        alertsListEl.innerHTML = priorityAlerts.map(({ rec, st }) => {
+          const catBadge = rec.type === 'taxi'
+            ? '<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-800">TÁXI</span>'
+            : '<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-100 text-blue-800">ESCOLAR</span>';
+
+          return `
+            <div class="p-4 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  ${catBadge}
+                  <span class="text-xs font-bold text-slate-700">Alvará Nº ${escapeHtml(rec.alvaraNum)}</span>
+                  <span class="text-xs text-slate-400">• Cad. ${escapeHtml(rec.cadastroNum)}</span>
+                </div>
+                <p class="text-sm font-bold text-slate-900">${escapeHtml(rec.nome)}</p>
+                <p class="text-xs text-slate-600">${escapeHtml(st.alertText)}</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="px-2.5 py-1 text-xs font-bold rounded-lg border ${st.badgeClass}">
+                  ${escapeHtml(st.shortLabel)}
+                </span>
+                <button onclick="openFormModal('${rec.type}', '${rec.id}')" class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Editar / Renovar">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // =========================================================================
+    // RENDERIZAÇÃO DAS TABELAS (TÁXI E TRANSPORTE ESCOLAR)
+    // =========================================================================
+    function clearFilters(type) {
+      document.getElementById(`filter-${type}-search`).value = '';
+      document.getElementById(`filter-${type}-status`).value = 'TODOS';
+      if (type === 'taxi') renderTaxiTable();
+      else renderEscolarTable();
+    }
+
+    function filterRecordsByType(type) {
+      const search = (document.getElementById(`filter-${type}-search`).value || '').toLowerCase().trim();
+      const statusFilter = document.getElementById(`filter-${type}-status`).value;
+
+      return records.filter(rec => {
+        if (rec.type !== type) return false;
+
+        const st = evaluateAlvaraStatus(rec);
+        if (statusFilter !== 'TODOS' && st.code !== statusFilter) return false;
+
+        if (search) {
+          const matchNome = (rec.nome || '').toLowerCase().includes(search);
+          const matchDoc = (rec.docValue || '').toLowerCase().includes(search) ||
+                           (rec.docValue || '').replace(/\D/g, '').includes(search.replace(/\D/g, '') || '___');
+          const matchAlvara = (rec.alvaraNum || '').toLowerCase().includes(search);
+          const matchCad = (rec.cadastroNum || '').toLowerCase().includes(search);
+          return matchNome || matchDoc || matchAlvara || matchCad;
+        }
+        return true;
+      });
+    }
+
+    function renderTaxiTable() {
+      const list = filterRecordsByType('taxi');
+      const tbody = document.getElementById('tbody-taxi');
+      const emptyEl = document.getElementById('empty-taxi');
+
+      if (list.length === 0) {
+        tbody.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      tbody.innerHTML = list.map(rec => {
+        const st = evaluateAlvaraStatus(rec);
+        const vehiclesHtml = (rec.vehicles || []).map(v => `
+          <div class="mb-1 last:mb-0">
+            <p class="text-xs font-bold text-slate-800">${escapeHtml(v.marca)} ${escapeHtml(v.modelo)}</p>
+            <span class="inline-block mt-0.5 px-2 py-0.5 bg-slate-800 text-white font-mono text-[11px] font-bold rounded">
+              ${escapeHtml(v.placa)}
+            </span>
+          </div>
+        `).join('');
+
+        return `
+          <tr class="hover:bg-slate-50/90 transition">
+            <td class="py-3.5 px-4 font-bold text-slate-700">${escapeHtml(rec.cadastroNum)}</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-900 font-bold text-xs border border-slate-200">
+                ${escapeHtml(rec.alvaraNum)}
+              </span>
+            </td>
+            <td class="py-3.5 px-4">
+              <p class="font-bold text-slate-900">${escapeHtml(rec.nome)}</p>
+              <p class="text-xs text-slate-500 mt-0.5">
+                ${rec.docValue ? `<span class="font-semibold">${escapeHtml(rec.docType)}:</span> ${escapeHtml(rec.docValue)}` : 'Documento não informado'}
+              </p>
+            </td>
+            <td class="py-3.5 px-4 text-xs text-slate-600">
+              <p><span class="font-semibold">IPM:</span> ${escapeHtml(rec.ipm || '-')}</p>
+              <p class="mt-0.5"><span class="font-semibold">Insc. Mun.:</span> ${escapeHtml(rec.inscricaoMunicipal || '-')}</p>
+            </td>
+            <td class="py-3.5 px-4">
+              ${vehiclesHtml || '<span class="text-xs text-slate-400">Nenhum veículo</span>'}
+            </td>
+            <td class="py-3.5 px-4 text-xs">
+              <p class="text-slate-500">Emissão: <strong class="text-slate-700">${formatDateBR(rec.emissao)}</strong></p>
+              <p class="text-slate-500 mt-0.5">Validade: <strong class="text-slate-900">${formatDateBR(rec.validade)}</strong></p>
+              <p class="text-[11px] text-amber-700 mt-0.5">Prazo final: <strong>${st.deadlineStr}</strong></p>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${st.badgeClass}" title="${escapeHtml(st.alertText)}">
+                ${escapeHtml(st.shortLabel)}
+              </span>
+              ${st.code !== 'VIGENTE' ? `<p class="text-[11px] text-slate-600 mt-1 max-w-[200px] leading-tight">${escapeHtml(st.alertText)}</p>` : ''}
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1">
+                <button onclick="openFichaModal('${rec.id}')" class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition" title="Visualizar / Imprimir Ficha">
+                  <i data-lucide="file-text" class="w-4 h-4"></i>
+                </button>
+                <button onclick="openFormModal('taxi', '${rec.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Editar Cadastro">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteRecord('${rec.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Excluir Cadastro">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function renderEscolarTable() {
+      const list = filterRecordsByType('escolar');
+      const tbody = document.getElementById('tbody-escolar');
+      const emptyEl = document.getElementById('empty-escolar');
+
+      if (list.length === 0) {
+        tbody.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      tbody.innerHTML = list.map(rec => {
+        const st = evaluateAlvaraStatus(rec);
+        const vehiclesHtml = (rec.vehicles || []).map(v => `
+          <div class="flex items-center gap-1.5 flex-wrap bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 mb-1 last:mb-0">
+            <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">${escapeHtml(v.tipo || 'Van')}</span>
+            <span class="text-xs font-semibold text-slate-800">${escapeHtml(v.marca)} ${escapeHtml(v.modelo)}</span>
+            <span class="px-1.5 py-0.5 bg-slate-800 text-white font-mono text-[10px] font-bold rounded">${escapeHtml(v.placa)}</span>
+          </div>
+        `).join('');
+
+        return `
+          <tr class="hover:bg-slate-50/90 transition">
+            <td class="py-3.5 px-4 font-bold text-slate-700">${escapeHtml(rec.cadastroNum)}</td>
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-900 font-bold text-xs border border-slate-200">
+                ${escapeHtml(rec.alvaraNum)}
+              </span>
+            </td>
+            <td class="py-3.5 px-4">
+              <p class="font-bold text-slate-900">${escapeHtml(rec.nome)}</p>
+              <p class="text-xs text-slate-500 mt-0.5">
+                ${rec.docValue ? `<span class="font-semibold">${escapeHtml(rec.docType)}:</span> ${escapeHtml(rec.docValue)}` : 'Documento não informado'}
+              </p>
+            </td>
+            <td class="py-3.5 px-4 text-xs text-slate-600">
+              <p><span class="font-semibold">IPM:</span> ${escapeHtml(rec.ipm || '-')}</p>
+              <p class="mt-0.5"><span class="font-semibold">Insc. Mun.:</span> ${escapeHtml(rec.inscricaoMunicipal || '-')}</p>
+            </td>
+            <td class="py-3.5 px-4 max-w-[260px]">
+              ${vehiclesHtml || '<span class="text-xs text-slate-400">Nenhum veículo</span>'}
+            </td>
+            <td class="py-3.5 px-4 text-xs">
+              <p class="text-slate-500">Emissão: <strong class="text-slate-700">${formatDateBR(rec.emissao)}</strong></p>
+              <p class="text-slate-500 mt-0.5">Validade: <strong class="text-slate-900">${formatDateBR(rec.validade)}</strong></p>
+              <p class="text-[11px] text-blue-700 mt-0.5">Prazo aulas: <strong>${st.deadlineStr}</strong></p>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${st.badgeClass}" title="${escapeHtml(st.alertText)}">
+                ${escapeHtml(st.shortLabel)}
+              </span>
+              ${st.code !== 'VIGENTE' ? `<p class="text-[11px] text-slate-600 mt-1 max-w-[200px] leading-tight">${escapeHtml(st.alertText)}</p>` : ''}
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1">
+                <button onclick="openFichaModal('${rec.id}')" class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition" title="Visualizar / Imprimir Ficha">
+                  <i data-lucide="file-text" class="w-4 h-4"></i>
+                </button>
+                <button onclick="openFormModal('escolar', '${rec.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Editar Cadastro">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteRecord('${rec.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Excluir Cadastro">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    // =========================================================================
+    // MODAL DE FORMULÁRIO (NOVO / EDIÇÃO) E NUMERAÇÃO SEQUENCIAL
+    // =========================================================================
+    function getNextSequentialCadastroNum(type) {
+      const sameType = records.filter(r => r.type === type && r.cadastroNum && r.cadastroNum.trim() !== '');
+      if (sameType.length === 0) {
+        return { value: '', isFirst: true };
+      }
+
+      let maxNum = 0;
+      let padLength = 3;
+
+      sameType.forEach(r => {
+        const digitsMatch = String(r.cadastroNum).match(/\d+/);
+        if (digitsMatch) {
+          const num = parseInt(digitsMatch[0], 10);
+          if (num >= maxNum) {
+            maxNum = num;
+            padLength = Math.max(padLength, digitsMatch[0].length);
+          }
+        }
+      });
+
+      const nextVal = String(maxNum + 1).padStart(padLength, '0');
+      return { value: nextVal, isFirst: false };
+    }
+
+    function openFormModal(type, recordId = null) {
+      const modal = document.getElementById('form-modal');
+      document.getElementById('alvara-form').reset();
+      document.getElementById('form-type').value = type;
+      document.getElementById('form-id').value = recordId || '';
+
+      const isTaxi = type === 'taxi';
+      document.getElementById('modal-badge-type').textContent = isTaxi ? 'MODALIDADE: TÁXI' : 'MODALIDADE: TRANSPORTE ESCOLAR';
+      document.getElementById('modal-form-title').textContent = recordId
+        ? `Editar Alvará — ${isTaxi ? 'Táxi' : 'Transporte Escolar'}`
+        : `Cadastro de Alvará de Licença — ${isTaxi ? 'Táxi' : 'Transporte Escolar'}`;
+
+      document.getElementById('modal-rule-text').innerHTML = isTaxi
+        ? '<strong>Regra Táxi:</strong> Validade automática em <strong>31/12</strong> do ano de emissão. Após o vencimento, o taxista possui prazo final de renovação até <strong>28/02</strong> do ano seguinte. Permite adicionar múltiplos veículos.'
+        : '<strong>Regra Transporte Escolar:</strong> Validade automática em <strong>31/12</strong> do ano de emissão. Prazo final de renovação até <strong>05/02 (Início das Aulas)</strong>. Permite cadastrar múltiplos veículos e novos tipos (Vans, Micro-ônibus, Ônibus, etc.).';
+
+      document.getElementById('vehicles-section-title').innerHTML = isTaxi
+        ? '<i data-lucide="car-taxi-front" class="w-4 h-4 text-amber-600"></i><span>Veículos Vinculados — Táxi</span>'
+        : '<i data-lucide="bus" class="w-4 h-4 text-blue-600"></i><span>Veículos Vinculados — Transporte Escolar</span>';
+
+      document.getElementById('vehicles-section-subtitle').textContent = isTaxi
+        ? 'Adicione um ou mais veículos vinculados a este alvará de Táxi.'
+        : 'Motoristas escolares podem possuir vários veículos cadastrados e adicionar novos tipos de veículo.';
+
+      const cadInput = document.getElementById('field-cadastro-num');
+      const cadHint = document.getElementById('hint-cadastro-num');
+
+      if (recordId) {
+        const rec = records.find(r => r.id === recordId);
+        if (!rec) return;
+
+        cadInput.value = rec.cadastroNum || '';
+        cadHint.textContent = 'Número sequencial editável manualmente.';
+        document.getElementById('field-alvara-num').value = rec.alvaraNum || '';
+        document.getElementById('field-emissao').value = rec.emissao || '';
+        document.getElementById('field-validade').value = rec.validade || '';
+        document.getElementById('field-ipm').value = rec.ipm || '';
+        document.getElementById('field-inscricao').value = rec.inscricaoMunicipal || '';
+        document.getElementById('field-doc-type').value = rec.docType || 'CPF';
+        handleDocTypeChange(false);
+        document.getElementById('field-doc-value').value = rec.docValue || '';
+        document.getElementById('field-nome').value = rec.nome || '';
+
+        const container = document.getElementById('vehicles-container');
+        container.innerHTML = '';
+        const defaultTipo = isTaxi ? customVehicleTypes.taxi[0] : customVehicleTypes.escolar[0];
+        const vList = (rec.vehicles && rec.vehicles.length > 0)
+          ? rec.vehicles
+          : [{ tipo: defaultTipo, marca: '', modelo: '', placa: '' }];
+        vList.forEach(v => addVehicleRow(v));
+      } else {
+        const seq = getNextSequentialCadastroNum(type);
+        cadInput.value = seq.value;
+        if (seq.isFirst) {
+          cadInput.placeholder = 'Digite o 1º número manualmente (ex: 001)';
+          cadHint.textContent = 'Primeiro cadastro: informe o número inicial manualmente; os próximos serão sequenciais.';
+        } else {
+          cadHint.textContent = `Sugerido automaticamente (${seq.value}) a partir do cadastro anterior, mas você pode modificar.`;
+        }
+
+        const refVal = document.getElementById('reference-date').value;
+        document.getElementById('field-emissao').value = refVal;
+        autoCalculateValidade();
+
+        document.getElementById('field-doc-type').value = 'CPF';
+        handleDocTypeChange(true);
+
+        const container = document.getElementById('vehicles-container');
+        container.innerHTML = '';
+        const defaultTipo = isTaxi ? customVehicleTypes.taxi[0] : customVehicleTypes.escolar[0];
+        addVehicleRow({ tipo: defaultTipo, marca: '', modelo: '', placa: '' });
+      }
+
+      updateFormStatusPreview();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeFormModal() {
+      const modal = document.getElementById('form-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function autoCalculateValidade() {
+      const emissao = document.getElementById('field-emissao').value;
+      if (emissao) {
+        const year = emissao.split('-')[0];
+        document.getElementById('field-validade').value = `${year}-12-31`;
+      }
+      updateFormStatusPreview();
+    }
+
+    function updateFormStatusPreview() {
+      const type = document.getElementById('form-type').value || 'taxi';
+      const validade = document.getElementById('field-validade').value;
+      const previewEl = document.getElementById('form-status-preview');
+
+      if (!validade) {
+        previewEl.className = 'hidden';
+        return;
+      }
+
+      const st = evaluateAlvaraStatus({ type, validade });
+      previewEl.className = `p-3 rounded-xl border text-xs font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${st.badgeClass}`;
+      previewEl.innerHTML = `
+        <span><strong>Status Calculado:</strong> ${escapeHtml(st.label)}</span>
+        <span class="font-bold">Prazo Final Renovação: ${escapeHtml(st.deadlineStr)}</span>
+      `;
+    }
+
+    // =========================================================================
+    // LINHAS DINÂMICAS DE MÚLTIPLOS VEÍCULOS E GESTÃO DE TIPOS DE VEÍCULO
+    // =========================================================================
+    function buildVehicleTypeOptions(type, selectedTipo) {
+      const list = [...(customVehicleTypes[type] || [])];
+      if (selectedTipo && !list.includes(selectedTipo)) {
+        list.push(selectedTipo);
+      }
+      const optionsHtml = list.map(t =>
+        `<option value="${escapeHtml(t)}" ${t === selectedTipo ? 'selected' : ''}>${escapeHtml(t)}</option>`
+      ).join('');
+
+      return `${optionsHtml}<option value="__NEW_TYPE__">+ Adicionar novo tipo...</option>`;
+    }
+
+    function handleVehicleTypeSelectChange(selectEl) {
+      if (selectEl.value === '__NEW_TYPE__') {
+        const previousVal = selectEl.dataset.prevValue || '';
+        selectEl.value = previousVal;
+        openNewVehicleTypeModal(selectEl);
+      } else {
+        selectEl.dataset.prevValue = selectEl.value;
+      }
+    }
+
+    function openNewVehicleTypeModal(selectEl) {
+      pendingVehicleSelectEl = selectEl;
+      const type = document.getElementById('form-type').value || 'escolar';
+      const labelModalidade = type === 'taxi' ? 'Táxi' : 'Transporte Escolar';
+      document.getElementById('new-vehicle-type-desc').textContent =
+        `Cadastre um novo tipo de veículo para a modalidade ${labelModalidade}. Ele ficará salvo automaticamente para os próximos cadastros.`;
+
+      const input = document.getElementById('input-new-vehicle-type');
+      input.value = '';
+      const modal = document.getElementById('modal-new-vehicle-type');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeNewVehicleTypeModal() {
+      const modal = document.getElementById('modal-new-vehicle-type');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      pendingVehicleSelectEl = null;
+    }
+
+    function confirmAddVehicleType() {
+      const input = document.getElementById('input-new-vehicle-type');
+      const rawName = input.value.trim();
+      if (!rawName) {
+        showToast('Informe o nome do novo tipo de veículo.', 'warning');
+        return;
+      }
+
+      const type = document.getElementById('form-type').value || 'escolar';
+      const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+      const exists = (customVehicleTypes[type] || []).find(
+        item => item.toLowerCase() === formattedName.toLowerCase()
+      );
+      const finalName = exists || formattedName;
+
+      if (!exists) {
+        customVehicleTypes[type].push(finalName);
+        saveVehicleTypesToStorage();
+      }
+
+      document.querySelectorAll('#vehicles-container .veh-tipo').forEach(sel => {
+        const current = sel === pendingVehicleSelectEl ? finalName : sel.value;
+        sel.innerHTML = buildVehicleTypeOptions(type, current);
+        sel.value = current;
+        sel.dataset.prevValue = current;
+      });
+
+      closeNewVehicleTypeModal();
+      showToast(`Tipo "${finalName}" adicionado com sucesso!`, 'success');
+    }
+
+    function addVehicleRow(vehicle = {}) {
+      const type = document.getElementById('form-type').value || 'taxi';
+      const defaultTipo = type === 'taxi' ? customVehicleTypes.taxi[0] : customVehicleTypes.escolar[0];
+      const selectedTipo = vehicle.tipo || defaultTipo;
+
+      const container = document.getElementById('vehicles-container');
+      const row = document.createElement('div');
+      row.className = 'vehicle-item grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200 items-end';
+
+      row.innerHTML = `
+        <div class="sm:col-span-4">
+          <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Tipo de Veículo *</label>
+          <div class="flex items-center gap-1">
+            <select onchange="handleVehicleTypeSelectChange(this)" data-prev-value="${escapeHtml(selectedTipo)}" class="veh-tipo w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+              ${buildVehicleTypeOptions(type, selectedTipo)}
+            </select>
+            <button type="button" onclick="openNewVehicleTypeModal(this.previousElementSibling)" title="Adicionar novo tipo de veículo" class="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition shrink-0">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+        <div class="sm:col-span-3">
+          <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Marca *</label>
+          <input type="text" required value="${escapeHtml(vehicle.marca || '')}" placeholder="Ex: VW" class="veh-marca w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs uppercase focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Modelo *</label>
+          <input type="text" required value="${escapeHtml(vehicle.modelo || '')}" placeholder="${type === 'taxi' ? 'VIRTUS' : 'MPOLO'}" class="veh-modelo w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs uppercase focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Placa *</label>
+          <input type="text" required value="${escapeHtml(vehicle.placa || '')}" oninput="formatPlate(this)" maxlength="8" placeholder="${type === 'taxi' ? 'TBZ-5E26' : 'KOU-5843'}" class="veh-placa w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs uppercase font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="sm:col-span-1 flex justify-end">
+          <button type="button" onclick="removeVehicleRow(this)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Remover veículo">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `;
+
+      container.appendChild(row);
+      lucide.createIcons();
+    }
+
+    function removeVehicleRow(btn) {
+      const container = document.getElementById('vehicles-container');
+      if (container.children.length <= 1) {
+        showToast('É necessário manter ao menos 1 veículo vinculado ao alvará.', 'warning');
+        return;
+      }
+      btn.closest('.vehicle-item').remove();
+    }
+
+    // =========================================================================
+    // SALVAR E EXCLUIR REGISTROS
+    // =========================================================================
+    function saveAlvara(event) {
+      event.preventDefault();
+
+      const id = document.getElementById('form-id').value;
+      const type = document.getElementById('form-type').value;
+      const cadastroNum = document.getElementById('field-cadastro-num').value.trim();
+      const alvaraNum = document.getElementById('field-alvara-num').value.trim();
+      const emissao = document.getElementById('field-emissao').value;
+      const validade = document.getElementById('field-validade').value;
+      const ipm = document.getElementById('field-ipm').value.trim();
+      const inscricaoMunicipal = document.getElementById('field-inscricao').value.trim();
+      const docType = document.getElementById('field-doc-type').value;
+      const docValue = document.getElementById('field-doc-value').value.trim();
+      const nome = document.getElementById('field-nome').value.trim().toUpperCase();
+
+      const vehicles = [];
+      const rows = document.querySelectorAll('#vehicles-container .vehicle-item');
+      rows.forEach(row => {
+        vehicles.push({
+          tipo: row.querySelector('.veh-tipo').value,
+          marca: row.querySelector('.veh-marca').value.trim().toUpperCase(),
+          modelo: row.querySelector('.veh-modelo').value.trim().toUpperCase(),
+          placa: row.querySelector('.veh-placa').value.trim().toUpperCase()
+        });
+      });
+
+      const payload = {
+        id: id || `alv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        type,
+        cadastroNum,
+        alvaraNum,
+        emissao,
+        validade,
+        ipm,
+        inscricaoMunicipal,
+        docType,
+        docValue,
+        nome,
+        vehicles
+      };
+
+      if (id) {
+        const idx = records.findIndex(r => r.id === id);
+        if (idx !== -1) records[idx] = payload;
+        showToast('Alvará atualizado com sucesso!', 'success');
+      } else {
+        records.push(payload);
+        showToast('Novo alvará cadastrado com sucesso!', 'success');
+      }
+
+      saveRecordsToStorage();
+      closeFormModal();
+      refreshAllViews();
+    }
+
+    function deleteRecord(id) {
+      const rec = records.find(r => r.id === id);
+      if (!rec) return;
+
+      openConfirmDialog(
+        'Excluir Cadastro de Alvará',
+        `Deseja realmente excluir o cadastro Nº ${rec.cadastroNum} (Alvará ${rec.alvaraNum}) de "${rec.nome}"? Esta ação não pode ser desfeita.`,
+        () => {
+          records = records.filter(r => r.id !== id);
+          saveRecordsToStorage();
+          refreshAllViews();
+          showToast('Cadastro excluído com sucesso.', 'info');
+        }
+      );
+    }
+
+    // =========================================================================
+    // IMPORTAÇÃO E EXPORTAÇÃO DE PLANILHAS EXCEL (.XLS / .XLSX) VIA SHEETJS
+    // =========================================================================
+    function downloadTemplate(type) {
+      const wb = XLSX.utils.book_new();
+      let rows = [];
+
+      if (type === 'taxi') {
+        rows = [
+          {
+            'CADASTRO Nº': '002',
+            'ALVARÁ Nº': '07/2026',
+            'DATA DE EMISSÃO': '05/02/2026',
+            'DATA DE VALIDADE': '31/12/2026',
+            'Nº PROCESSO IPM': '4512/2026',
+            'INSCRIÇÃO MUNICIPAL': '102938',
+            'TIPO DOCUMENTO': 'CPF',
+            'DOCUMENTO': '123.456.789-00',
+            'NOME / RAZÃO SOCIAL': 'JOÃO DA SILVA PEREIRA',
+            'MARCA': 'CHEVROLET',
+            'MODELO': 'ONIX PLUS',
+            'PLACA': 'ABC-1D23'
+          }
+        ];
+      } else {
+        rows = [
+          {
+            'CADASTRO Nº': '002',
+            'ALVARÁ Nº': '11/2026',
+            'DATA DE EMISSÃO': '05/02/2026',
+            'DATA DE VALIDADE': '31/12/2026',
+            'Nº PROCESSO IPM': '8890/2026',
+            'INSCRIÇÃO MUNICIPAL': '554433',
+            'TIPO DOCUMENTO': 'CNPJ',
+            'DOCUMENTO': '12.345.678/0001-99',
+            'NOME / RAZÃO SOCIAL': 'TRANSPORTE ESCOLAR SEGURO LTDA',
+            'TIPO VEÍCULO': 'Van',
+            'MARCA': 'MERCEDES-BENZ',
+            'MODELO': 'SPRINTER 416',
+            'PLACA': 'XYZ-9A87'
+          }
+        ];
+      }
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, type === 'taxi' ? 'Modelo_Taxi' : 'Modelo_Escolar');
+      XLSX.writeFile(wb, `SESTRAN_Modelo_Importacao_${type === 'taxi' ? 'Taxi' : 'Transporte_Escolar'}.xlsx`);
+      showToast('Planilha modelo baixada com sucesso!', 'success');
+    }
+
+    function handleExcelImport(event, type) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+          if (!jsonRows || jsonRows.length === 0) {
+            showToast('A planilha selecionada está vazia.', 'warning');
+            return;
+          }
+
+          let importedCount = 0;
+          let groupedEscolarMap = new Map();
+
+          jsonRows.forEach(row => {
+            const normRow = {};
+            Object.keys(row).forEach(k => {
+              const cleanKey = k.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+              normRow[cleanKey] = row[k];
+            });
+
+            const nome = String(
+              normRow['NOME / RAZAO SOCIAL'] || normRow['NOME/RAZAO SOCIAL'] || normRow['NOME'] || normRow['RAZAO SOCIAL'] || ''
+            ).trim().toUpperCase();
+
+            if (!nome) return;
+
+            const alvaraNum = String(normRow['ALVARA Nº'] || normRow['ALVARA N'] || normRow['ALVARA'] || normRow['Nº ALVARA'] || '').trim();
+            let cadastroNum = String(normRow['CADASTRO Nº'] || normRow['CADASTRO N'] || normRow['CADASTRO'] || '').trim();
+
+            if (!cadastroNum) {
+              const seq = getNextSequentialCadastroNum(type);
+              cadastroNum = seq.value || String(records.filter(r => r.type === type).length + importedCount + 1).padStart(3, '0');
+            }
+
+            const emissaoRaw = normRow['DATA DE EMISSAO'] || normRow['EMISSAO'] || '';
+            const emissao = parseExcelDate(emissaoRaw) || document.getElementById('reference-date').value;
+
+            const validadeRaw = normRow['DATA DE VALIDADE'] || normRow['VALIDADE'] || '';
+            let validade = parseExcelDate(validadeRaw);
+            if (!validade && emissao) {
+              validade = `${emissao.split('-')[0]}-12-31`;
+            }
+
+            const ipm = String(normRow['Nº PROCESSO IPM'] || normRow['Nº IPM'] || normRow['PROCESSO IPM'] || normRow['IPM'] || '').trim();
+            const inscricaoMunicipal = String(normRow['INSCRICAO MUNICIPAL'] || normRow['INSCRICAO'] || '').trim();
+
+            let docType = String(normRow['TIPO DOCUMENTO'] || '').trim().toUpperCase();
+            const docValue = String(normRow['DOCUMENTO'] || normRow['CPF'] || normRow['CNPJ'] || normRow['RG'] || '').trim();
+            if (!['CPF', 'RG', 'CNPJ'].includes(docType)) {
+              const digits = docValue.replace(/\D/g, '');
+              if (digits.length === 14) docType = 'CNPJ';
+              else if (digits.length === 11) docType = 'CPF';
+              else docType = 'CPF';
+            }
+
+            const vehicle = {
+              tipo: String(normRow['TIPO VEICULO'] || normRow['TIPO'] || (type === 'taxi' ? 'Sedan / Táxi' : 'Van')).trim(),
+              marca: String(normRow['MARCA'] || '').trim().toUpperCase(),
+              modelo: String(normRow['MODELO'] || '').trim().toUpperCase(),
+              placa: String(normRow['PLACA'] || '').trim().toUpperCase()
+            };
+
+            if (alvaraNum) {
+              const groupKey = `${type}::${alvaraNum}::${nome}`;
+              if (groupedEscolarMap.has(groupKey)) {
+                if (vehicle.placa || vehicle.modelo) {
+                  groupedEscolarMap.get(groupKey).vehicles.push(vehicle);
+                }
+                return;
+              }
+            }
+
+            const newRec = {
+              id: `imp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              type,
+              cadastroNum,
+              alvaraNum,
+              emissao,
+              validade,
+              ipm,
+              inscricaoMunicipal,
+              docType,
+              docValue,
+              nome,
+              vehicles: (vehicle.placa || vehicle.modelo || vehicle.marca) ? [vehicle] : []
+            };
+
+            if (alvaraNum) {
+              groupedEscolarMap.set(`${type}::${alvaraNum}::${nome}`, newRec);
+            }
+
+            records.push(newRec);
+            importedCount++;
+          });
+
+          saveRecordsToStorage();
+          refreshAllViews();
+          showToast(`${importedCount} registro(s) importado(s) com sucesso da planilha!`, 'success');
+        } catch (err) {
+          console.error(err);
+          showToast('Erro ao processar o arquivo Excel. Verifique o formato da planilha.', 'error');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function parseExcelDate(val) {
+      if (!val) return '';
+      if (val instanceof Date && !isNaN(val)) {
+        const y = val.getFullYear();
+        const m = String(val.getMonth() + 1).padStart(2, '0');
+        const d = String(val.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+      const str = String(val).trim();
+      const brMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (brMatch) {
+        return `${brMatch[3]}-${brMatch[2].padStart(2, '0')}-${brMatch[1].padStart(2, '0')}`;
+      }
+      const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (isoMatch) {
+        return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      }
+      return '';
+    }
+
+    // =========================================================================
+    // MÓDULO DE RELATÓRIOS OFICIAIS (IMPRESSÃO E EXPORTAÇÃO EXCEL)
+    // =========================================================================
+    function getFilteredReportRecords() {
+      const cat = document.getElementById('report-category').value;
+      const statusFilter = document.getElementById('report-status').value;
+      const search = (document.getElementById('report-search').value || '').toLowerCase().trim();
+
+      return records.filter(rec => {
+        if (cat !== 'TODOS' && rec.type !== cat) return false;
+        const st = evaluateAlvaraStatus(rec);
+        if (statusFilter !== 'TODOS' && st.code !== statusFilter) return false;
+
+        if (search) {
+          const matchNome = (rec.nome || '').toLowerCase().includes(search);
+          const matchIpm = (rec.ipm || '').toLowerCase().includes(search);
+          const matchAlvara = (rec.alvaraNum || '').toLowerCase().includes(search);
+          const matchVeiculo = (rec.vehicles || []).some(v =>
+            `${v.tipo || ''} ${v.marca || ''} ${v.modelo || ''} ${v.placa || ''}`.toLowerCase().includes(search)
+          );
+          return matchNome || matchIpm || matchAlvara || matchVeiculo;
+        }
+        return true;
+      });
+    }
+
+    function formatVehiclesForReportCell(rec) {
+      const vList = rec.vehicles || [];
+      if (vList.length === 0) {
+        return '<span class="text-xs text-slate-400">Não informado</span>';
+      }
+
+      if (rec.type === 'escolar') {
+        return vList.map(v => `
+          <div class="mb-1 last:mb-0 text-xs">
+            <span class="font-bold uppercase text-blue-800 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] mr-1">${escapeHtml(v.tipo || 'Van')}</span>
+            <span class="font-semibold text-slate-800">${escapeHtml(v.marca)} ${escapeHtml(v.modelo)}</span>
+            ${v.placa ? `<span class="ml-1 px-1.5 py-0.5 bg-slate-800 text-white font-mono text-[10px] font-bold rounded">${escapeHtml(v.placa)}</span>` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Táxi
+      return vList.map(v => `
+        <div class="mb-1 last:mb-0 text-xs">
+          <span class="font-semibold text-slate-800">${escapeHtml(v.marca)} ${escapeHtml(v.modelo)}</span>
+          ${v.placa ? `<span class="ml-1 px-1.5 py-0.5 bg-slate-800 text-white font-mono text-[10px] font-bold rounded">${escapeHtml(v.placa)}</span>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function formatVehiclesPlainText(rec) {
+      const vList = rec.vehicles || [];
+      if (vList.length === 0) return '';
+      return vList.map(v => {
+        const prefix = rec.type === 'escolar' && v.tipo ? `[${v.tipo}] ` : '';
+        const model = `${v.marca || ''} ${v.modelo || ''}`.trim();
+        const plate = v.placa ? ` - Placa: ${v.placa}` : '';
+        return `${prefix}${model}${plate}`.trim();
+      }).join(' | ');
+    }
+
+    function renderReportTable() {
+      const cat = document.getElementById('report-category').value;
+      const list = getFilteredReportRecords();
+      const tbody = document.getElementById('tbody-report');
+      const emptyEl = document.getElementById('empty-report');
+      const thCat = document.getElementById('th-report-cat');
+      const thVeiculo = document.getElementById('th-report-veiculo');
+
+      const subtitleMap = {
+        TODOS: 'Relatório Consolidado de Alvarás — Táxi e Transporte Escolar',
+        taxi: 'Relatório de Alvarás de Licença — Modalidade Táxi',
+        escolar: 'Relatório de Alvarás de Licença — Transporte Escolar (Vans / Micro-ônibus / Ônibus)'
+      };
+      document.getElementById('report-subtitle').textContent = subtitleMap[cat];
+      document.getElementById('report-print-date').textContent = `Emitido em: ${formatDateBR(document.getElementById('reference-date').value)}`;
+      document.getElementById('report-total-rows').textContent = `Total de registros listados: ${list.length}`;
+
+      if (cat === 'TODOS') {
+        thCat.classList.remove('hidden');
+        thVeiculo.textContent = 'VEÍCULO / FROTA';
+      } else if (cat === 'escolar') {
+        thCat.classList.add('hidden');
+        thVeiculo.textContent = 'FROTA / VEÍCULO';
+      } else {
+        thCat.classList.add('hidden');
+        thVeiculo.textContent = 'VEÍCULO';
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      tbody.innerHTML = list.map(rec => {
+        const st = evaluateAlvaraStatus(rec);
+        const catCell = cat === 'TODOS'
+          ? `<td class="py-2.5 px-3 font-semibold text-xs">${rec.type === 'taxi' ? 'TÁXI' : 'ESCOLAR'}</td>`
+          : '';
+        const veiculoCell = `<td class="py-2.5 px-3">${formatVehiclesForReportCell(rec)}</td>`;
+
+        return `
+          <tr class="hover:bg-slate-50">
+            ${catCell}
+            <td class="py-2.5 px-3 font-semibold text-slate-900">${escapeHtml(rec.nome)}</td>
+            <td class="py-2.5 px-3 text-slate-700">${escapeHtml(rec.ipm || '-')}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${escapeHtml(rec.alvaraNum)}</td>
+            ${veiculoCell}
+            <td class="py-2.5 px-3 text-slate-700">${formatDateBR(rec.emissao)}</td>
+            <td class="py-2.5 px-3 font-semibold text-slate-900">${formatDateBR(rec.validade)}</td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded text-xs font-bold border ${st.badgeClass}">
+                ${escapeHtml(st.shortLabel)}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function printReport() {
+      document.body.classList.remove('printing-ficha');
+      window.print();
+    }
+
+    function exportReportToExcel() {
+      const cat = document.getElementById('report-category').value;
+      const list = getFilteredReportRecords();
+
+      if (list.length === 0) {
+        showToast('Não há registros para exportar no relatório atual.', 'warning');
+        return;
+      }
+
+      const vehicleColName = cat === 'escolar'
+        ? 'FROTA / VEÍCULO'
+        : (cat === 'taxi' ? 'VEÍCULO' : 'VEÍCULO / FROTA');
+
+      const dataToExport = list.map(rec => {
+        const st = evaluateAlvaraStatus(rec);
+        const row = {};
+        if (cat === 'TODOS') {
+          row['CATEGORIA'] = rec.type === 'taxi' ? 'TÁXI' : 'TRANSPORTE ESCOLAR';
+        }
+        row['NOME / RAZÃO SOCIAL'] = rec.nome;
+        row['Nº IPM'] = rec.ipm || '';
+        row['Nº ALVARÁ'] = rec.alvaraNum;
+        row[vehicleColName] = formatVehiclesPlainText(rec);
+        row['DATA DE EMISSÃO'] = formatDateBR(rec.emissao);
+        row['DATA DE VALIDADE'] = formatDateBR(rec.validade);
+        row['STATUS / PRAZO'] = st.label;
+        return row;
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      XLSX.utils.book_append_sheet(wb, ws, 'Relatorio_SESTRAN');
+      XLSX.writeFile(wb, `SESTRAN_Relatorio_Alvaras_${cat.toUpperCase()}.xlsx`);
+      showToast('Relatório exportado para Excel (.xlsx)!', 'success');
+    }
+
+    // =========================================================================
+    // MODAL DE FICHA CADASTRAL INDIVIDUAL
+    // =========================================================================
+    function openFichaModal(id) {
+      const rec = records.find(r => r.id === id);
+      if (!rec) return;
+
+      const st = evaluateAlvaraStatus(rec);
+      const isTaxi = rec.type === 'taxi';
+
+      const vehiclesSection = (rec.vehicles || []).map((v, idx) => `
+        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-200 text-slate-800 mr-2">${escapeHtml(v.tipo || (isTaxi ? 'Táxi' : 'Van'))}</span>
+            <span class="font-bold text-slate-900">${escapeHtml(v.marca)} ${escapeHtml(v.modelo)}</span>
+          </div>
+          <span class="px-2.5 py-1 bg-slate-900 text-white font-mono text-xs font-bold rounded">${escapeHtml(v.placa)}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('ficha-content').innerHTML = `
+        <div class="border-b-2 border-slate-900 pb-4">
+          <p class="text-xs font-bold uppercase text-blue-700">SESTRAN - Secretaria Municipal de Segurança e Trânsito</p>
+          <h2 class="text-lg font-extrabold text-slate-900">Diretoria de Transporte e Estatística</h2>
+          <p class="text-sm font-bold text-slate-700 mt-1">
+            CADASTRO DE ALVARÁ DE LICENÇA — ${isTaxi ? 'TÁXI' : 'TRANSPORTE ESCOLAR'}
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div>
+            <span class="block text-[10px] font-bold uppercase text-slate-500">Cadastro Nº</span>
+            <span class="text-base font-extrabold text-slate-900">${escapeHtml(rec.cadastroNum)}</span>
+          </div>
+          <div>
+            <span class="block text-[10px] font-bold uppercase text-slate-500">Alvará Nº</span>
+            <span class="text-base font-extrabold text-blue-700">${escapeHtml(rec.alvaraNum)}</span>
+          </div>
+          <div>
+            <span class="block text-[10px] font-bold uppercase text-slate-500">Data de Emissão</span>
+            <span class="text-sm font-bold text-slate-900">${formatDateBR(rec.emissao)}</span>
+          </div>
+          <div>
+            <span class="block text-[10px] font-bold uppercase text-slate-500">Data de Validade</span>
+            <span class="text-sm font-bold text-slate-900">${formatDateBR(rec.validade)}</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl border ${st.badgeClass} text-xs">
+          <p class="font-bold">${escapeHtml(st.label)}</p>
+          <p class="mt-0.5">${escapeHtml(st.alertText)}</p>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <span class="block text-[10px] font-bold uppercase text-slate-500">Nome / Razão Social</span>
+            <p class="text-base font-bold text-slate-900">${escapeHtml(rec.nome)}</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <span class="block text-[10px] font-bold uppercase text-slate-500">${escapeHtml(rec.docType || 'Documento')}</span>
+              <p class="font-semibold text-slate-800">${escapeHtml(rec.docValue || 'Não informado')}</p>
+            </div>
+            <div>
+              <span class="block text-[10px] font-bold uppercase text-slate-500">Nº do Processo do IPM</span>
+              <p class="font-semibold text-slate-800">${escapeHtml(rec.ipm || 'Não informado')}</p>
+            </div>
+            <div>
+              <span class="block text-[10px] font-bold uppercase text-slate-500">Inscrição Municipal</span>
+              <p class="font-semibold text-slate-800">${escapeHtml(rec.inscricaoMunicipal || 'Não informado')}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <span class="block text-xs font-bold uppercase text-slate-600">
+            Veículos Vinculados (${(rec.vehicles || []).length})
+          </span>
+          ${vehiclesSection}
+        </div>
+      `;
+
+      const modal = document.getElementById('modal-ficha');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeFichaModal() {
+      const modal = document.getElementById('modal-ficha');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.classList.remove('printing-ficha');
+    }
+
+    function printFicha() {
+      document.body.classList.add('printing-ficha');
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-ficha');
+      }, 500);
+    }
+
+    // =========================================================================
+    // MÁSCARAS DE DOCUMENTOS (CPF, RG, CNPJ) E PLACA
+    // =========================================================================
+    function handleDocTypeChange(clearInput = true) {
+      const type = document.getElementById('field-doc-type').value;
+      const input = document.getElementById('field-doc-value');
+      if (clearInput) input.value = '';
+
+      if (type === 'CPF') {
+        input.placeholder = '000.000.000-00';
+        input.maxLength = 14;
+      } else if (type === 'CNPJ') {
+        input.placeholder = '00.000.000/0000-00';
+        input.maxLength = 18;
+      } else {
+        input.placeholder = '00.000.000-0';
+        input.maxLength = 15;
+      }
+    }
+
+    function maskDocumentInput(input) {
+      const type = document.getElementById('field-doc-type').value;
+      if (type === 'CPF') {
+        let v = input.value.replace(/\D/g, '').slice(0, 11);
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        input.value = v;
+      } else if (type === 'CNPJ') {
+        let v = input.value.replace(/\D/g, '').slice(0, 14);
+        v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+        v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        v = v.replace(/(\d{4})(\d)/, '$1-$2');
+        input.value = v;
+      } else {
+        input.value = input.value.toUpperCase();
+      }
+    }
+
+    function formatPlate(input) {
+      let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+      if (v.length > 3) {
+        v = v.slice(0, 3) + '-' + v.slice(3);
+      }
+      input.value = v;
+    }
+
+    // =========================================================================
+    // UTILITÁRIOS (FORMATAÇÃO DE DATA, ESCAPE HTML, TOAST E CONFIRMAÇÃO)
+    // =========================================================================
+    function formatDateBR(isoDate) {
+      if (!isoDate) return '-';
+      const parts = isoDate.split('-');
+      if (parts.length !== 3) return isoDate;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+
+      const styles = {
+        success: 'bg-emerald-900 text-white border-emerald-700',
+        error: 'bg-red-900 text-white border-red-700',
+        warning: 'bg-amber-900 text-white border-amber-700',
+        info: 'bg-slate-900 text-white border-slate-700'
+      };
+
+      toast.className = `px-4 py-3 rounded-xl shadow-xl border text-sm font-medium flex items-center gap-2.5 transition-all transform translate-y-2 opacity-0 ${styles[type] || styles.info}`;
+      toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function openConfirmDialog(title, message, onConfirm) {
+      const modal = document.getElementById('confirm-modal');
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+
+      const cancelBtn = document.getElementById('confirm-cancel-btn');
+      const okBtn = document.getElementById('confirm-ok-btn');
+
+      const cleanup = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+
+      cancelBtn.onclick = cleanup;
+      okBtn.onclick = () => {
+        cleanup();
+        onConfirm();
+      };
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+  </script>
+</body>
+</html>

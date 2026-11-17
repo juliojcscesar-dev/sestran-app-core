@@ -4,6 +4,7 @@ export const MODULOS_ACESSO = [
   { id: "EDUCACAO", numero: "03", titulo: "Educação no Trânsito", href: "/educacao-transito" },
   { id: "CREDENCIAIS", numero: "04", titulo: "Credenciais de Vagas", href: "/credenciais" },
   { id: "SINALIZACAO", numero: "05", titulo: "Sinalização Viária - O.S.", href: "/sinalizacao-viaria" },
+  { id: "TRANSPORTE", numero: "06", titulo: "Transporte e Estatística", href: "/transporte-estatistica" },
 ] as const;
 export type ModuloAcesso = typeof MODULOS_ACESSO[number]["id"];
 export type NivelAcesso = "SEM_ACESSO" | "CONSULTA" | "OPERADOR";
@@ -28,5 +29,6 @@ export function moduloDoCaminho(pathname: string): ModuloAcesso | undefined {
   if (pathname.startsWith("/veiculos-abandonados") || pathname.startsWith("/veiculos-recolhidos") || pathname.startsWith("/documento-veiculo")) return "VEICULOS";
   if (pathname.startsWith("/educacao-transito") || pathname.startsWith("/agenda-educativa")) return "EDUCACAO";
   if (pathname.startsWith("/credenciais")) return "CREDENCIAIS";
+  if (pathname.startsWith("/transporte-estatistica")) return "TRANSPORTE";
   return undefined;
 }

@@ -267,6 +267,13 @@
       "when": 1794498545291,
       "tag": "0037_sinalizacao_fonte_tamanho",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794919397730,
+      "tag": "0038_modulo_transporte_alvaras",
+      "breakpoints": true
     }
   ]
 }

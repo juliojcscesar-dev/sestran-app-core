@@ -1250,6 +1250,30 @@ export type Database = {
         }
         Relationships: []
       }
+      transporte_alvaras_estado: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          id: number
+          registros: Json | null
+          tipos_veiculo: Json | null
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          id: number
+          registros?: Json | null
+          tipos_veiculo?: Json | null
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          id?: number
+          registros?: Json | null
+          tipos_veiculo?: Json | null
+        }
+        Relationships: []
+      }
       user_module_permissions: {
         Row: {
           atualizado_por: string | null

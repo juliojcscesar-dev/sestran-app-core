@@ -29,6 +29,7 @@ import { Route as AuthenticatedPainel2RouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSinalizacaoViariaRouteImport } from './routes/_authenticated/sinalizacao-viaria'
 import { Route as AuthenticatedSolicitantesRouteImport } from './routes/_authenticated/solicitantes'
 import { Route as AuthenticatedTerritorioRouteImport } from './routes/_authenticated/territorio'
+import { Route as AuthenticatedTransporteEstatisticaRouteImport } from './routes/_authenticated/transporte-estatistica'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedVeiculosAbandonadosRouteImport } from './routes/_authenticated/veiculos-abandonados'
 import { Route as AuthenticatedVeiculosRecolhidosRouteImport } from './routes/_authenticated/veiculos-recolhidos'
@@ -148,6 +149,12 @@ const AuthenticatedTerritorioRoute = AuthenticatedTerritorioRouteImport.update({
   path: '/territorio',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTransporteEstatisticaRoute =
+  AuthenticatedTransporteEstatisticaRouteImport.update({
+    id: '/transporte-estatistica',
+    path: '/transporte-estatistica',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
@@ -233,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/sinalizacao-viaria': typeof AuthenticatedSinalizacaoViariaRoute
   '/solicitantes': typeof AuthenticatedSolicitantesRoute
   '/territorio': typeof AuthenticatedTerritorioRoute
+  '/transporte-estatistica': typeof AuthenticatedTransporteEstatisticaRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
@@ -265,6 +273,7 @@ export interface FileRoutesByTo {
   '/sinalizacao-viaria': typeof AuthenticatedSinalizacaoViariaRoute
   '/solicitantes': typeof AuthenticatedSolicitantesRoute
   '/territorio': typeof AuthenticatedTerritorioRoute
+  '/transporte-estatistica': typeof AuthenticatedTransporteEstatisticaRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
@@ -299,6 +308,7 @@ export interface FileRoutesById {
   '/_authenticated/sinalizacao-viaria': typeof AuthenticatedSinalizacaoViariaRoute
   '/_authenticated/solicitantes': typeof AuthenticatedSolicitantesRoute
   '/_authenticated/territorio': typeof AuthenticatedTerritorioRoute
+  '/_authenticated/transporte-estatistica': typeof AuthenticatedTransporteEstatisticaRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/veiculos-abandonados': typeof AuthenticatedVeiculosAbandonadosRoute
   '/_authenticated/veiculos-recolhidos': typeof AuthenticatedVeiculosRecolhidosRoute
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/sinalizacao-viaria'
     | '/solicitantes'
     | '/territorio'
+    | '/transporte-estatistica'
     | '/usuarios'
     | '/veiculos-abandonados'
     | '/veiculos-recolhidos'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/sinalizacao-viaria'
     | '/solicitantes'
     | '/territorio'
+    | '/transporte-estatistica'
     | '/usuarios'
     | '/veiculos-abandonados'
     | '/veiculos-recolhidos'
@@ -398,6 +410,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sinalizacao-viaria'
     | '/_authenticated/solicitantes'
     | '/_authenticated/territorio'
+    | '/_authenticated/transporte-estatistica'
     | '/_authenticated/usuarios'
     | '/_authenticated/veiculos-abandonados'
     | '/_authenticated/veiculos-recolhidos'
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTerritorioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/transporte-estatistica': {
+      id: '/_authenticated/transporte-estatistica'
+      path: '/transporte-estatistica'
+      fullPath: '/transporte-estatistica'
+      preLoaderRoute: typeof AuthenticatedTransporteEstatisticaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/usuarios': {
       id: '/_authenticated/usuarios'
       path: '/usuarios'
@@ -658,6 +678,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSinalizacaoViariaRoute: typeof AuthenticatedSinalizacaoViariaRoute
   AuthenticatedSolicitantesRoute: typeof AuthenticatedSolicitantesRoute
   AuthenticatedTerritorioRoute: typeof AuthenticatedTerritorioRoute
+  AuthenticatedTransporteEstatisticaRoute: typeof AuthenticatedTransporteEstatisticaRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVeiculosAbandonadosRoute: typeof AuthenticatedVeiculosAbandonadosRoute
   AuthenticatedVeiculosRecolhidosRoute: typeof AuthenticatedVeiculosRecolhidosRoute
@@ -685,6 +706,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSinalizacaoViariaRoute: AuthenticatedSinalizacaoViariaRoute,
   AuthenticatedSolicitantesRoute: AuthenticatedSolicitantesRoute,
   AuthenticatedTerritorioRoute: AuthenticatedTerritorioRoute,
+  AuthenticatedTransporteEstatisticaRoute:
+    AuthenticatedTransporteEstatisticaRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVeiculosAbandonadosRoute: AuthenticatedVeiculosAbandonadosRoute,
   AuthenticatedVeiculosRecolhidosRoute: AuthenticatedVeiculosRecolhidosRoute,
