@@ -1274,6 +1274,27 @@ export type Database = {
         }
         Relationships: []
       }
+      transporte_termo_estado: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          dados: Json | null
+          id: number
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          dados?: Json | null
+          id?: number
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          dados?: Json | null
+          id?: number
+        }
+        Relationships: []
+      }
       user_module_permissions: {
         Row: {
           atualizado_por: string | null

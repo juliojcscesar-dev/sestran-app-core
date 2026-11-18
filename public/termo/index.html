@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard – Termo de Recebimento</title>
+<style>
+:root{--bg:#eaf3fc;--card:#fff;--tx:#10243e;--mut:#5a7190;--bd:#c9def3;--pri:#1557b0;--lt:#6fb4ee;--tint:#f0f7ff;--th:#dcebfa;--thx:#0f3d7a;--yel:#ffff00;--red:#c0392b}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1726;--card:#12233a;--tx:#e6f0fb;--mut:#8fa7c4;--bd:#25405f;--pri:#4d9bf0;--lt:#8cc8ff;--tint:#10294a;--th:#1b3a62;--thx:#cfe6ff}}
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--tx)}
+header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding:16px 24px;background:linear-gradient(110deg,#0d3f86,#1f6fd1 60%,#5aaaf0);color:#fff;box-shadow:0 2px 10px rgba(21,87,176,.35)}
+h1{font-size:19px;margin:0}h2{font-size:15px;margin:0 0 12px;color:var(--pri);font-weight:700}
+main{max-width:1250px;margin:0 auto;padding:20px;display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(21,87,176,.08)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.kpi{border-left:5px solid var(--pri)}.kpi:nth-child(even){border-left-color:var(--lt)}
+.kpi small{color:var(--mut)}.kpi b{display:block;font-size:24px;margin-top:4px;color:var(--pri)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:3px}
+input,select{padding:8px;border:1px solid var(--bd);border-radius:6px;background:var(--tint);color:var(--tx);font:inherit}
+input:focus,select:focus{outline:2px solid var(--lt);border-color:var(--pri)}
+button{padding:9px 14px;border:0;border-radius:6px;background:var(--pri);color:#fff;font:inherit;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+button.s{background:transparent;color:var(--pri);border:1px solid var(--lt)}button.d{background:var(--red)}
+header button.s{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.45)}
+header>div>button:not(.s){background:#fff;color:#0d3f86;font-weight:700}
+.seg{display:inline-flex;border:1px solid #fff;border-radius:8px;overflow:hidden}
+.seg button{border-radius:0;background:transparent;color:#fff;padding:9px 16px;transition:background .15s,color .15s}
+.seg button:hover:not(.on){background:#cfe6ff;color:#0d3f86;filter:none}
+.seg button.on{background:linear-gradient(135deg,#c8f7d4,#8fe3a8);color:#0a5a2a;font-weight:700;filter:none}
+.dot{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px}
+.info{font-size:12.5px;color:var(--mut);line-height:1.6;border-left:5px solid var(--lt);background:var(--tint)}
+.bar{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:12px}.bar span:first-child{width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar i{display:block;height:14px;background:linear-gradient(90deg,var(--pri),var(--lt));border-radius:3px;min-width:2px}.bar div{flex:1}
+.split{display:flex;height:22px;border-radius:5px;overflow:hidden;margin:10px 0 6px}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{border:1px solid var(--bd);padding:5px 7px;text-align:left;white-space:nowrap}th{background:var(--th);color:var(--thx)}
+td.n{text-align:right}tr.p td{background:var(--yel);color:#000;font-weight:600}tr.g td{background:#d9d9d9;color:#000;font-weight:700}
+td button{padding:3px 8px;font-size:11px;margin-right:3px}
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Termo de Recebimento</h1>
+  <div class="seg"><button id="mP" onclick="setMode('P')">📦 Produtos (NF-e)</button><button id="mS" onclick="setMode('S')">🛠 Serviços (NFS-e)</button></div>
+  <div><button class="s" onclick="bkp()">💾 Backup (XLS)</button> <button class="s" onclick="$('fi').click()">📂 Importar XLS</button><input type="file" id="fi" accept=".xls,.xlsx" style="display:none" onchange="imp(event)"> <button class="s" onclick="demo()">Restaurar exemplo</button> <button class="s" onclick="clearAll()">Limpar tudo</button> <button onclick="pdf()">⬇ Gerar PDF</button></div>
+</header>
+<main>
+  <section class="card info" id="info"></section>
+
+  <section class="card"><h2 id="hh" style="font-weight:800;text-transform:uppercase;letter-spacing:.3px"></h2>
+    <div class="f">
+      <label>Título<input id="titulo"></label>
+      <label>Empresa / Instituição<input id="empresa"></label>
+      <label>Empenho<input id="empenho"></label>
+      <label>NFS-e<input id="nfse"></label>
+      <label><span id="lr1">Alíquota 1 (%)</span><input id="r1" type="number" step="0.01" min="0"></label>
+      <label><span id="lr2">Alíquota 2 (%)</span><input id="r2" type="number" step="0.01" min="0"></label>
+      <label id="wg">Agrupamento dos totais<select id="grp" onchange="D().grp=this.value;render()"></select></label>
+    </div>
+  </section>
+
+  <section class="kpis">
+    <div class="card kpi"><small>💰 Valor total</small><b id="k1"></b></div>
+    <div class="card kpi"><small id="n2"></small><b id="k2"></b></div>
+    <div class="card kpi"><small id="n3"></small><b id="k3"></b></div>
+    <div class="card kpi"><small>🏢 Fornecedores / Itens</small><b id="k4"></b></div>
+  </section>
+
+  <section class="grid2">
+    <div class="card"><h2>💰 Valor por fornecedor</h2><div id="ch1"></div></div>
+    <div class="card"><h2>🧾 Optante Simples Nacional</h2><div id="ch2"></div><h2 style="margin-top:18px">📉 Retenções por fornecedor</h2><div id="ch3"></div></div>
+  </section>
+
+  <section class="card"><h2 id="ft">➕ Adicionar item</h2>
+    <div class="f">
+      <label>Estabelecimento<input id="est" list="ests"></label><datalist id="ests"></datalist>
+      <label>CNPJ<input id="cnpj" placeholder="00.000.000/0001-00"></label>
+      <label>Optante Simples<select id="sim"><option>NÃO</option><option>SIM</option></select></label>
+      <label id="l_nf">NF-e<input id="nf"></label>
+      <label>Qtde<input id="qt" type="number" min="0" step="any"></label>
+      <label id="l_prod">Produto / Especificação<input id="prod"></label>
+      <label id="l_placa">Placa / Veículo<input id="placa"></label>
+      <label>Valor total (R$)<input id="val" type="number" min="0" step="0.01"></label>
+      <label id="w_tipo">Alíquota IRRF<select id="tipo"><option value="a"></option><option value="b"></option></select></label>
+    </div>
+    <p><button onclick="save()" id="bs">Adicionar</button> <button class="s" id="bl" style="display:none" onclick="addLine(edit)">＋ Adicionar linha neste fornecedor</button> <button class="s" onclick="resetForm()">Cancelar</button></p>
+  </section>
+
+  <section class="card"><h2>📋 Planilha</h2><div class="tw"><table id="tb"></table></div></section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="text/plain" id="principal">const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const R=n=>'R$ '+fmt(n), pc=n=>fmt(n)+'%', r2=n=>Math.round((n+1e-9)*100)/100;
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const SEM='(SEM ESTABELECIMENTO)', nm=e=>e||SEM;
+const TIT={P:'ANEXO DO TERMO DE RECEBIMENTO - PRODUTOS',S:'ANEXO DO TERMO DE RECEBIMENTO - SERVIÇOS'};
+const mk=a=>{const k=a[5].lastIndexOf(' - ');return{est:a[0],cnpj:a[1],sim:a[2],nf:a[3],qt:a[4],prod:k>0?a[5].slice(0,k):a[5],placa:k>0?a[5].slice(k+3):'',val:a[6],tipo:'a'}};
+const DEMO_P=[
+ ['VIA PARTS PECAS E SERVICOS EIRELI EPP','07.257.649/0001-31','NÃO','21196',6,'OLEO MOTOR SAE 5W30 - AYZ8C07 DUCATO MULTI',741],
+ ['VIA PARTS PECAS E SERVICOS EIRELI EPP','07.257.649/0001-31','NÃO','21198',1,'OLEO BD MINERAL 15W40 CI-4 VALVOLINE - AOH3956',598.5],
+ ['SOCIEDADE ELETRICA PARANA','79.697.314/0001-45','NÃO','9907',1,'BALDE DE OLEO 20 LITROS VG 46 - BCN-7290',1045],
+ ['JURANDIR S DE A LEITE MECANICA ME','09.163.356/0001-10','SIM','2886',4,'OLEO 10W30 - AWN9851 PALIO FIRE ECONOMY',212.8],
+ ['JURANDIR S DE A LEITE MECANICA ME','09.163.356/0001-10','SIM','2887',3,'OLEO MOTOR SAE 5W30 - AVW7981 UNO MILLE ECONOMY',145.5],
+ ['JURANDIR S DE A LEITE MECANICA ME','09.163.356/0001-10','SIM','2887',2,'ADITIVO RADIADOR - AVW7981 UNO MILLE ECONOMY',63.26],
+ ['PW RETIFICA E AUTO CENTER LTDA','52.723.398/0001-98','SIM','205',1,'OLEO HIDRAULICO - ASN4239 PALIO WEEKEND ELX 1.3',30.4],
+ ['PW RETIFICA E AUTO CENTER LTDA','52.723.398/0001-98','SIM','205',3,'OLEO MOTOR 15W40 - ASN4239 PALIO WEEKEND ELX 1.3',185.25],
+ ['CENTRAL 376 PECAS E SERVICOS LTDA','23.422.277/0001-08','NÃO','13693',3,'OLEO 15W40 - S/PLACA122 PA CARREGADEIRA WA200-5',1852.5],
+ ['CENTRAL 376 PECAS E SERVICOS LTDA','23.422.277/0001-08','NÃO','13693',2,'OLEO 10W30 - S/PLACA122 PA CARREGADEIRA WA200-5',1672]].map(mk);
+const DEMO_S=[['SOUPEC','21.487.807/0001-70','NÃO','2737',1,'SERVIÇOS MECANICOS',152]].map(mk);
+const EMP='VÓLUS - INSTITUIÇÃO DE PAGAMENTO LTDA';
+const fresh=m=>m==='P'?{h:{titulo:TIT.P,empresa:EMP,empenho:'31871',nfse:'839179'},items:clone(DEMO_P),r:[0.24,1.2],grp:'forn'}
+                      :{h:{titulo:TIT.S,empresa:EMP,empenho:'28341',nfse:'807310'},items:clone(DEMO_S),r:[4.8,4],grp:'forn'};
+let S=null,edit=-1;
+try{S=JSON.parse(localStorage.getItem('volus2'))}catch(e){}
+if(!S||!S.P){S={mode:'P',P:fresh('P'),S:fresh('S')};
+  try{const o=JSON.parse(localStorage.getItem('volus'));if(o&&o.items){S.P.h={...S.P.h,...o.h};S.P.items=o.items.map(i=>({...i,tipo:i.tipo==='1.20'?'b':'a'}))}}catch(e){}}
+if(S.v!==3){S.P.grp='forn';S.S.grp='forn';S.v=3}
+S.P.items.forEach(i=>{if(i.placa===undefined){const k=i.prod.lastIndexOf(' - ');if(k>0){i.placa=i.prod.slice(k+3).trim();i.prod=i.prod.slice(0,k).trim()}else i.placa=''}});
+const pj=i=>i.prod+(i.placa?' - '+i.placa:'');
+const D=()=>S[S.mode], isP=()=>S.mode==='P';
+const persist=()=>{try{localStorage.setItem('volus2',JSON.stringify(S))}catch(e){};try{parent.postMessage({tipo:'termo-salvar',dados:JSON.parse(JSON.stringify(S))},location.origin)}catch(e){}};
+
+// Regras: PRODUTO – Simples não retém; alíquota 1 ou 2 conforme o item. SERVIÇO – IRRF (não retém se Simples) + ISSQN sempre.
+function calc(i,d=D(),m=S.mode){const v=+i.val||0,[a,b]=d.r;
+  if(m==='P')return i.sim==='SIM'?[0,0]:i.tipo==='b'?[0,r2(v*b/100)]:[r2(v*a/100),0];
+  return[i.sim==='SIM'?0:r2(v*a/100),r2(v*b/100)]}
+const sm=(rows,f)=>r2(rows.reduce((a,i)=>a+f(i),0));
+function groups(){const d=D(),it=d.items,mkg=(label,rows,sub)=>({label,rows,sub,v:sm(rows,i=>+i.val||0),a:sm(rows,i=>calc(i)[0]),b:sm(rows,i=>calc(i)[1])});
+  if(!it.length)return[];
+  if(d.grp==='forn'){const m=new Map();it.forEach(i=>{const k=i.est||'';if(!m.has(k))m.set(k,[]);m.get(k).push(i)});return[...m.values()].map(r=>mkg('TOTAL PARCIAL',r,true))}
+  if(!isP())return[mkg('Total',it,false)];
+  return[['a',d.r[0]],['b',d.r[1]]].map(([t,x])=>mkg('Sub-Total Alíquota '+pc(x),it.filter(i=>i.tipo===t),true)).filter(g=>g.rows.length)}
+function tot(){const g=groups();return{g,v:r2(g.reduce((a,x)=>a+x.v,0)),a:r2(g.reduce((a,x)=>a+x.a,0)),b:r2(g.reduce((a,x)=>a+x.b,0))}}
+const names=(d=D(),m=S.mode)=>m==='P'?['IRRF '+pc(d.r[0]),'IRRF '+pc(d.r[1])]:['IRRF '+pc(d.r[0]),'ISSQN '+pc(d.r[1])];
+
+function render(){
+  const d=D(),p=isP(),T=tot(),N=names();
+  $('mP').className=p?'on':'';$('mS').className=p?'':'on';
+  for(const k of['titulo','empresa','empenho','nfse'])if($(k).value!==d.h[k])$(k).value=d.h[k];
+  if(+$('r1').value!==d.r[0])$('r1').value=d.r[0];if(+$('r2').value!==d.r[1])$('r2').value=d.r[1];
+  if(p&&d.grp==='tot'||!p&&d.grp==='aliq')d.grp='forn';
+  $('grp').innerHTML='<option value="forn">Por fornecedor (TOTAL PARCIAL)</option>'+(p?'<option value="aliq">Por alíquota (modelo Excel)</option>':'<option value="tot">Somente total geral</option>');$('grp').value=d.grp;
+  $('lr1').textContent=p?'Alíquota IRRF 1 (%)':'Alíquota IRRF (%)';$('lr2').textContent=p?'Alíquota IRRF 2 (%)':'Alíquota ISSQN (%)';
+  $('hh').textContent=p?'📦 PRODUTOS (NF-e)':'🛠 SERVIÇOS (NFS-e)';
+  $('l_nf').firstChild.textContent=p?'NF-e':'NFS-e';$('l_prod').firstChild.textContent=p?'Produto / Especificação':'Descrição / Serviços';
+  $('w_tipo').style.display=p?'':'none';$('l_placa').style.display=p?'':'none';$('tipo').options[0].text=pc(d.r[0]);$('tipo').options[1].text=pc(d.r[1]);
+  $('info').innerHTML=p?'<b>PRODUTO</b> — Nos pagamentos de fornecimento de produtos deve ser observada a retenção do IRRF conforme a natureza do bem.<br>• Alíquotas usuais: 0,24% ou 1,20%, conforme a natureza do bem fornecido (escolha por item).<br>• Empresas <b>optantes pelo Simples Nacional</b> (SIM) não têm retenção do IRRF.'
+    :'<b>SERVIÇO</b> — • IRRF: alíquota de 4,80%. Empresas <b>optantes pelo Simples Nacional</b> (SIM) não têm retenção do IRRF (o valor da alíquota 4,80% não é calculado).<br>• ISSQN: alíquota e responsabilidade pela retenção conforme a natureza do serviço e a legislação municipal.<br>Deve ser observada a NFS-e; quando o serviço for prestado no município, encaminhar o processo ao setor de retenção para emissão da Guia de Recolhimento.';
+  $('k1').textContent=R(T.v);$('n2').textContent='🧾 '+N[0];$('n3').textContent='🧾 '+N[1];$('k2').textContent=R(T.a);$('k3').textContent=R(T.b);
+  const fs=[...new Set(d.items.map(i=>i.est||''))].map(e=>{const r=d.items.filter(i=>(i.est||'')===e);return{e,v:sm(r,i=>+i.val||0),t:sm(r,i=>calc(i)[0]+calc(i)[1])}});
+  $('k4').textContent=fs.length+' / '+d.items.length;
+  $('ests').innerHTML=fs.filter(x=>x.e).map(x=>`<option value="${E(x.e)}">`).join('');
+  const mx=Math.max(1,...fs.map(x=>x.v)),mi=Math.max(.01,...fs.map(x=>x.t));
+  $('ch1').innerHTML=fs.map(x=>`<div class="bar"><span title="${E(nm(x.e))}">${E(nm(x.e))}</span><div><i style="width:${x.v/mx*100}%"></i></div><b>${R(x.v)}</b></div>`).join('')||'Sem dados';
+  $('ch3').innerHTML=fs.map(x=>`<div class="bar"><span title="${E(nm(x.e))}">${E(nm(x.e))}</span><div><i style="width:${x.t/mi*100}%;background:linear-gradient(90deg,#c0392b,#f4a49a)"></i></div><b>${R(r2(x.t))}</b></div>`).join('')||'Sem dados';
+  const sv=sm(d.items.filter(i=>i.sim==='SIM'),i=>+i.val||0),nv=r2(T.v-sv),pp=T.v?sv/T.v*100:0;
+  $('ch2').innerHTML=`<div class="split"><div style="width:${pp}%;background:linear-gradient(90deg,#2e9e5b,#8fe3b0)"></div><div style="width:${100-pp}%;background:linear-gradient(90deg,var(--pri),var(--lt))"></div></div>
+   <small><span class="dot" style="background:linear-gradient(90deg,#2e9e5b,#8fe3b0)"></span> Simples: ${R(sv)} (${pp.toFixed(1)}%) &nbsp; <span class="dot" style="background:linear-gradient(90deg,var(--pri),var(--lt))"></span> Não optante: ${R(nv)} (${(T.v?100-pp:0).toFixed(1)}%)</small>`;
+  let h=`<tr><th>Estabelecimento</th><th>CNPJ</th><th>Simples</th><th>${p?'NF-e':'NFS-e'}</th><th>Qtde</th><th>${p?'Produto/Especificação':'Descrição/Serviços'}</th>${p?'<th>Placa/Veículo</th>':''}<th>Valor total</th><th>${N[0]}</th><th>${N[1]}</th><th></th></tr>`;
+  T.g.forEach(g=>{g.rows.forEach(i=>{const k=d.items.indexOf(i),c=calc(i);
+    h+=`<tr><td>${E(nm(i.est))}</td><td>${E(i.cnpj)}</td><td>${i.sim}</td><td class="n">${E(i.nf)}</td><td class="n">${i.qt}</td><td>${E(i.prod)}</td>${p?`<td>${E(i.placa||'')}</td>`:''}<td class="n">${R(i.val)}</td><td class="n">${R(c[0])}</td><td class="n">${R(c[1])}</td><td><button class="s" onclick="ed(${k})">Editar</button><button class="d" onclick="del(${k})">✕</button></td></tr>`});
+    const last=d.items.indexOf(g.rows[g.rows.length-1]);
+    h+=`<tr><td colspan="${p?11:10}"><button class="s" onclick="addLine(${last})">＋ Adicionar linha${g.sub?' – '+E(g.label==='TOTAL PARCIAL'?nm(g.rows[0].est):g.label.replace('Sub-Total ','')):''}</button></td></tr>`;
+    if(g.sub)h+=`<tr class="p"><td colspan="${p?7:6}">${E(g.label)}</td><td class="n">${R(g.v)}</td><td class="n">${R(g.a)}</td><td class="n">${R(g.b)}</td><td></td></tr>`});
+  h+=`<tr class="g"><td colspan="${p?7:6}">${p?'TOTAL GERAL':'TOTAL'}</td><td class="n">${fmt(T.v)}</td><td class="n">${fmt(T.a)}</td><td class="n">${fmt(T.b)}</td><td></td></tr>`;
+  $('tb').innerHTML=h;persist();
+}
+for(const k of['titulo','empresa','empenho','nfse'])$(k).addEventListener('input',e=>{D().h[k]=e.target.value;persist()});
+[['r1',0],['r2',1]].forEach(([id,x])=>$(id).addEventListener('change',e=>{const v=parseFloat(e.target.value);if(!isNaN(v)&&v>=0)D().r[x]=v;render()}));
+function setMode(m){S.mode=m;resetForm();render()}
+$('sim').addEventListener('change',e=>{$('tipo').value=e.target.value==='SIM'?'a':'b'});
+function save(){
+  const v=parseFloat($('val').value);
+  // Campos incompletos são permitidos: só impede salvar uma linha totalmente vazia.
+  if(!['est','cnpj','nf','qt','prod','placa','val'].some(k=>$(k).value.trim()))return alert('Preencha ao menos um campo para adicionar o item.');
+  const it={est:$('est').value.trim().toUpperCase(),cnpj:$('cnpj').value.trim(),sim:$('sim').value,nf:$('nf').value.trim(),qt:parseFloat($('qt').value)||0,prod:$('prod').value.trim().toUpperCase(),placa:isP()?$('placa').value.trim().toUpperCase():'',val:isNaN(v)?0:r2(v),tipo:isP()?$('tipo').value:'a'};
+  if(edit>=0)D().items[edit]=it;else D().items.push(it);
+  resetForm();render();
+}
+function resetForm(){edit=-1;['est','cnpj','nf','qt','prod','placa','val'].forEach(k=>$(k).value='');$('sim').value='NÃO';$('tipo').value='b';$('bs').textContent='Adicionar';$('ft').textContent='➕ Adicionar item';$('bl').style.display='none'}
+function ed(k){const i=D().items[k];edit=k;$('est').value=i.est;$('cnpj').value=i.cnpj;$('sim').value=i.sim;$('nf').value=i.nf;$('qt').value=i.qt;$('prod').value=i.prod;$('placa').value=i.placa||'';$('val').value=i.val;$('tipo').value=i.tipo;$('bs').textContent='Salvar alterações';$('ft').textContent='✏️ Editando item';$('bl').style.display='';scrollTo({top:$('ft').offsetTop-80,behavior:'smooth'})}
+function addLine(k){const i=D().items[k];resetForm();$('est').value=i.est;$('cnpj').value=i.cnpj;$('sim').value=i.sim;$('tipo').value=i.tipo;$('ft').textContent='➕ Nova linha em: '+i.est;scrollTo({top:$('ft').offsetTop-80,behavior:'smooth'});$('nf').focus()}
+function del(k){if(confirm('Remover este item?')){D().items.splice(k,1);render()}}
+function demo(){if(confirm('Substituir os dados de '+(isP()?'PRODUTOS':'SERVIÇOS')+' pelo exemplo?')){S[S.mode]=fresh(S.mode);resetForm();render()}}
+function clearAll(){if(confirm('Apagar todos os itens de '+(isP()?'PRODUTOS':'SERVIÇOS')+'?')){D().items=[];render()}}
+
+// ===== Backup / importação XLS (as duas planilhas) =====
+function bkp(){
+  if(!window.XLSX)return alert('Biblioteca XLSX não carregou. Verifique a conexão com a internet.');
+  const wb=XLSX.utils.book_new(),H=[];
+  [['P','Itens_Produtos'],['S','Itens_Servicos']].forEach(([m,sh])=>{const d=S[m],N=names(d,m);
+    const rows=d.items.map(i=>{const c=calc(i,d,m);return{'Estabelecimento':i.est,'CNPJ':i.cnpj,'Optante Simples':i.sim,'NF-e/NFS-e':i.nf,'Qtde':i.qt,'Produto/Descricao':i.prod,'Placa/Veiculo':i.placa||'','Valor Total':i.val,'Grupo':i.tipo==='b'?'B':'A',[N[0]]:c[0],[N[1]]:c[1]}});
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows,{header:['Estabelecimento','CNPJ','Optante Simples','NF-e/NFS-e','Qtde','Produto/Descricao','Placa/Veiculo','Valor Total','Grupo',N[0],N[1]]}),sh);
+    H.push({Modo:m,Titulo:d.h.titulo,Empresa:d.h.empresa,Empenho:d.h.empenho,'NFS-e':d.h.nfse,'Aliquota 1':d.r[0],'Aliquota 2':d.r[1],Agrupamento:d.grp})});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(H),'Cabecalho');
+  XLSX.writeFile(wb,'BACKUP_VOLUS_'+new Date().toISOString().slice(0,10)+'.xls',{bookType:'biff8'});
+}
+function imp(ev){
+  const f=ev.target.files[0];if(!f)return;
+  if(!window.XLSX){ev.target.value='';return alert('Biblioteca XLSX não carregou. Verifique a conexão com a internet.')}
+  const r=new FileReader();
+  r.onload=e=>{try{
+    const wb=XLSX.read(e.target.result,{type:'array'});
+    const num=v=>typeof v==='number'?v:(parseFloat(String(v).replace(/[R$\s.]/g,'').replace(',','.'))||0);
+    const pick=(o,...k)=>{for(const x of k)if(o[x]!==undefined&&o[x]!=='')return o[x];return''};
+    const rd=sh=>{const ws=wb.Sheets[sh];if(!ws)return null;
+      return XLSX.utils.sheet_to_json(ws,{defval:''}).filter(o=>Object.values(o).some(v=>String(v).trim()!=='')).map(o=>({est:String(o['Estabelecimento']).trim(),cnpj:String(o['CNPJ']),sim:String(o['Optante Simples']).toUpperCase().startsWith('S')?'SIM':'NÃO',nf:String(pick(o,'NF-e/NFS-e','NF-e')),qt:num(o['Qtde']),prod:String(pick(o,'Produto/Descricao','Produto')),placa:String(pick(o,'Placa/Veiculo')),hasP:o['Placa/Veiculo']!==undefined,val:r2(num(o['Valor Total'])),tipo:/^b$|1,2/i.test(String(pick(o,'Grupo','Aliquota IRRF')).trim())?'b':'a'}))};
+    const P=rd('Itens_Produtos')||rd('Itens'),V=rd('Itens_Servicos');
+    [P,V].forEach((L,n)=>L&&L.forEach(i=>{if(!i.hasP&&L===P){const k=i.prod.lastIndexOf(' - ');if(k>0){i.placa=i.prod.slice(k+3).trim();i.prod=i.prod.slice(0,k).trim()}}delete i.hasP}));
+    if(!P&&!V)throw new Error('abas de itens não encontradas');
+    if(!confirm('Importar '+(P?P.length:0)+' itens de Produtos e '+(V?V.length:0)+' de Serviços, substituindo os dados atuais?'))return;
+    if(P)S.P.items=P;if(V)S.S.items=V;
+    if(wb.Sheets['Cabecalho'])XLSX.utils.sheet_to_json(wb.Sheets['Cabecalho'],{defval:''}).forEach(o=>{const d=S[o['Modo']];if(!d)return;
+      d.h={titulo:String(o['Titulo']),empresa:String(o['Empresa']),empenho:String(o['Empenho']),nfse:String(o['NFS-e'])};
+      d.r=[num(o['Aliquota 1'])||d.r[0],num(o['Aliquota 2'])||d.r[1]];if(o['Agrupamento'])d.grp=o['Agrupamento']});
+    resetForm();render();
+  }catch(err){alert('Não foi possível ler o arquivo: '+err.message)}finally{ev.target.value=''}};
+  r.readAsArrayBuffer(f);
+}
+
+// ===== PDF: Letter paisagem (792x612 pt), mesmo padrão da planilha =====
+function pdf(){
+  if(!window.jspdf)return alert('Biblioteca jsPDF não carregou. Verifique a conexão com a internet.');
+  const d=D(),p=isP(),T=tot(),doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'letter'});
+  const X=[27.6,187.7,277.8,316.4,356.9,393.5,609.6,649.4,688,726],RH=11.2,FS=6.6,Y=[255,255,0],GR=[217,217,217];
+  const cell=(c0,c1,y,h,fill)=>{if(fill){doc.setFillColor(...fill);doc.rect(X[c0],y,X[c1]-X[c0],h,'F')}doc.setLineWidth(.5);doc.rect(X[c0],y,X[c1]-X[c0],h)};
+  const txt=(s,c,y,h,al,b,w=1)=>{s=String(s);doc.setFont('helvetica',b?'bold':'normal');let f=FS;doc.setFontSize(f);const cw=(X[c+w]-X[c])-5;while(doc.getTextWidth(s)>cw&&f>3.5){f-=.2;doc.setFontSize(f)}
+    const x=al==='r'?X[c+w]-2.5:al==='c'?(X[c]+X[c+w])/2:X[c]+2.5;doc.text(s,x,y+h-3.2,{align:al==='r'?'right':al==='c'?'center':'left'})};
+  doc.setFont('helvetica','bold');doc.setFontSize(8.2);doc.text(d.h.titulo,X[0],60);
+  let y=64;
+  [1,2,3].forEach(c=>cell(c,c+1,y,12));txt('EMPENHO',1,y,12,'c',1);txt('NFS-e',2,y,12,'c',1);txt('VALOR R$',3,y,12,'c',1);
+  y+=12;[0,1,2,3].forEach(c=>cell(c,c+1,y,12));
+  txt(d.h.empresa,0,y,12,'l',1);txt(d.h.empenho,1,y,12,'c');txt(d.h.nfse,2,y,12,'c');txt(fmt(T.v),3,y,12,'c');
+  y+=12;const HH=34;
+  for(let c=0;c<9;c++)cell(c,c+1,y,HH);
+  doc.setLineWidth(1.4);doc.rect(X[0],y,X[1]-X[0],HH);doc.rect(X[5],y,X[9]-X[5],HH);
+  const ln=(a,c)=>a.forEach((s,k)=>txt(s,c,y+HH-11.4-(a.length-1-k)*9.6,12,'c',1));
+  ln(['ESTABELECIMENTO'],0);ln(['CNPJ'],1);ln(['OPTANTE','SIMPLES','NACIONAL'],2);ln(p?['NF-e','NF-e']:['NFS-e','NFS-e'],3);ln(['QTDE'],4);
+  ln(p?['PRODUTO/','ESPECIFICAÇÃO']:['DESCRIÇÃO/','SERVIÇOS'],5);ln(['VALOR','TOTAL'],6);
+  ln(['IRRF','ALIQ.',pc(d.r[0])],7);ln(p?['IRRF','ALIQ.',pc(d.r[1])]:['ISSQN',pc(d.r[1])],8);
+  y+=HH;
+  const np=h=>{if(y+h>585){doc.addPage();y=40}};
+  T.g.forEach(g=>{
+    g.rows.forEach(i=>{np(RH);const c=calc(i);for(let k=0;k<9;k++)cell(k,k+1,y,RH);
+      txt(i.est||'',0,y,RH,'l');txt(i.cnpj,1,y,RH,'l');txt(i.sim,2,y,RH,'l');txt(i.nf,3,y,RH,'r');txt(i.qt,4,y,RH,'r');
+      txt(pj(i),5,y,RH,'l');txt(R(i.val),6,y,RH,'r');txt(R(c[0]),7,y,RH,'r');txt(R(c[1]),8,y,RH,'r');y+=RH});
+    if(g.sub){np(RH);for(let k=0;k<9;k++)cell(k,k+1,y,RH,Y);
+      txt(g.label.toUpperCase(),0,y,RH,'l');txt(R(g.v),6,y,RH,'r');txt(R(g.a),7,y,RH,'r');txt(R(g.b),8,y,RH,'r');y+=RH}});
+  np(RH+1);for(let k=0;k<9;k++)cell(k,k+1,y,RH+1,GR);
+  doc.setLineWidth(1.4);doc.rect(X[0],y,X[9]-X[0],RH+1);
+  txt(p?'TOTAL GERAL':'TOTAL',0,y,RH+1,'l',1);txt(fmt(T.v),6,y,RH+1,'r',1);txt(fmt(T.a),7,y,RH+1,'r',1);txt(fmt(T.b),8,y,RH+1,'r',1);
+  doc.save((p?'PRODUTOS_':'SERVICOS_')+(d.h.empenho||'VOLUS')+'.pdf');
+}
+resetForm();render();
+</script>
+<script>
+(function(){var ok=false;function iniciar(d){if(ok)return;ok=true;try{if(d)localStorage.setItem('volus2',JSON.stringify(d));}catch(e){}
+var sc=document.createElement('script');sc.text=document.getElementById('principal').textContent;document.body.appendChild(sc);}
+addEventListener('message',function(e){if(e.origin===location.origin&&e.data&&e.data.tipo==='termo-dados')iniciar(e.data.dados);});
+if(parent!==window)parent.postMessage({tipo:'termo-pronto'},location.origin);else iniciar(null);
+setTimeout(function(){iniciar(null)},8000);})();
+</script>
+</body>
+</html>

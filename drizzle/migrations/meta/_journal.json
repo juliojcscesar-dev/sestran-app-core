@@ -274,6 +274,13 @@
       "when": 1794919397730,
       "tag": "0038_modulo_transporte_alvaras",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1795013819970,
+      "tag": "0039_transporte_termo_recebimento",
+      "breakpoints": true
     }
   ]
 }
