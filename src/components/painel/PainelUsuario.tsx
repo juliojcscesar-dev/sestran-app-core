@@ -12,7 +12,8 @@ import veiculosAsset from "@/assets/painel-veiculos.png.asset.json";
 import sinalizacaoAsset from "@/assets/painel-sinalizacao.png.asset.json";
 import credenciaisAsset from "@/assets/painel-credenciais.png.asset.json";
 import educacaoAsset from "@/assets/painel-educacao.png.asset.json";
-import ditranAsset from "@/assets/painel-ditran.jpg.asset.json";
+import transporteAsset from "@/assets/painel-transporte.png.asset.json";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import noticiaAsset from "@/assets/noticia-educacao-transito.png.asset.json";
 
 type Sessao = Parameters<typeof temAcesso>[0];
@@ -28,6 +29,19 @@ function Modulo({ sessao, modulo, href, img, titulo }: { sessao: Sessao; modulo:
   </div>;
 }
 
+function Transporte({ sessao }: { sessao: Sessao }) {
+  const titulo = "Diretoria de Transporte e Estatística";
+  const imagem = <img src={transporteAsset.url} alt={titulo} loading="lazy" className="mx-auto max-h-56 w-full object-contain" />;
+  if (!temAcesso(sessao, "TRANSPORTE")) return <Modulo sessao={sessao} modulo="TRANSPORTE" href="/transporte-estatistica" img={transporteAsset.url} titulo={titulo} />;
+  return <DropdownMenu>
+    <DropdownMenuTrigger title={`Abrir ${titulo}`} className="block w-full rounded-lg transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{imagem}</DropdownMenuTrigger>
+    <DropdownMenuContent align="center" className="w-64">
+      <DropdownMenuItem asChild><Link to="/transporte-estatistica">Painel de Controle — Alvarás</Link></DropdownMenuItem>
+      <DropdownMenuItem asChild><Link to="/transporte-estatistica-termo">Termo de Recebimento</Link></DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>;
+}
+
 export function PainelUsuario({ sessao, dataExtenso, noticia }: { sessao: Sessao; dataExtenso: string; noticia: Noticia }) {
   const [dia, setDia] = useState<Date | undefined>(new Date());
   return <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -37,7 +51,7 @@ export function PainelUsuario({ sessao, dataExtenso, noticia }: { sessao: Sessao
       <Modulo sessao={sessao} modulo="SINALIZACAO" href="/sinalizacao-viaria" img={sinalizacaoAsset.url} titulo="Sinalização Viária" />
       <Modulo sessao={sessao} modulo="VEICULOS" href="/veiculos-abandonados" img={veiculosAsset.url} titulo="Veículo Abandonado" />
       <Modulo sessao={sessao} modulo="CREDENCIAIS" href="/credenciais" img={credenciaisAsset.url} titulo="Credenciais para Vagas Exclusivas" />
-      <img src={ditranAsset.url} alt="DITRAN Paranavaí" loading="lazy" className="mx-auto max-h-56 w-full object-contain" />
+      <Transporte sessao={sessao} />
       <Modulo sessao={sessao} modulo="EDUCACAO" href="/educacao-transito" img={educacaoAsset.url} titulo="Educação no Trânsito" />
     </div>
     <aside className="space-y-5">

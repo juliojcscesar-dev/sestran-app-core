@@ -4,6 +4,7 @@ import { administrador } from "@/lib/permissoes";
 import { PainelUsuario } from "@/components/painel/PainelUsuario";
 import { NOTICIA_SECRETARIA, dataPorExtenso } from "@/lib/painel-usuario";
 import { Button } from "@/components/ui/button";
+import { MonitorCog } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/painel-2")({
   head: () => ({ meta: [
@@ -26,7 +27,13 @@ function Painel2() {
 
   return <div className="space-y-5">
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-      <h1 className="min-w-0 break-words font-display text-2xl font-bold text-primary sm:text-3xl">Painel 2</h1>
+      <div className="flex min-w-0 items-center gap-4">
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-accent sm:h-20 sm:w-20"><MonitorCog className="h-8 w-8 sm:h-10 sm:w-10" /></span>
+        <div className="min-w-0">
+          <h1 className="break-words font-display text-xl font-bold uppercase leading-tight text-primary sm:text-2xl">Painel 02<br />Gestão Operacional</h1>
+          <p className="text-sm text-muted-foreground">Indicadores, informações e controle das atividades da Secretaria</p>
+        </div>
+      </div>
       <Button asChild variant="outline" size="sm" className="shrink-0"><Link to="/painel">Painel completo</Link></Button>
     </div>
     <PainelUsuario sessao={sessao} dataExtenso={dataPorExtenso(new Date())} noticia={NOTICIA_SECRETARIA} />
