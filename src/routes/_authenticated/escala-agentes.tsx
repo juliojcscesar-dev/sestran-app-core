@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { CalendarClock as IcCalendarClock } from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSessao } from "@/hooks/useSessao";
 import { administrador } from "@/lib/permissoes";
@@ -51,5 +53,5 @@ function QuadroEscala() {
     window.addEventListener("message", aoMensagem);
     return () => { window.removeEventListener("message", aoMensagem); clearTimeout(timer); };
   }, []);
-  return <iframe ref={ref} title="Escala dos Agentes de Trânsito" src="/escala/index.html" className="h-[calc(100vh-7rem)] w-full rounded-lg border bg-background" />;
+  return <div className="space-y-4"><CabecalhoModulo icone={IcCalendarClock} titulo="Escala dos Agentes" subtitulo="Organização e gerenciamento das escalas dos Agentes de Trânsito." /><iframe ref={ref} title="Escala dos Agentes de Trânsito" src="/escala/index.html" className="h-[calc(100vh-12rem)] w-full rounded-lg border bg-background" /></div>;
 }

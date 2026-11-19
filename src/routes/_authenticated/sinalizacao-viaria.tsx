@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { TrafficCone as IcTrafficCone } from "lucide-react";
 import { useEffect, useMemo, useState, type ClipboardEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -139,7 +141,7 @@ function Sinalizacao() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><p className="text-xs font-semibold tracking-wider text-muted-foreground">DITRAN · DEPARTAMENTO TÉCNICO DE SINALIZAÇÃO VIÁRIA</p><h1 className="font-display text-2xl font-semibold">Painel de Sinalização Viária</h1><p className="text-sm text-muted-foreground">Cadastre, acompanhe e consulte as ordens de serviço do setor.</p></div>
+        <CabecalhoModulo icone={IcTrafficCone} titulo="Sinalização Viária" subtitulo="Planejamento e gerenciamento dos serviços de sinalização viária." />
         <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={exportarCSV}><Download className="mr-2 h-4 w-4" />Exportar CSV</Button><RelatorioModulo modulo="SINALIZACAO" titulo="Ordens de Serviço — Sinalização Viária" arquivo="relatorio-sinalizacao-viaria" colunas={["Nº", "Data", "Pedido", "Natureza", "Endereço", "Situação"]} situacoes={STATUS.map((s) => ({ valor: s, rotulo: s }))} buscar={async (de, ate, situacao) => ordens.filter((o) => (!de || o.data >= de) && (!ate || o.data <= ate) && (!situacao || o.status === situacao)).map((o) => [o.numero, fmt(o.data), [o.pedido, o.numero_pedido].filter(Boolean).join(" · "), o.natureza, textoSimples(o.endereco), o.status])} /></div>
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

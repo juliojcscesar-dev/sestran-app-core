@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { ClipboardCheck as IcClipboardCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -160,7 +162,7 @@ function VeiculosRecolhidos() {
   const campo = (rot: string, k: keyof Form, tipo = "text", cls = "") => <div className={`space-y-1 ${cls}`}><Label>{rot}</Label><Input type={tipo} value={(f[k] as string) ?? ""} onChange={(e) => set(k)(e.target.value)} /></div>;
 
   return <div className="space-y-6">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="font-display text-2xl font-semibold">Veículos Recolhidos</h1><p className="text-sm text-muted-foreground">Check-list de vistoria e acompanhamento dos veículos no pátio.</p></div>{opera && <Button onClick={novo}><Plus className="mr-2 h-4 w-4" />Novo check-in</Button>}</div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><CabecalhoModulo icone={IcClipboardCheck} titulo="Veículos Recolhidos" subtitulo="Check-list de vistoria e acompanhamento dos veículos no pátio." />{opera && <Button onClick={novo}><Plus className="mr-2 h-4 w-4" />Novo check-in</Button>}</div>
     <Tabs value={aba} onValueChange={setAba}>
       <TabsList><TabsTrigger value="painel">Dashboard</TabsTrigger><TabsTrigger value="lista">Veículos cadastrados</TabsTrigger><TabsTrigger value="relatorio">Relatórios</TabsTrigger></TabsList>
       <TabsContent value="painel" className="space-y-4">

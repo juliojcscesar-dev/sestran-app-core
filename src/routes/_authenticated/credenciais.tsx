@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { Accessibility as IcAccessibility } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -220,8 +222,7 @@ function PaginaCredenciais() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-2xl font-semibold">Credenciais de Vagas Exclusivas</h1>
-          <p className="text-sm text-muted-foreground">Solicitação e emissão de credencial para pessoa idosa e pessoa com deficiência (PCD).</p>
+          <CabecalhoModulo icone={IcAccessibility} titulo="Credenciais para Vagas Exclusivas" subtitulo="Gestão e emissão de credenciais para estacionamento em vagas especiais." />
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild><Link to="/credenciais-consulta"><Search className="mr-2 h-4 w-4" />Consultar credenciais existentes</Link></Button>

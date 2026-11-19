@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { FileCheck as IcFileCheck } from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
@@ -53,6 +55,6 @@ function Termo({ podeSalvar }: { podeSalvar: boolean }) {
     window.addEventListener("message", aoMensagem);
     return () => { window.removeEventListener("message", aoMensagem); clearTimeout(timer); };
   }, [podeSalvar]);
-  return <iframe ref={ref} title="Dashboard — Termo de Recebimento" src="/termo/index.html" className="h-[calc(100vh-7rem)] w-full rounded-lg border bg-background" />;
+  return <div className="space-y-4"><CabecalhoModulo icone={IcFileCheck} titulo="Termo de Recebimento" subtitulo="Registro e controle de recebimentos relacionados às despesas da Secretaria." /><iframe ref={ref} title="Dashboard — Termo de Recebimento" src="/termo/index.html" className="h-[calc(100vh-12rem)] w-full rounded-lg border bg-background" /></div>;
 }
 

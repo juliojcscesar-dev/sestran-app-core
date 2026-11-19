@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { Bus as IcBus } from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSessao } from "@/hooks/useSessao";
 import { temAcesso } from "@/lib/permissoes";
@@ -53,5 +55,5 @@ function Quadro({ podeSalvar }: { podeSalvar: boolean }) {
     window.addEventListener("message", aoMensagem);
     return () => { window.removeEventListener("message", aoMensagem); clearTimeout(timer); };
   }, [podeSalvar]);
-  return <iframe ref={ref} title="Diretoria de Transporte e Estatística" src="/transporte/index.html" className="h-[calc(100vh-7rem)] w-full rounded-lg border bg-background" />;
+  return <div className="space-y-4"><CabecalhoModulo icone={IcBus} titulo="Painel de Controle – Alvarás" subtitulo="Controle e monitoramento dos prazos de validade dos alvarás." /><iframe ref={ref} title="Diretoria de Transporte e Estatística" src="/transporte/index.html" className="h-[calc(100vh-12rem)] w-full rounded-lg border bg-background" /></div>;
 }

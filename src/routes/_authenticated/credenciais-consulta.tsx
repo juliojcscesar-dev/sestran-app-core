@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { SearchCheck as IcSearchCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -106,8 +108,7 @@ function ConsultaCredenciais() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-2xl font-semibold">Credenciais de Estacionamento – Idoso e PcD</h1>
-          <p className="text-sm text-muted-foreground">Consulta das credenciais já existentes e das emitidas no sistema por nome, número da credencial, CPF, RG ou CNPJ.</p>
+          <CabecalhoModulo icone={IcSearchCheck} titulo="Consulta de Credenciais" subtitulo="Consulta e acompanhamento das credenciais cadastradas no município." />
         </div>
         <Button variant="outline" asChild><Link to="/credenciais"><ArrowLeft className="mr-2 h-4 w-4" />Voltar às Credenciais</Link></Button>
       </div>

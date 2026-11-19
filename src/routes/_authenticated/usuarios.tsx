@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { UserCog as IcUserCog } from "lucide-react";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +31,7 @@ function Usuarios() {
  const backup = useMutation({mutationFn: async (p:{userId:string;valor:boolean})=>{const {error}=await supabase.rpc("definir_backup_modulo",{_user_id:p.userId,_modulo:"CREDENCIAIS",_pode_backup:p.valor}); if(error) throw error;},onSuccess:async()=>{await qc.invalidateQueries({queryKey:["usuarios-acesso"]});await qc.invalidateQueries({queryKey:["sessao"]});toast.success("Acesso atualizado.");},onError:()=>toast.error("Não foi possível atualizar o backup.")});
  const convite=useMutation({mutationFn:()=>conviteFn({data:{email,origem:window.location.origin}}),onSuccess:()=>{setEmail("");qc.invalidateQueries({queryKey:["usuarios-acesso"]});toast.success("Convite enviado por e-mail.");},onError:(e)=>toast.error(e.message)});
  if(!administrador(sessao)) return null;
- return <div className="space-y-6"><div><h1 className="font-display text-2xl font-semibold">Gestão de Usuários</h1><p className="mt-1 text-sm text-muted-foreground">Usuários e Acesso</p></div>
+ return <div className="space-y-6"><CabecalhoModulo icone={IcUserCog} titulo="Usuários e Acessos" subtitulo="Gerenciamento de usuários e permissões de acesso aos módulos do sistema." />
  <form className="flex flex-wrap items-end gap-3 border-b pb-6" onSubmit={e=>{e.preventDefault();convite.mutate();}}><div className="w-full max-w-sm"><label htmlFor="convite-email" className="text-sm font-medium">Convidar usuário</label><Input id="convite-email" type="email" required placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)}/></div><Button type="submit" disabled={convite.isPending}><Mail className="mr-2 h-4 w-4"/>Enviar convite</Button></form>
  <div className="relative max-w-sm"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground"/><Input className="pl-9" aria-label="Buscar usuário" placeholder="Buscar nome ou e-mail" value={busca} onChange={e=>setBusca(e.target.value)}/></div>
  <div className="overflow-x-auto border rounded-md"><Table><TableHeader><TableRow><TableHead className="min-w-60">Usuário</TableHead>{MODULOS_ACESSO.map(m=><TableHead key={m.id} className="min-w-56"><span className="block text-xs text-muted-foreground">Módulo {m.numero}</span>{m.titulo}</TableHead>)}</TableRow></TableHeader><TableBody>

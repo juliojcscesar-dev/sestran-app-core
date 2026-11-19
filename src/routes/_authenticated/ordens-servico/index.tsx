@@ -1,3 +1,5 @@
+import { CabecalhoModulo } from "@/components/layout/CabecalhoModulo";
+import { ClipboardList as IcClipboardList } from "lucide-react";
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -171,12 +173,7 @@ function ListaOS() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold">Ordens de Serviço</h1>
-          <p className="text-sm text-muted-foreground">
-            {filtros.arquivadas
-              ? "Ordens arquivadas da SESTRAN."
-              : "Ordens ativas da Secretaria de Trânsito."}
-          </p>
+          <CabecalhoModulo icone={IcClipboardList} titulo="Ordem de Serviço" subtitulo="Gestão e controle das operações e serviços dos Agentes de Trânsito." />
         </div>
         <div className="flex flex-wrap gap-2">
           <RelatorioModulo modulo="OS"
